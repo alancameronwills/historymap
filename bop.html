@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Bop</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <style>
+        /*@media screen and (orientation:landscape) {html {transform: rotatue(-90deg)}}*/
+
+        body {
+            background-color: lightgrey;
+            overflow: hidden;
+        }
+
+        .field {
+            position: absolute; left:0;right:0;top:0;bottom:0;border:darkred solid 4pt;
+        }
+
+        .ball {
+            border-radius: 50%;
+            background-image: linear-gradient(pink, darkred);
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            height: 100px;
+            width: 100px;
+        }
+    </style>
+    <script>
+        var friction = 0.005;
+
+        function g(name) {return document.getElementById(name);}
+
+        var wallRight = window.innerWidth;
+        var wallBottom = window.innerHeight;
+        var acceleration = {x:0,y:0};
+
+
+        var balls = [];
+        var numbersBox;
+        var fingerOnBall = false;
+
+        function go () {
+            numbersBox = g("numbers");
+            /*
+            window.addEventListener("deviceorientation", function(event) {
+                try {
+                    if (event.beta == null) {
+                        friction = 0;
+                    }
+                acceleration.y = (event.beta)/100;
+                acceleration.x = (event.gamma)/100;
+                //numbersBox.innerHTML = "" + acceleration.x + ", " + acceleration.y;
+                }catch (e){msg += "THROW "; numbersBox.innerHTML = msg;}
+
+            });
+            */
+
+            window.addEventListener("devicemotion", function(event) {
+                //var msg = "";
+                try {
+                    var ax = event.accelerationIncludingGravity.x;
+                    var ay = event.accelerationIncludingGravity.y;
+                    var az = event.accelerationIncludingGravity.z;
+                    //msg += "" + ax + ", " + ay + ", " + az;
+                    if (ax == null) friction = 0;
+                    acceleration.x = -ax/100;
+                    acceleration.y = ay/100;
+                    
+                } catch(e) {}
+                //numbersBox.innerHTML = msg;
+            }, true);
+
+            ball = g("ball1");
+            ball.position = {x:100, y:100};
+            ball.velocity = {x:5,y:5};
+            ball.radius = 50;
+
+
+            ball.onmousedown = function(event){
+                ball.velocity = {x:0,y:0};
+                fingerOnBall = true;
+            };
+            ball.onmousemove = function (event) {
+                if (fingerOnBall) {
+                    ball.position.x = event.pageX;
+                    ball.position.y = event.pageY;
+                    moveIt();
+                }
+            }
+            ball.onmouseup = function(event) {
+                fingerOnBall = false;
+                window.requestAnimationFrame(move);
+            }
+
+            ball.addEventListener("touchstart", function (event) {
+                event.preventDefault();
+                numbers.innerHTML = "touch";
+                fingerOnBall = true;
+                ball.velocity = {x:0,y:0};
+            });
+            ball.addEventListener("touchmove", function(event) {
+                event.preventDefault();
+                var dx = event.changedTouches[0].pageX;
+                var dy = event.changedTouches[0].pageY;
+                numbers.innerHTML = "" + dx + ", " + dy;
+                ball.position.x = dx;
+                ball.position.y = dy;
+                moveIt();
+            });
+
+            ball.addEventListener("touchend", function(event) {
+                fingerOnBall = false;
+                window.requestAnimationFrame(move);
+            });
+
+            //  screen.orientation.lock("portrait-primary");
+            //screen.lockOrientation("portrait-primary");
+
+            window.requestAnimationFrame(move);
+        }
+
+        function move(ball) {
+            if (fingerOnBall) return;
+            var wallEmbedX = Math.min(Math.max(ball.radius - ball.position.x, 0), 
+                    wallRight - ball.radius - ball.position.x);
+            ball.velocity.x += wallEmbedX*0.1;
+
+            var wallEmbedY = Math.min(Math.max(ball.radius - ball.position.y, 0), 
+                    wallBottom - ball.radius - ball.position.y);
+            ball.velocity.y += wallEmbedY*0.1;
+            
+            ball.velocity.x += acceleration.x - ball.velocity.x*friction;
+            ball.velocity.y += acceleration.y - ball.velocity.y*friction;
+            ball.position.x += ball.velocity.x;
+            ball.position.y += ball.velocity.y;
+
+            ball.style.left = (ball.position.x-ball.radius) + "px";
+            ball.style.top = (ball.position.y-ball.radius) + "px";
+            window.requestAnimationFrame(move);
+        }
+
+    </script>
+</head>
+
+<body >
+    <div class="field" onclick="go()">
+        <div id="ball1" class="ball">
+
+        </div>
+    </div>
+    <div id="numbers" style="position:absolute;top:20px;left:10px;height:500px;width:200px;"></div>
+</body>
+
+</html>

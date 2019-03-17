@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html>
+<!-- Editor page for History Map -->
+<head>
+    <title>Edit place in Moylgrove</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <link rel="icon" type="image/png" href="img/favicon96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="img/favicon32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="img/favicon16.png" sizes="16x16" />
+    
+    <link rel="stylesheet" type="text/css" href="./css/history-edit.css" />
+
+    <!-- Direct client read for images -->
+    <script src="Scripts/azure-storage.common.js"></script>
+    <script src="Scripts/azure-storage.blob.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Map API. When loaded, callback loadMap() -->
+    <script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?key=AryU5OBCq3C8xwf-lo7yDEdItLzoyMQfVuxBkgeZIXFXWDsqLW0WBuNmudPAqj3M&callback=loadMap'
+        async defer></script>
+    <!-- Scripts for this page -->
+    <script src="Scripts/history.js"></script>
+    <script src="Scripts/history-edit.js"></script>
+    <!-- Monitor user behaviour -->
+    <script type="text/javascript">  var appInsights = window.appInsights || function (a) { function b(a) { c[a] = function () { var b = arguments; c.queue.push(function () { c[a].apply(c, b) }) } } var c = { config: a }, d = document, e = window; setTimeout(function () { var b = d.createElement("script"); b.src = a.url || "https://az416426.vo.msecnd.net/scripts/a/ai.0.js", d.getElementsByTagName("script")[0].parentNode.appendChild(b) }); try { c.cookie = d.cookie } catch (a) { } c.queue = []; for (var f = ["Event", "Exception", "Metric", "PageView", "Trace", "Dependency"]; f.length;)b("track" + f.pop()); if (b("setAuthenticatedUserContext"), b("clearAuthenticatedUserContext"), b("startTrackEvent"), b("stopTrackEvent"), b("startTrackPage"), b("stopTrackPage"), b("flush"), !a.disableExceptionTracking) { f = "onerror", b("_" + f); var g = e[f]; e[f] = function (a, b, d, e, h) { var i = g && g(a, b, d, e, h); return !0 !== i && c["_" + f](a, b, d, e, h), i } } return c }({ instrumentationKey: "1eff7d7b-45c5-4162-9d8c-5019829546ab" }); window.appInsights = appInsights, appInsights.queue && 0 === appInsights.queue.length && appInsights.trackPageView();</script>
+</head>
+<body>
+    <div id="signinDialog" class="dialog" onClick="$(this).hide();signin();">
+        <div>
+            <h2>Please sign in</h2>
+            <p>Thanks for contributing information to the History Map! Before you begin, please let us know who you are. Click
+                or tap anywhere on the screen to open the sign-in window.</p>
+            <p>You won't have to do this every time you contribute. This site uses cookies to keep you signed in.</p>
+            <p>(Don't want to sign in? Please email
+                <a href="mailto:alan@pantywylan.org">alan@pantywylan.org</a> with improvements to the map.)</p>
+        </div>
+    </div>
+    <div id="deleteDialog" class="dialog" onClick="$(this).hide();">
+        <div>
+            Delete
+            <span id='thingToDelete'>it</span>?
+            <span class="toolbutton">Cancel</span>
+            <span class="toolbutton" style="background-color:red" onClick="$('#deleteDialog')[0].action()">Delete</span>
+        </div>
+    </div>
+    <div id="linkDialog" class="dialog" onClick="$(this).hide();">
+        <div onclick="noPropagate(event)">Paste a link to a web page here:
+            <br/>
+            <input id="linkRef" type="text" size="20" pattern="https?://.+|\.\/\?place=[0-9]{3}" placeholder="http://..." />
+            <input type="button" onclick="CompleteCreateLink()" value="Link" />
+            <span id="linkRemoveOption">
+                - or -
+                <br/>
+                <input type="button" onclick="CompleteRemoveLink()" value="Remove link" />
+            </span>
+        </div>
+    </div>
+    <div id="savedDialog" class="dialog" onClick="$(this).hide();">
+        <div>
+            <h2>Saved!</h2>
+        </div>
+    </div>
+    <table width="100%" style="table-layout:fixed;">
+        <col width="150px" />
+        <col width="410px" />
+        <col width="600px;" />
+        <tr valign="middle">
+            <td>
+                <h4>Location</h4>
+            </td>
+            <td>
+                <span id="latlong"></span> &nbsp;&nbsp; Zoom in:
+                <input id="zoom" type="checkbox" title="The map zooms closer to distinguish places in cluttered areas." /> &nbsp;&nbsp;SA43 3
+                <input id="postcode" type="text" maxlength="2" style="width:25px;" pattern="[A-Za-z]{2}" />
+            </td>
+            <td align="right">
+                <span id="username"></span>
+                <div class="toolbutton" title="Save your changes" onclick="SavePlace()">Save</div>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td>
+                <h4>Title</h4>
+                <p>Current name of the property. Use the subtitle for alternative or old names.</p>
+            </td>
+            <td>
+                <div style="border-style:hidden;">
+                    <input id="title" class="input" placeholder="place name" type="text" style="width:290px;font-size:large;color:royalblue;font-weight:bold;"
+                        onchange="updatePlaceName()" required="required" />
+                    <div class="prompt">&nbsp;Built c.</div>
+                    <input id="year" type="number" min="1600" max="2050" class="input" style="width:50px" />
+                </div>
+                <input id="subtitle" type="text" size="40" />
+            </td>
+            <td rowspan="2" valign="top">
+                <div style="position:relative;">
+                    <div style="position:absolute">
+                        <div id="theMap" style="position:relative;height:400px;width:600px;">
+                            <h2 style="position:absolute;top:100px;left:40px;">Getting the map...</h2>
+                        </div>
+                        <div style='position:absolute;top:0px;left:0;width:150px;height:50px;background-color:rgb(40,40,40);border-radius:4px;color:white'>
+                            <div style="vertical-align:middle;">
+                                <input type="radio" name="mapSelector" value="os" onchange="mapChange('os')" />Ordnance Survey
+                                <br/>
+                                <input type="radio" name="mapSelector" value="aerial" onchange="mapChange('aerial')" checked="checked" />Aerial photos
+                            </div>
+                        </div>
+                        <div style='position:absolute;top:120px;right:34px;height:35px;width:35px;'>
+                            <img src='img/target.png' title="Centre map on place" onclick="CentreMapOnPlace()" />
+                        </div>
+                    </div>
+                </div>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td>
+                <h4>Description</h4>
+                <p>Write about the architecture of the house, and events and people in its history.</p>
+                <p>References to living persons by name are best avoided. (These pages will be indexed by Google et al.)</p>
+                <p>Please mention where the information came from: such as title deeds, old maps, oral history.</p>
+                <p></p>
+            </td>
+            <td>
+                <div id="toolBar1">
+                    <div class="toolbutton" onclick="formatDoc('formatblock','h4')" title="Sub heading">H</div>
+                    <div class="toolbutton" onclick="formatDoc('formatblock','div')" title="Plain paragraph">¶</div>
+                    <div class="toolbutton" onclick="formatDoc('InsertText','â')">â</div>
+                    <div class="toolbutton" onclick="formatDoc('InsertText','ê')">ê</div>
+                    <div class="toolbutton" onclick="formatDoc('InsertText','î')">î</div>
+                    <div class="toolbutton" onclick="formatDoc('InsertText','ô')">ô</div>
+                    <div class="toolbutton" onclick="formatDoc('InsertText','û')">û</div>
+                    <div class="toolbutton" onclick="formatDoc('InsertText','ŵ')">ŵ</div>
+                    <div class="toolbutton" onclick="formatDoc('InsertText','ŷ')">ŷ</div>
+                    <div class="toolbutton" onclick="createLink()" title="Link a phrase to another web page">Link</div>
+                </div>
+
+                <div id="text" style="background-color:white;padding:5px;width:400px;height:300px;border-style:solid;border-width:1px;overflow:auto;"
+                    contenteditable="true">
+                    Please wait...
+                </div>
+
+            </td>
+
+        </tr>
+        <tr valign="top" style="background-color:#e0f0ff">
+            <td>
+                <h4>Street view
+                    <br/>or photo 1</h4>
+                <p>Provide a photo - landscape orientation works best; or set a street view.</p>
+            </td>
+            <td>
+                <div id="photo1" style="width:300px;height:225px;border-style: solid;border-color:blue;border-width:1px;display:inline-block;"
+                    ondrop="drop('photo1',event);" ondragover="dragover('photo1',event)" ondragleave="dragleave('photo1')">
+                    <p id="photo1prompt" style="vertical-align:middle;text-align:center;padding:10px;color:gray;">
+                        Upload a picture from your computer: click the button
+                        <br/>-or-
+                        <br/>Paste a link to a picture on the web
+                        <br/>-or-
+                        <br/>Paste the 'embed' link from a Google Street View.</p>
+                    <img id="photo1img" style="display:none" width="300px" />
+                    <div id="photo1google" style="display:none"></div>
+                </div>
+                <input type="button" onclick="showDeleteDialog(DeletePhoto1, 'the picture')" value="X" class="deleteButton" title="Delete this picture or street view"
+                />
+            </td>
+            <td>
+                Upload a photo:&nbsp;&nbsp;
+                <input id="pic1file" onchange="UploadFile(this.files[0])" type="file" title="upload" name="Upload" id="uploadpic1" />
+                <br/> - or -
+                <br/> Paste a link to a picture, or Google Street View:
+                <br/>
+                <input id="photo1url" type="text" style="width:300px" pattern="<iframe.*</iframe>|http.*(jpg|jpeg|png|gif) *" placeholder="<iframe... or http...jpg|.png|.gif"
+                    onchange="ShowPhoto1()" onfocus="this.select()" />
+                <input type="button" onclick="ShowPhoto1()" value="+" style="background-color:lightgreen;" title="Set the photo or street view."
+                />
+                <br/>
+                <br/>
+                <a id="googleLink" href="#" target="_blank">Open Google maps to get street view</a>
+                <p>
+                    <small>
+                        <i>A Google map opens in a new window. Set it to Street View and adjust the view. In the pull-down menu
+                            at top left, select Share, then select Embed. Copy the link '&lt;iframe...'. Paste it into the
+                            field above.
+                        </i>
+                    </small>
+                </p>
+            </td>
+        </tr>
+        <tr valign="top">
+            <td>
+                <h4>Slideshow</h4>
+                <p>One or more photos. If you provide several, they will automatically show in rotation.</p>
+                <p>Landscape orientation works best.</p>
+            </td>
+            <td>
+                <div id="photo2" style="width:300px;height:225px;border-style: solid;border-color:blue;border-width:1px;display:inline-block;"
+                    ondrop="drop('photo2',event);" ondragover="dragover('photo2',event)" ondragleave="dragleave('photo2')">
+                    <p id="photo2prompt" style="vertical-align:middle;text-align:center;padding:10px;color:gray;">
+                        Upload photos from your computer
+                        <br/>- or -
+                        <br/>Paste the URLs of pictures on the web into the line at the right</p>
+                    <img id="photo2img" style="display:none" width="300px" />
+                </div>
+                <input type="button" onclick="showDeleteDialog(DeletePhoto2, 'the picture from the slide show')" value="X" class="deleteButton"
+                    title="Delete this picture from the slide show." />
+            </td>
+            <td>
+                Upload photos:&nbsp;&nbsp;
+                <input id="pic2file" onchange="UploadFile2(this.files)" type="file" title="upload" name="Upload" id="uploadpic2" multiple
+                />
+                <br/> or paste the web address of a picture on the web:
+                <br/>
+                <input id="photo2url" type="text" style="width:300px" pattern="http.*(jpg|jpeg|png|gif) *" placeholder="http...jpg|.png|.gif"
+                    onchange="AddPhoto2($('#photo2url')[0].value, true)" onfocus="this.select()" title="Paste the URL (web address) of a picture."
+                />
+                <input type="button" value="+" onclick="AddPhoto2($('#photo2url')[0].value, true)" style="background-color:lightgreen;" title="Add the picture to this slide show."
+                />
+                <div id="photo2Gallery" style="overflow-y:auto;height:200px" title="Click a picture to show it on the left">
+
+                </div>
+            </td>
+        </tr>
+    </table>
+</body>
+
+</html>

@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html>
+<!-- Print History Map data to a single page -->
+<head>
+    <title>History</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="img/favicon96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="img/favicon32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="img/favicon16.png" sizes="16x16" />
+
+    <script src="Scripts/azure-storage.common.js"></script>
+    <script src="Scripts/azure-storage.blob.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="Scripts/history.js"></script>
+    <script
+        type="text/javascript">  var appInsights = window.appInsights || function (a) { function b(a) { c[a] = function () { var b = arguments; c.queue.push(function () { c[a].apply(c, b) }) } } var c = { config: a }, d = document, e = window; setTimeout(function () { var b = d.createElement("script"); b.src = a.url || "https://az416426.vo.msecnd.net/scripts/a/ai.0.js", d.getElementsByTagName("script")[0].parentNode.appendChild(b) }); try { c.cookie = d.cookie } catch (a) { } c.queue = []; for (var f = ["Event", "Exception", "Metric", "PageView", "Trace", "Dependency"]; f.length;)b("track" + f.pop()); if (b("setAuthenticatedUserContext"), b("clearAuthenticatedUserContext"), b("startTrackEvent"), b("stopTrackEvent"), b("startTrackPage"), b("stopTrackPage"), b("flush"), !a.disableExceptionTracking) { f = "onerror", b("_" + f); var g = e[f]; e[f] = function (a, b, d, e, h) { var i = g && g(a, b, d, e, h); return !0 !== i && c["_" + f](a, b, d, e, h), i } } return c }({ instrumentationKey: "1eff7d7b-45c5-4162-9d8c-5019829546ab" }); window.appInsights = appInsights, appInsights.queue && 0 === appInsights.queue.length && appInsights.trackPageView();</script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif;
+            background-color: aliceblue;
+        }
+
+        input:invalid {
+            background-color: #ffd0e0;
+            border-color: red;
+            border-style: solid;
+            border-width: 1px;
+        }
+
+        h2 {
+            color: rgb(7, 21, 207);
+        }
+    </style>
+
+    <script>
+
+        var imgUrl = "https://moylgrove-history.azurewebsites.net/images/";
+        var apiUrl = "https://moylgrove-history.azurewebsites.net/api/";
+        var avUrl = "https://moylgrove-history.azurewebsites.net/av/";
+        var watchId;
+        var currentPlaceId;
+        var latKm = 0.0089; // Pembs. 
+        var longKm = 0.0144;
+
+
+        function search(table, first, last, year, place, process) {
+            if (typeof fetch !== 'undefined') {
+                fetch(apiUrl + "{0}?first={1}&last={2}&year={3}&place={4}"
+                    .format(table, first || "", last || "", year || "", place || ""))
+                    .then(function (response) { return response.json(); })
+                    .then(function (results) { process(results); });
+            }
+            else {
+                $.get(apiUrl + "{0}?first={1}&last={2}&year={3}&place={4}"
+                    .format(table, first || "", last || "", year || "", place || ""),
+                    function (data, status) {
+                        process(data);
+                    });
+            }
+            appInsights.trackEvent("search");
+        }
+
+        function searchPerson() {
+            var gn = $('#searchName')[0].value.trim();
+            var ln = $('#searchLastName')[0].value.trim();
+            var syob = $('#searchYob')[0].value.trim();
+            if (!gn && !ln && !syob) return;
+            $('#searchResult').show(200);
+            $("#searchCloseButton").css("background-color", "darkred");
+            $('#searchResult').html("<table><tr><th>source</th><th>house</th><th>given</th><th>surname</th><th>b</th><th>origin</th></table>");
+            search("census", gn, ln, syob, "", function (results) {
+                if (results.length > 0) {
+                    var s = "";
+                    for (var i = 0, t; t = results[i]; i++) {
+                        var origin = t.Origin; if (origin == "m") origin = "Moylg";
+                        s += "<tr><td>{0}cs</td><td><span {6} onclick='go({5},1)'>{1}</span></td><td>{2}</td><td>{3}</td><td>{4}</td><td>{7}</td></tr>"
+                            .format(t.PartitionKey, t.HouseName, t.GivenNames, t.Surname, t.YoB, t.PlaceId,
+                                t.PlaceId ? "class='darklink'" : "", origin);
+                    }
+                    $('#searchResult > table > tbody').append(s);
+                }
+            });
+            search("graves", gn, ln, syob, "", function (results) {
+                if (results.length > 0) {
+                    var s = "";
+                    for (var i = 0, t; t = results[i]; i++) {
+                        s += "<tr><td>grave</td><td><span {6} onclick='go({5},1)'>{0}</span></td><td>{1}</td><td>{2}</td><td>{3}</td><td>- {4}</td></tr>"
+                            .format(t.home, t.firstNames, t.lastName, t.yob, t.yod, t.assigned,
+                                t.assigned ? "class='darklink'" : "");
+                    }
+                    $('#searchResult > table > tbody').append(s);
+                }
+            });
+        }
+
+        function startSearch(firsts, last, yob) {
+            appInsights.trackEvent("clickPerson");
+            var first = firsts.split(" ")[0];
+            $('#searchName')[0].value = first;
+            $('#searchLastName')[0].value = last;
+            $('#searchYob')[0].value = yob;
+            searchPerson();
+        }
+
+
+        function getPeopleData(id, houseName, element) {
+            if (!id) return;
+            var censusYears = {};
+            search("census", "", "", "", id, function (result) {
+                if (result.length > 0) {
+                    var showHouseName = false;
+                    var cf = comparable(houseName);
+                    for (var i = 0, t; t = result[i]; i++) {
+                        if (t.HouseName && comparable(t.HouseName) != cf) { showHouseName = true; }
+                        if (!censusYears[t.PartitionKey]) { censusYears[t.PartitionKey] = []; }
+                        censusYears[t.PartitionKey].push(t);
+                    }
+                    $("#textbox").append("<h4><a href='#' onclick=\"$('#census').toggle('slide')\">Census entries</a></h4>");
+                    var householdName = "";
+                    var s = "<table>";
+                    for (var cy in censusYears) {
+                        var yearEntries = censusYears[cy];
+                        s += "<tr><td colspan=5><b>{0}</b></td></tr>".format(cy);
+                        for (var i = 0, t; t = yearEntries[i]; i++) {
+                            if (showHouseName && t.HouseName != householdName) {
+                                householdName = t.HouseName;
+                                s += "<tr><td colspan=5><i>{0}</i></td></tr>".format(householdName);
+                            }
+                            s += "<tr><td><span class='link' onclick='startSearch(\"{0}\", \"{1}\", \"{2}\")'>{0} {1}</span></td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td></tr>".format(
+                                t.GivenNames, t.Surname, t.YoB.substr(0, 4), t.Age,
+                                decode({ h: "head", sole: "head", w: "wife", s: "son", d: "dgtr", b: "bro" }, t.Relationship || ""),
+                                decode({ s: "sgl", m: "mrd", u: "unm", w: "wdw", d: "div" }, t.Condition || ""), t.Occupation || "");
+                        }
+                    }
+                    s += "</table>";
+                    element.html(s);
+                }
+            });
+        }
+        function decode(m, code) {
+            var d = m[code];
+            return d ? d : code;
+        }
+
+        function getGraves(id, element) {
+            if (!id) return;
+            search("graves", "", "", "", id, function (result) {
+                if (result.length > 0) {
+                    result.sort(function (a, b) { return a.yod - b.yod; });
+                    var s = "<h4><a href='https://drive.google.com/file/d/1LjXR1C27fwazM0Ovib4oKRdfxY47TAcc/view' target='graves'>Gravestones</a></h4>"
+                        + "<table>";
+                    for (var i = 0, t; t = result[i]; i++) {
+                        s += ("<tr><td>{0}</td><td>-{1}</td><td><span class='link' onclick='startSearch(\"{2}\", \"{3}\", \"{0}\")'>{2}</span></td>"
+                            + "<td><span class='link' onclick='startSearch(\"{2}\", \"{3}\", \"{0}\")'>{3}</span></td><td>{4}</td><td>{5}</td><td>{6}</td></tr>").format(
+                                t.yob, t.yod, t.firstNames, t.lastName, t.age, t.home, t.graveId);
+                    }
+                    s += "</table>";
+                    element.html(s);
+                }
+            });
+        }
+
+
+        // Create a unique id for a pin by interleaving digits of the lat & long.
+        // The idea of doing it from the lat & long is that when searched in the table,
+        // pins that are near to each other on the ground will be near in the table.
+        // So a rough "find all the nearby pins" is just a matter of truncating the id as a search term.
+        function hashLocation(place) {
+            var x = (parseFloat(place.Longitude) + 300).toFixed(6);
+            var y = (parseFloat(place.Latitude) + 200).toFixed(6);
+            var key = "";
+            for (var i = 0; i < x.length; i++) {
+                if (x.charAt(i) != ".") {
+                    key += x.charAt(i) + y.charAt(i);
+                }
+            }
+            return key;
+        }
+
+        function sortByLocation(data) {
+            var sorted = [];
+            for (var i = 0, place; place = data[i]; i++) {
+                if (!place.Title) continue; // index or other housekeeping
+                place.locationKey = hashLocation(place);
+                sorted.push(place);
+            }
+            sorted.sort(function (a, b) { return a.locationKey < b.locationKey ? -1 : a.locationKey > b.locationKey ? 1 : 0; });
+            return sorted;
+        }
+
+        function printInOrder(places) {
+            for (let i = 0, place; place = places[i]; i++) {
+                let t = $("#template .placeDisplay").clone();
+                t.find(".texthead").html(place.Title);
+                t.find(".year").html(place.Year);
+                t.find(".subhead").html(place.Subtitle);
+                t.find(".postcode").html(place.Postcode);
+                t.find(".latlong").html(place.Latitude + ", " + place.Longitude);
+                t.find(".description").html(place.Text);
+                if (place.Pic1 && place.Pic1[0] != "!") {
+                    let picBlob = place.Pic1.replace(/^images\//, imgUrl);
+                    let content = "<div style='max-width:100vw;'><img src='{0}' style='border-radius:4px;' width='100%'></img></div>".format(picBlob);
+                    t.find(".pic").html(content);
+                }
+
+                getGraves(place.RowKey, t.find(".graves"));
+                getPeopleData(place.RowKey, place.Title, t.find(".census"));
+
+
+                let urls = place.Pic2.split(";");
+
+                if (urls.length > 1){
+                    var picset = "";
+                    for (let j in urls) {
+                        let picBlob = urls[j].replace(/^images\//, imgUrl);
+                        picset += "<div style='max-width:100vw;'><img width='100%' src='" + picBlob + "'></img></div>";
+                    }
+                    t.find(".xpics").html(picset); 
+                }
+                
+                $("#list").append(t);
+            }
+        }
+
+        // initialization
+        $(function () {
+            $.get(apiUrl + "places", function (data, status) {
+                printInOrder(sortByLocation(data));
+            });
+        });
+
+    </script>
+</head>
+
+<body>
+    <h4>The History Map - the lot</h4>
+    <div id="list"></div>
+    <div id="template" style="display:none">
+        Place
+        <div class="placeDisplay">
+            <h2><span class="texthead"></span> <small><span class="year"></span></small></h2>
+            <h4 class="subhead"></h4>
+            <h5><span class="latlong"></span> <span class="postcode"></span></h5>
+            <div class="pic"></div>
+            <div class="description"></div>
+            <div class="census"></div>
+            <div class="graves"></div>
+            <div class="xpics"></div>
+        </div>
+    </div>
+</body>
+
+</html>

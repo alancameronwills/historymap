@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Apps</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script>
+
+        var api = "https://moylgrove-history.azurewebsites.net/api/apps";
+        var cookedUser = "";
+        $(function () {
+            $.get(api, function (data, status) {
+                if (data.length > 0) {
+                    var table = document.createElement("TABLE");
+                    for (var i = 0, t; t = data[i]; i++) {
+                        var row = table.insertRow(-1);
+                        row.insertCell(-1).innerHTML = t.User;
+                        row.insertCell(-1).innerHTML = "<a target='appview' href='" + t.Link + "'>" + t.App + "</a>";
+                    }
+                    $("#appList").empty();
+                    $("#appList").append(table);
+                }
+            });
+            cookedUser = getCookie("user");
+            if (cookedUser) $("#userName").val(cookedUser);
+        });
+        function addItem() {
+            var link = $("#link").val().trim().replace("/edit", "");
+            var key = link.match(/\/[^\/]{30,100}/)[0].substring(1);
+            var s = { PartitionKey: "span1", RowKey: key, user: $("#userName").val().trim(), app: $("#appName").val().trim(), link: link };
+            if (s.user && s.app && s.link) {
+                $("button").hide();
+                var ss = JSON.stringify(s);
+                $.ajax({
+                    url: api, type: "post", data: ss,
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    success: function (data) {
+                        if (!cookedUser) setCookie("user", s.user, 3);
+                        location.reload(true);
+                    }
+                });
+            }
+        }
+
+        function setCookie(cname, cvalue, exdays) {
+            var d = new Date();
+            d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
+            document.cookie = cname + "=" + cvalue + "; expires=" + d.toUTCString();
+        }
+
+        function getCookie(cname) {
+            var name = cname + "=";
+            var decodedCookie = decodeURIComponent(document.cookie);
+            var ca = decodedCookie.split(';');
+            for (var i = 0; i < ca.length; i++) {
+                var c = ca[i];
+                while (c.charAt(0) == ' ') {
+                    c = c.substring(1);
+                }
+                if (c.indexOf(name) == 0) {
+                    return c.substring(name.length, c.length);
+                }
+            }
+            return "";
+        }
+
+
+    </script>
+</head>
+
+<body>
+    <table>
+        <tr>
+            <th>Your name</th>
+            <th>App name</th>
+            <th>Link</th>
+            <th></th>
+        </tr>
+        <tr id="inputRow">
+            <td><input type="text" id="userName" /></td>
+            <td><input type="text" id="appName" /></td>
+            <td><input type="text" id="link" /></td>
+            <td><button onclick="addItem()">+</button></td>
+        </tr>
+    </table>
+    <div id="appList"></div>
+</body>
+
+</html>

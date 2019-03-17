@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>History Map</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <!-- The icon that appears in the browser tab. Different browsers use different sizes. -->
+    <link rel="icon" type="image/png" href="favicon96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16" />
+
+    <!-- JQuery - popular utilities. Defines "$" -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+
+    <!-- Map API includes licence key and callback to loadMap (in Scripts/history-map.js) when loaded. -->
+    <script type='text/javascript'
+        src='https://www.bing.com/api/maps/mapcontrol?key=AryU5OBCq3C8xwf-lo7yDEdItLzoyMQfVuxBkgeZIXFXWDsqLW0WBuNmudPAqj3M&callback=loadMap'
+        async defer></script>
+
+    <!-- Default script and styles -->
+    <script src="Scripts/history.js"></script>
+    <script src="Scripts/history-map.js"></script>
+
+    <link rel="stylesheet" type="text/css" href="./css/history.css" />
+
+    <!-- Application Insights monitors usage -->
+    <script
+        type="text/javascript">  var appInsights = window.appInsights || function (a) { function b(a) { c[a] = function () { var b = arguments; c.queue.push(function () { c[a].apply(c, b) }) } } var c = { config: a }, d = document, e = window; setTimeout(function () { var b = d.createElement("script"); b.src = a.url || "https://az416426.vo.msecnd.net/scripts/a/ai.0.js", d.getElementsByTagName("script")[0].parentNode.appendChild(b) }); try { c.cookie = d.cookie } catch (a) { } c.queue = []; for (var f = ["Event", "Exception", "Metric", "PageView", "Trace", "Dependency"]; f.length;)b("track" + f.pop()); if (b("setAuthenticatedUserContext"), b("clearAuthenticatedUserContext"), b("startTrackEvent"), b("stopTrackEvent"), b("startTrackPage"), b("stopTrackPage"), b("flush"), !a.disableExceptionTracking) { f = "onerror", b("_" + f); var g = e[f]; e[f] = function (a, b, d, e, h) { var i = g && g(a, b, d, e, h); return !0 !== i && c["_" + f](a, b, d, e, h), i } } return c }({ instrumentationKey: "1eff7d7b-45c5-4162-9d8c-5019829546ab" }); window.appInsights = appInsights, appInsights.queue && 0 === appInsights.queue.length && appInsights.trackPageView();</script>
+</head>
+
+<body>
+    <!-- Left-side index of places -->
+    <div id='houselist'>
+        <span style='background-color:yellow;'>
+            <b>Getting the list of places...</b>
+        </span>
+    </div>
+    <div id='theMap'>
+        <h2 style="color:darkgreen;font-family: 'Times New Roman', Times, serif">&nbsp;
+            <br />
+            <br /> Just a moment please... </h2>
+    </div>
+    <!-- Title and map type switch -->
+    <div class="maphead" style='position:absolute;top:0;right:0;width:500px;height:50px;'>
+        <div id="historyTitle" style="display:inline;position:relative;top:0px;left:0px;margin-left:10px;border-radius:4px;
+                     font-size:24pt;font-family:'Times New Roman', Times, serif;font-style:italic;">The
+            History Map
+        </div>
+        <div class="dropdown"><span id="zone"><span style="background-color:red">Choose...</span></span>
+            <div id="zoneSelect" class="dropDownMenu" style="position:absolute;top:20px;z-index:1;padding:10px;">
+                <input type="checkbox" id="selectCardigan" name="sCardigan" value="cardigan" />Cardigan<br />
+                <input type="checkbox" id="selectMoylgrove" name="sMoylgrove" value="moylgrove" />Moylgrove<br />
+                <input type="checkbox" id="selectStDogmaels" name="sStDogmaels" value="stdogmaels" />St Dogmaels<br />
+            </div>
+        </div>
+        <div style="position:absolute;top:0px;right:0px;display:block;">
+            <input type="radio" name="mapSelector" value="os" onchange="mapChange('os')" />Ordnance Survey
+            <br />
+            <input type="radio" name="mapSelector" value="aerial" onchange="mapChange('aerial')"
+                checked="checked" />Aerial
+            photos
+        </div>
+        <a href="https://moylgrove.wales" target="_blank"><img style="position: fixed;top:0px;right:500px;"
+                src="favicon96.png" title="Moylgrove" /></a>
+    </div>
+    <div id="helpButton" style="position:fixed;right:30px;top:160px;">
+        <img src="img/help.png" onclick="$('#help').toggle('slide')" ).fade />
+    </div>
+    <!-- Search UI for the census and gravestone data -->
+    <div id="searchPanel" class="maphead" style="position:absolute;top:50px;right:100px;width:400px;visibility:hidden;"
+        onkeyup="if (event.cancelBubble) {event.cancelBubble=true;} if (event.stopPropagation) {event.stopPropagation();} if (event.keyCode==13) searchPerson();"
+        title="Search for a historical person.">
+        Name:
+        <input type="text" size="8" id="searchName" placeholder="first name" title="First name (optional)" />
+        <input type="text" size="10" id="searchLastName" placeholder="last name" title="Last name (optional)" />
+        Born:
+        <input type="text" size="4" id="searchYob" placeholder="birth yr" title="Year of birth (optional)" />
+        <span onclick="searchPerson()">
+            <img src="img/search30.png" height="20" />
+        </span>
+        <div id="searchCloseButton" style="position:absolute; top:0px;right:4px;">
+            <span onclick="$('#searchResult').hide(200); $('#searchCloseButton').css({backgroundColor:'inherit'});"
+                style="font-size:large;padding:5px;">X</span>
+        </div>
+        <div id="searchResult">
+        </div>
+    </div>
+    <!-- Place info panel: Text and main picture or Google Streetview. Some places also have an audio file. -->
+    <div style="width:40vw;position:absolute;top:0;left:12em;pointer-events: none;">
+        <div id="textbox" class="descriptionbox"></div>
+        <div id="audiodiv" class="avbox"></div>
+        <div id="firstpic" style="display:none;border-radius:4px;"></div>
+    </div>
+    <!-- Experimental feature: Glen Johnson's blog appears for some entries -->
+    <div id="blog"
+        style="display:none;background-color:rgb(230, 189, 136);position:absolute; top:50vh; bottom:0;width:760px;left:12em;">
+        <iframe seamless style="position:absolute;height:100%;width:100%;overflow:auto"></iframe>
+    </div>
+    <!-- Additional pictures, shown in a slide show. -->
+    <div id="secondpic" style="display:none;position:absolute;bottom:0px;right:1px;max-width:40vw;"></div>
+    <!-- Popups -->
+    <div id="message"
+        style="display:none;position:absolute;top:30vh;left:40vw;width:450px;height:100px;background-color:white;padding:20px;">
+    </div>
+    <div id="deleteDialog" class="dialog" style="text-align: left;" onClick="$(this).hide();">
+        <div>
+            <p>Delete this place completely and permanently from the map?</p>
+            <span class="toolbutton" style="background-color:lightgreen">No, keep it</span> &nbsp;&nbsp;&nbsp;&nbsp;
+            <span class="toolbutton" style="background-color:red"
+                onClick="DeleteConfirmed($('#deleteDialog')[0].place)">Yes,
+                remove it</span>
+        </div>
+    </div>
+    <div id="help" class="help" onclick="$(this).hide('slide')">
+        <p>On this map, you can view and record historical notes about houses and other places.</p>
+        <ul>
+            <li>Click any red dot, or click in the list, to see notes and pictures about that place.</li>
+            <li>Click on a photo to see a larger view of it. Close the new window to come back to this one.</li>
+            <li>Some places have a little Street View. You can turn around and move along the road in it.</li>
+            <li>Census and gravestone data: click a person to find out where else they lived.</li>
+            <li>Click the "Add/change" button if you'd like to contribute information about a place.
+            </li>
+            <li>To add a new place to the map, right-click/CTRL+click the position on the map.</li>
+            <li>Problems? Email alan@pantywylan.org</li>
+        </ul>
+        <p>Please add notes about the history of your house, so that we can build up an interesting map!</p>
+        <div style="position:absolute;top:0px;right:0px;padding:4px;margin:2px;background-color:red;color:white;">X
+        </div>
+    </div>
+    <div id="census" class="help" onclick="$(this).hide('slide')">
+        <p>Census entries tell us who was present in a house on the night of the census. They don't say who normally
+            lived there,
+            or where those present normally lived. Sailors, for example, are often not at home.</p>
+        <p>The columns are: Recorded name of house (if different from the modern name); name; date of birth (+/- 1yr);
+            age;
+            relationship to head of household; marital state; occupation.</p>
+        <p>There may be a few instances where the house name has changed, and the details have been attached to the
+            wrong house.
+            If you've found one of those cases, please email alan@pantywylan.org
+        </p>
+        <p>Click a person to find out where else they (or someone with their name and birth year) can be found.</p>
+        <div style="position:absolute;top:0px;right:0px;padding:4px;margin:2px;background-color:red;color:white;">X
+        </div>
+    </div>
+    
+</body>
+
+</html>

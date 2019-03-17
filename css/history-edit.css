@@ -1,0 +1,145 @@
+  
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif;
+            background-color: aliceblue;
+        }
+
+        .description,
+        p {
+            font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif
+        }
+
+
+        input:invalid {
+            background-color: #ffd0e0;
+            border-color: red;
+            border-style: solid;
+            border-width: 1px;
+        }
+
+        .texthead,
+        h4 {
+            color: royalblue;
+            font-size: large;
+            font-weight: bold;
+            margin: 10px;
+        }
+
+        ::placeholder {
+            color: #c0c0c0;
+        }
+
+        .toolbutton {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            outline: 0;
+        }
+
+        .toolbutton {
+            background-color: royalblue;
+            color: white;
+            padding: 3px;
+            display: inline-block;
+            position: relative;
+        }
+
+        .toolbutton:hover {
+            background-color: cornflowerblue;
+        }
+
+        .toolbutton:active {
+            background-color: blue;
+        }
+
+        .tooltiptext {
+            visibility: hidden;
+            width: 250px;
+            background-color: white;
+            color: #404040;
+            text-align: center;
+            padding: 5px 0;
+            border-style: solid;
+            border-color: #404040;
+            border-width: 1px;
+            box-shadow: 2px 2px gray;
+            border-radius: 6px;
+            position: fixed;
+            text-align: left;
+
+            padding: 2px;
+            z-index: 1;
+        }
+
+        /* Show the tooltip text when you mouse over the tooltip container */
+
+        .toolbutton:hover .tooltiptext {
+            visibility: visible;
+        }
+
+        .prompt,
+        .input {
+            height: 30px;
+            vertical-align: text-bottom;
+            display: inline-block;
+        }
+
+        .prompt {
+            text-align: right;
+        }
+
+        .input {
+            background-color: white;
+            border-color: royalblue;
+            border-width: 1px;
+            border-style: solid;
+        }
+
+        .alarm {
+            background-color: lightpink
+        }
+
+        #photo1 {
+            background-color: rgb(199, 253, 235);
+            outline: 2px dashed black;
+            outline-offset: -10px;
+        }
+
+        .dialog {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        .dialog div {
+            display: inline-block;
+            position: fixed;
+            padding: 10px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            user-select: none;
+            border-color: grey;
+            border-style: solid;
+            border-radius: 4px;
+            text-align: center;
+            border-width: 1px;
+            background-color: ivory;
+        }
+
+        .deleteButton {
+            color: red;
+            background-color: #ffe0ff;
+            vertical-align: top;
+        }
+    

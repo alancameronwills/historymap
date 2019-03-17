@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html>
+<!-- History Map live app - see notes about houses as you pass them. -->
+<head>
+    <title>Tour Moylgrove</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="img/favicon96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="img/favicon32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="img/favicon16.png" sizes="16x16" />
+
+    <script src="Scripts/azure-storage.common.js"></script>
+    <script src="Scripts/azure-storage.blob.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type='text/javascript'
+        src='https://www.bing.com/api/maps/mapcontrol?key=AryU5OBCq3C8xwf-lo7yDEdItLzoyMQfVuxBkgeZIXFXWDsqLW0WBuNmudPAqj3M&callback=loadMap'
+        async defer></script>
+    <script src="Scripts/history.js"></script>
+    <script
+        type="text/javascript">  var appInsights = window.appInsights || function (a) { function b(a) { c[a] = function () { var b = arguments; c.queue.push(function () { c[a].apply(c, b) }) } } var c = { config: a }, d = document, e = window; setTimeout(function () { var b = d.createElement("script"); b.src = a.url || "https://az416426.vo.msecnd.net/scripts/a/ai.0.js", d.getElementsByTagName("script")[0].parentNode.appendChild(b) }); try { c.cookie = d.cookie } catch (a) { } c.queue = []; for (var f = ["Event", "Exception", "Metric", "PageView", "Trace", "Dependency"]; f.length;)b("track" + f.pop()); if (b("setAuthenticatedUserContext"), b("clearAuthenticatedUserContext"), b("startTrackEvent"), b("stopTrackEvent"), b("startTrackPage"), b("stopTrackPage"), b("flush"), !a.disableExceptionTracking) { f = "onerror", b("_" + f); var g = e[f]; e[f] = function (a, b, d, e, h) { var i = g && g(a, b, d, e, h); return !0 !== i && c["_" + f](a, b, d, e, h), i } } return c }({ instrumentationKey: "1eff7d7b-45c5-4162-9d8c-5019829546ab" }); window.appInsights = appInsights, appInsights.queue && 0 === appInsights.queue.length && appInsights.trackPageView();</script>
+
+    <style>
+        @keyframes waggle {
+            0% {}
+
+            50% {
+                transform: translateY(100px)
+            }
+
+            100% {}
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif;
+            background-color: aliceblue;
+        }
+
+        input:invalid {
+            background-color: #ffd0e0;
+            border-color: red;
+            border-style: solid;
+            border-width: 1px;
+        }
+
+        h2 {
+            color: rgb(7, 21, 207);
+        }
+
+        .alarm {
+            background-color: lightpink
+        }
+
+        .button {
+            background-color: lightgray;
+            padding: 4px;
+            margin: 4px;
+            border: 1px solid black;
+            border-radius: 4px;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            pointer-events: none;
+        }
+    </style>
+
+    <script>
+
+        var refreshInterval = 5000; // 5s
+        var imgUrl = "https://moylgrove-history.azurewebsites.net/images/";
+        var apiUrl = "https://moylgrove-history.azurewebsites.net/api/";
+        var avUrl = "https://moylgrove-history.azurewebsites.net/av/";
+        var watchId;
+        var currentPlaceId;
+        var latKm = 0.0089; // Pembs. 
+        var longKm = 0.0144;
+        window.placeIndex = {};
+
+        window.zoom = 17;
+
+        options = {
+            enableHighAccuracy: true,
+            timeout: 9000,  // Stop trying after 9 seconds (e.g. if in a tunnel)
+            maximumAge: 1000 // We accept location calculated anything up to 1 seconds ago
+        };
+
+        var mapsize = 1;
+
+        function expandMap(newsize) {
+            mapsize = newsize % 3;
+            switch (mapsize) {
+                case 0:
+                    $("#tophalf").css("top", "0px").css('height', "auto").css('bottom', "30px");
+                    $("#mapBox").css("top", "auto").css('height', "30px").css('bottom', "0px");
+                    $("#expandButton").html("&nbsp;&nbsp;^&nbsp;&nbsp;");
+                    break;
+                case 1:
+                    $("#tophalf").css("top", "0px").css('height', "70vh").css('bottom', "auto");
+                    $("#mapBox").css("top", "auto").css('height', "30vh").css('bottom', "0px");
+                    $("#expandButton").html("&nbsp;&nbsp;^&nbsp;&nbsp;");
+                    break;
+                case 2:
+                    $("#mapBox").css("top", "auto").css('height', "80vh").css('bottom', "0px");
+                    $("#expandButton").html("&nbsp;&nbsp;v&nbsp;&nbsp;");
+                    break;
+            }
+        }
+
+        var previousPlace = null;
+        function gotPosition(location) {
+            var lon = location.coords.longitude;
+            var lat = location.coords.latitude;
+                        window.lastLatitude = lat;
+                        window.lastLongitude = lon;
+
+            /*
+                        // Skip if < 5s interval
+                        var t = new Date().getTime();
+                        if (window.lastMoveTime && t - window.lastMoveTime < refreshInterval) return;
+                        window.lastMoveTime = t;
+            
+                        // Skip if move < 5m
+                        if (window.lastLatitude
+                            && Math.abs(window.lastLongitude - lon) / longKm < 0.003
+                            && Math.abs(window.lastLatitude - lat) / latKm < 0.003) return;
+                        window.lastLatitude = lat;
+                        window.lastLongitude = lon;
+            */
+            document.body.style.setProperty("background-color", "pink");
+
+            // find nearest place
+            // TODO: search previous nearby places first
+            var nearest;
+            var nearestDistance;
+            for (var i = 0, t; t = window.placeData[i]; i++) {
+                var dlong = (t.Longitude - lon) / longKm;
+                var dlat = (t.Latitude - lat) / latKm;
+                var distance = Math.sqrt(dlong * dlong + dlat * dlat);
+                if (distance < 0.5 && !nearest || distance < nearestDistance) {
+                    nearest = t;
+                    nearestDistance = distance;
+                }
+            }
+            document.body.style.setProperty("background-color", "aliceblue");
+            if (previousPlace != nearest) {
+                previousPlace = nearest;
+                showPlace(nearest, nearestDistance);
+            }
+        }
+
+        function getDistance(place) {
+                var dlong = (place.Longitude - window.lastLongitude) / longKm;
+                var dlat = (place.Latitude - window.lastLatitude) / latKm;
+                return Math.sqrt(dlong * dlong + dlat * dlat);
+        }
+
+        function setZoom(zoom, distance) {
+            window.zoom = zoom == 1 ? 19 : 17;
+            if (distance > 0.02 && window.zoom > 17) window.zoom = 17;
+            if (distance > 0.08) window.zoom = 16;
+            if (distance > 0.15) window.zoom = 16;
+            if (distance > 0.30) window.zoom = 15;
+            if (distance > 0.60) window.zoom = 14;
+        }
+
+        function fixPlaceRefs() {
+            $("#description a").each(function(ix, eh) {
+                var e = $(eh);
+                var link = e.attr("href").match(/\?place=(.*)/);
+                if (link) {
+                    e.attr("href", "#");
+                    e.attr("target", null);
+                    var ref = link[1];
+                    e.click(function() {
+                        var place = window.placeIndex[ref];
+                        showPlace(place, getDistance(place));
+                    });
+                }
+            });
+        }
+
+        var countShows = 0;
+        function showPlace(place, distance) {
+            if (window.showing && window.showing == place) return;
+            if (countShows++ == 2) {$("#intro").hide();}
+            $("#tophalf").scrollTop(0);
+            expandMap(1);
+            window.showing = place;
+            if (!place) {
+                $("#placeDisplay").hide();
+                $("#noPlaceDisplay").show();
+            } else {
+                $("#noPlaceDisplay").hide();
+                $("#placeDisplay").show();
+                $("#distance").html(distance ? distance.toFixed(2) + "km&nbsp;&nbsp;" : "");
+                $("#texthead").html(place.Title);
+                $("#subhead").html(place.Subtitle);
+                $("#postcode").html(place.Postcode);
+                $("#year").html(place.Year);
+                $("#description").html(place.Text);
+                fixPlaceRefs();
+                setZoom(place.Zoom, distance);
+
+                var picUrl;
+                if (place.Pic1 && place.Pic1[0] != "!") {
+                    picUrl = place.Pic1;
+                } else {
+                    if (place.Pic2) {
+                        var urls = place.Pic2.split(";");
+                        picUrl = urls[0];
+                    }
+                }
+                if (picUrl) {
+                    var picBlob = picUrl.replace(/^images\//, imgUrl);
+                    var content = "<div style='max-width:100vw;'><img src='{0}' style='border-radius:4px;' width='100%'></img></div>".format(picBlob);
+                    $("#pic").html(content);
+                } else { $("#pic").html(""); }
+                $("#e").html("");
+                setTimeout(function () { $("#tophalf").animate({ scrollTop: "-=-60px" }, 500); $("#tophalf").animate({ scrollTop: "-=60px" }, 500); }, 2000);
+            }
+        }
+
+        function getPositionError(error) {
+            $("#e").html("Trying to get current position: " + error.message);
+        }
+
+        function simulateMove() {
+            var lat = parseFloat($("#SimLatitude").val());
+            var lon = parseFloat($("#SimLongitude").val());
+            gotPosition({ coords: { latitude: lat, longitude: lon } });
+        }
+
+        function getPosition() {
+            $("#lamp").show();
+            navigator.geolocation.getCurrentPosition(function (pos) {
+                $("#SimLatitude").val(pos.coords.latitude);
+                $("#SimLongitude").val(pos.coords.longitude);
+                gotPosition(pos);
+                $("#lamp").hide();
+            }, getPositionError, options);
+        }
+
+        function initRefresher() {
+            if (window.watcher) { navigator.geolocation.clearWatch(window.watcher); }
+            if (window.refresher) { clearInterval(window.refresher); }
+            if ($("#track").prop("checked")) {
+                if ($("#continuous").prop("checked")) {
+                    window.refresher = setInterval(getPosition, 11000);
+                    getPosition();
+                } else {
+                    window.watcher = navigator.geolocation.watchPosition(function (pos) {
+
+                        // Ignore if < 3s since last update:
+                        var t = new Date().getTime();
+                        if (window.lastMoveTime && t - window.lastMoveTime < 3000) return;
+                        window.lastMoveTime = t;
+
+                        // Shift map to current location:
+                        window.here = new Microsoft.Maps.Location(pos.coords.latitude, pos.coords.longitude);
+                        if (window.map) {
+                            window.map.setView({ zoom: window.zoom });
+                            window.map.setView({ center: window.here });
+                            window.herePin.setLocation(window.here);
+                        }
+                        $("#lamp").show();
+                        setTimeout(function () { $("#lamp").hide(); }, 500);
+                        $("#SimLatitude").val(pos.coords.latitude);
+                        $("#SimLongitude").val(pos.coords.longitude);
+
+                        gotPosition(pos);
+
+                    }
+                        , getPositionError, options);
+                }
+            }
+        }
+
+        function preloadPics() {
+            var piclist = "";
+            for (var i = 0, place; place = window.placeData[i]; i++) {
+                var picUrl = "";
+                if (place.Pic1 && place.Pic1[0] != "!") {
+                    picUrl = place.Pic1;
+                } else {
+                    if (place.Pic2) {
+                        var urls = place.Pic2.split(";");
+                        picUrl = urls[0];
+                    }
+                }
+                if (picUrl) {
+                    var picBlob = picUrl.replace(/^images\//, imgUrl);
+                    piclist += "<img src='{0}' width='1' height='1' ></img>".format(picBlob);
+                }
+            }
+            $("#preload").html(piclist);
+        }
+
+        function showPins() {
+            for (var i = 0, place; place = window.placeData[i]; i++) {
+                if (!place.Title) continue;
+                window.placeIndex[place.RowKey] = place;
+                place.location = new Microsoft.Maps.Location(place.Latitude, place.Longitude);
+                var pushpin = new Microsoft.Maps.Pushpin(
+                    place.location,
+                    {
+                        title: place.Title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
+                        color: "#a00000", enableHoverStyle: true
+                    }
+                );
+                pushpin.place = place;
+                place.pin = pushpin;
+                window.map.entities.push(pushpin);
+                Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
+                    if (e) {
+                        var place = e.primitive.place;
+                        showPlace(place, getDistance(place));
+                    }
+                });
+            }
+        }
+
+
+        // Called when the script for Bing maps has loaded and is ready to draw a map:
+        function loadMap() {
+            // Wait until all scripts have loaded:
+            $(document).ready(function () {
+                // Arbitrary place to centre the map before GPS location is acquired:
+                window.here = new Microsoft.Maps.Location(52.068287, -4.747708);
+                // But hope to improve on it:
+                navigator.geolocation.getCurrentPosition(function (pos) {
+                    if (pos) window.here = pos;
+                });
+
+                // Load map:
+
+                window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
+                    {
+                        mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+                        center: window.here,
+                        showLocateMeButton: false,
+                        disableBirdseye: true,
+                        disableKeyboardInput: true,
+                        disableStreetside: true,
+                        enableClickableLogo: false,
+                        navigationBarMode: Microsoft.Maps.NavigationBarMode.compact,
+                        zoom: 19
+                    });
+
+                var svg = '<svg width="22" height="22" xmlns="http://www.w3.org/2000/svg">' +
+                    '<circle r="10" cx="11" cy="11" stroke="#00a0ff" stroke-width="2" fill="none"/>' +
+                    '<circle r="8" cx="11" cy="11" stroke="#ffff00" stroke-width="2" fill="none"/></svg>';
+
+                window.herePin = new Microsoft.Maps.Pushpin(
+                    window.here,
+                    { color: "#0000ff", icon: svg, anchor: { x: 10, y: 10 } }
+                );
+                window.map.entities.push(window.herePin);
+
+                $("#placeDisplay").hide();
+                $("#noPlaceDisplay").hide();
+                $.get(apiUrl + "places", function (data, status) {
+                    window.placeData = data;
+
+                    preloadPics();
+                    showPins();
+
+                    initRefresher();
+                });
+
+                // Minor convenience: If user selects OS map, zoom out so that actual OS shows:
+                Microsoft.Maps.Events.addHandler(window.map, 'maptypechanged', function () {
+                    var mapTypeId = window.map.getMapTypeId();
+                    if (mapTypeId == Microsoft.Maps.MapTypeId.ordnanceSurvey && window.map.getZoom() > 17) {
+                        setTimeout(function () { window.map.setView({ zoom: 17 }) }, 300);
+                    }
+                });
+
+            });
+
+        }
+
+    </script>
+</head>
+
+<body id="body">
+    <div id="tophalf" style="position:fixed;top:0;left:0;height:70vh;width:100%;overflow-y:scroll;">
+        <h4>The History Walk</h4>
+        <div id="lamp" style="position:fixed;top:0;right:0;width:10px;height:10px;background-color:blue;display:none">
+        </div>
+        <div id="sim" style='display:none'>
+            <input name="SimLatitude" id="SimLatitude" type="number" value="52.07" step="0.0001"
+                onchange="simulateMove()" />
+            <input name="SimLongitude" id="SimLongitude" type="number" value="-4.75" step="0.0001"
+                onchange="simulateMove()" />
+            <input type="checkbox" name="track" id="track" checked="checked" onchange="initRefresher()" />
+        </div>
+        <div style="color:darkred"><span id="e"></span><span id="m"></span></div>
+
+        <div id="intro">
+            <p>Keep this page open in your smartphone while you walk around Moylgrove.
+                As you pass each house, it will show you
+                some notes about its history and architecture.</p>
+            <p>Click Yes/Allow when asked if this page may use your location.</p>
+            <p>(Don't worry about losing phone/wifi signal as you walk around.
+                Just make sure you stay on this page - don't click the back button.
+                You can let your phone go to sleep, and the app will resume when you log into it again.)
+            </p>
+            <p>
+                If you click a link, it will open in a separate tab. The app will still be running behind it, in this
+                tab.
+                <b>Do you know how to switch between tabs?</b>
+            </p>
+            <p>Please let me know how you get on! All suggestions and ideas welcome to help us improve this app.
+                alan@pantywylan.org</p>
+            <button onClick="$('#intro').hide()" style="background-color:yellow">OK</button>
+            <hr />
+        </div>
+        <div id="placeDisplay">
+            <h2><span id="texthead"></span> <small><span id="year"></span></small></h2>
+            <h4 id="subhead"></h4>
+            <h5><span id="distance"></span><span id="postcode"></span> </h5>
+            <div id="pic"></div>
+            <div id="description"></div>
+        </div>
+        <div id="noPlaceDisplay">
+            <h1>You aren't near anywhere</h1>
+            <p>...or your device hasn't worked out its position yet, or it doesn't have satnav (GPS).
+                Open this page on a smartphone or a tablet with GPS, and take a walk around Moylgrove.
+                Or, if you prefer the comforts of home, open the <a href="http://bit.ly/moylgrovehistorymap">History
+                    Map</a>
+                and click the different houses on the map.
+            </p>
+            <p><small><a href="#" onclick="$('#sim').show()">Simulator</a></small></p>
+        </div>
+        <hr />
+        <p><input type="checkbox" name="continuous" id="continuous" onchange="initRefresher()"
+                style="width:20px;height:20px" /> Tick to use less battery - may reduce location accuracy</p>
+        <div id="preload" style="display:none"></div>
+        <!--<div id="scrollprompt" style="position:fixed;bottom:30%;width:100vw;left:0;height:50px;text-align:justify;text-align-last:center;" class="noselect">
+        <span style="font-size:50px; background-color:rgba(255,255,255,0.5);color:black;">^</span></div> -->
+    </div>
+
+    <div id="mapBox" style="position:fixed;top:auto;height:30vh;bottom:0px;left:0;width:100%;overflow:none;">
+        <div id="theMap"></div>
+        <button id="expandButton" style="position:absolute;top:0;left:0;" onclick="expandMap(mapsize+1)">&nbsp;&nbsp;^&nbsp;&nbsp;</button>
+        <!--<div class='noselect' style="text-align: center; color:red;width:100%;position:absolute;left:0;top:50%;">^</div>-->
+    </div>
+</body>
+
+</html>

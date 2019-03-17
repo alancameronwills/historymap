@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Roving Band</title>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="icon" type="image/png" href="img/favicon96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="img/favicon32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="img/favicon16.png" sizes="16x16" />
+    <script> camwidth = "480"; camheight = "240";
+    </script>
+
+    <style type="text/css">
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .dialog {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 1;
+        }
+
+        
+        .dialog > div {
+            display: inline-block;
+            position: fixed;
+            padding: 10px;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            user-select: none;
+            border-color: grey;
+            border-style: solid;
+            border-radius: 4px;
+            text-align: center;
+            border-width: 1px;
+            background-color: ivory;
+        }
+
+        #box {
+            position: absolute;
+            top: 0px;
+            left: 0px;
+            height: 840px;
+            width: 600px;
+        }
+
+        .label {
+            font-size: large;
+            font-weight: bold;
+            color: blue;
+        }
+
+        .text {
+            overflow-y: auto;
+            word-wrap: break-word;
+            width: 100%;
+            height: 100%;
+            position: absolute;
+            top: 2pt;
+            left: 2pt;
+        }
+
+        .noteGrid {
+            display: grid;
+            grid-template-columns: 50% auto auto auto;
+            grid-template-rows: 2.5em auto;
+            justify-content: space-between;
+            height: 100%;
+        }
+
+        .noteGrid>div {
+            padding: 4pt;
+            /* border: solid blue 2pt; */
+            position: relative;
+        }
+
+        #theMap {
+            background: lightgreen;
+            overflow-y: hidden;
+            display: inline-block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0px;
+            bottom: 0px;
+        }
+
+        #addControl {
+            top: 0;
+            left: 0;
+            position: fixed;
+        }
+
+        #addButton {
+            background: red;
+            width: 40px;
+            height: 40px;
+            font-size: 30px;
+            color: white;
+            text-align: center;
+        }
+
+        #pointForm {
+            background: rgba(0, 0, 0, 0.2);
+            position: fixed;
+            top: 1px;
+            left: 1px;
+            bottom: 0px;
+            right: 0px;
+        }
+
+        #pointForm>div {
+            background: white;
+            position: fixed;
+            border: 2pt blue solid;
+            top: 2em;
+            bottom: 2em;
+            left: 2em;
+            right: 2em;
+        }
+
+        .noselect {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            pointer-events: none;
+        }
+
+        .button {
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            background: blue;
+            color: white;
+            margin: 4px;
+            padding: 6px;
+            border-radius: 4px;
+            outline: 0;
+            text-align: right;
+        }
+        
+        .deleteButton {
+            color: red;
+            background-color: #ffe0ff;
+            vertical-align: top;
+        }
+
+        .camera {
+            display: none;
+            background-color: lightblue;
+            position: absolute;
+            left: 3em;
+            top: 3em;
+            bottom: 3em;
+            right: 3em;
+        }
+    </style>
+    <script src="Scripts/azure-storage.common.js"></script>
+    <script src="Scripts/azure-storage.blob.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?key=AryU5OBCq3C8xwf-lo7yDEdItLzoyMQfVuxBkgeZIXFXWDsqLW0WBuNmudPAqj3M&callback=loadMap'
+        async defer></script>
+    <script src="Scripts/history.js"></script>
+    <script>
+        
+        // At server end, a proxy translates this to the blob container, which is set for public access.
+        var picUrl = "https://moylgrove-history.azurewebsites.net/bunnypic/";
+
+        window.blobService = AzureStorage.createBlobService('moylgrovehistory',
+            'FYrLaOQASw3oLaEscmMUWtV70VbcTFGZXxwp0GuaTvJZKguM/C9AiI1nAKp6uw7AP4+k1gXwXTKNw9pcLDiFYA==');
+
+        window.placeIndex = {};  // Pins on the map.
+        window.laundryList = []; // Edited or created pins waiting to be uploaded to server.
+        window.latestDate = '1';   // Time the most recent pin was edited. 
+        window.convertedImages = {};
+        window.imageUploadQueue = [];
+
+        // Convenient way to get hold of display elements:
+        function g(id) { return document.getElementById(id); }
+
+        // Warn if user tries to close window while there still edited pins waiting to be uploaded:
+        window.addEventListener("beforeunload", function (e) {
+            var confirmationMessage = "Your places waiting to be shared. Wait until you have mobile or wifi before closing. But close anyway?";
+            if (window.laundryList.length == 0) return "";
+            e.returnValue = confirmationMessage;     // Gecko, Trident, Chrome 34+
+            return confirmationMessage;              // Gecko, WebKit, Chrome <34
+        });
+
+
+        // Called when the script for Bing maps has loaded and is ready to draw a map:
+        function loadMap() {
+            // Wait until all scripts have loaded:
+            $(document).ready(function () {
+                // Arbitrary place to centre the map before GPS location is acquired:
+                window.here = new Microsoft.Maps.Location(52.068287, -4.747708);
+                // But hope to improve on it:
+                navigator.geolocation.getCurrentPosition(function (pos) { 
+                    if (pos) window.here = pos; 
+                });
+
+                // Load map:
+                window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
+                    {
+                        mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+                        center: window.here,
+                        showLocateMeButton: true,
+                        disableBirdseye: true,
+                        disableKeyboardInput: true,
+                        disableStreetside: true,
+                        enableClickableLogo: false,
+                        navigationBarMode: Microsoft.Maps.NavigationBarMode.compact,
+                        zoom: 17
+                    });
+
+                // Load places from the database (and look for new places every minute):
+                periodicallyGetPlaces();
+
+                // Move map as user walks:
+                window.navigatorWatch = navigator.geolocation.watchPosition(
+                    // This code will run every time the GPS gets a new position:
+                    function (pos) {
+                        // Ignore if < 3s since last update:
+                        var t = new Date().getTime();
+                        if (window.lastMoveTime && t - window.lastMoveTime < 3000) return;
+                        window.lastMoveTime = t;
+
+                        // Shift map to current location:
+                        window.here = new Microsoft.Maps.Location(pos.coords.latitude, pos.coords.longitude);
+                        window.map.setView({ center: window.here });
+                    },
+
+                    // Not much we can do if GPS returns an error, other than try again later:
+                    function (err) { },
+
+                    // Various options:
+                    {
+                        enableHighAccuracy: true, 
+                        timeout: 9000,  // Stop trying after 9 seconds (e.g. if in a tunnel)
+                        maximumAge: 3000 // We accept location calculated anything up to 3 seconds ago
+                    }
+                );
+                
+                // Minor convenience: If user selects OS map, zoom out so that actual OS shows:
+                Microsoft.Maps.Events.addHandler(window.map, 'maptypechanged', function () {
+                    var mapTypeId = window.map.getMapTypeId();
+                    if (mapTypeId == Microsoft.Maps.MapTypeId.ordnanceSurvey && window.map.getZoom() > 17) {
+                        setTimeout(function () { window.map.setView({ zoom: 17 }) }, 300);
+                    }
+                });
+                
+            });
+
+            // Need user's name to record against contributions:
+            getUserName();
+        }
+
+        // Load places from the server, and then look again for new places at intervals:
+        function periodicallyGetPlaces() {
+            // Just in case we've already been here:
+            if (window.placeGetter) clearInterval(window.placeGetter);
+            // Get places once this time:
+            getPlaces();
+            // And then get them again every minute:
+            window.placeGetter = setInterval(getPlaces, 60000);
+        }
+
+        // Download places from server. 
+        // Only get ones that have been created or updated since the most recent we've seen so far.
+        // First time, the latestDate is set to '1' which lets in all places.
+        function getPlaces() {
+                $.get("https://moylgrove-history.azurewebsites.net/api/bunnies?latitude="
+                            + window.here.latitude + "&longitude=" + window.here.longitude 
+                            + "&after=" + window.latestDate,
+                            function (data, status) { gotPlaces(data) });
+        }
+
+        // Runs when file of places has been downloaded from the server.
+        // Create or update pins on the map.
+        function gotPlaces(places) {
+            if (!places || places.length==0) return;
+            window.latestDate = "1";
+            // JSON file from server is automatically parsed into an array of objects.
+            for (var i = 0, t; t = places[i]; i++) {
+                // Keep a note of the most recently-updated place we've seen:
+                if (t.Updated > window.latestDate) window.latestDate = t.Updated;
+                // Do we already have this pin on the map?
+                var pushpin = window.placeIndex[t.RowKey];
+                if (pushpin) {
+                    // Yes, this is an update to a pin we've seen before.
+                    // Update its title and description:
+                    pushpin.description = t.Text;
+                    pushpin.stripped = null;
+                    pushpin.setOptions({Title:t.Title});
+                } else {
+                    // No, this is a new place. Create a pin on the map for it:
+                    var pushpin = new Microsoft.Maps.Pushpin(
+                        new Microsoft.Maps.Location(t.Latitude, t.Longitude),
+                        {
+                            title: t.Title,  // label
+                            text: t.User[0], // first letter of author's name
+                            enableHoverStyle: true
+                        }
+                    );
+                    // Attach some extra data to the pin:
+                    pushpin.author = t.User;      // Author of the place
+                    pushpin.description = t.Text; // Description with photos etc
+                    pushpin.RowKey = t.RowKey;    // Unique ID of the place
+                    window.placeIndex[pushpin.RowKey] = pushpin; 
+                    // Stick it on the map:
+                    window.map.entities.push(pushpin); 
+                    // If user taps it, show the content:
+                    Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
+                        if (e) { showPin(e.primitive); }
+                    });
+                }
+            }
+        }
+
+        // User has tapped the + button.
+        // Show the form for adding a new pin.
+        function showPointForm() {
+            setFormUserName(getUserName(), true);
+            $("#label").text("Label");
+            $("#words").html("Words");
+            g("pointForm").pin = null;
+            // Keep the centre of the map at the time the Add button is clicked -
+            // because the map may shift while the form is being filled.
+            // Also, not window.here (which is the current actual location).
+            g("pointForm").location = window.map.tryPixelToLocation(new Microsoft.Maps.Point(0, 0));
+            $("#pointForm").show();
+            window.inlineImages = [];
+        }
+
+        // User has tapped a pin on the map.
+        // Show the form for an existing pin.
+        function showPin(pin) {
+            setFormUserName(pin.author, false);
+            $("#label").text(pin.getTitle());
+            $("#words").html(pin.description.replace(/\/image\//g, picUrl));
+            g("pointForm").pin = pin;
+            g("pointForm").location = null;
+            $("#pointForm").show();
+            window.inlineImages = [];
+        }
+
+        // User has clicked Save button on pin form.
+        function savePoint() {
+            $("#pointForm").hide();
+            var label = $("#label").text(); // Title at the top
+            var words = $("#words").html(); // Description and pictures - gets copy of html as string
+            var stripped = stripInlineImages(g("words"), window.inlineImages); // Mangles the html, so must happen after prvs stmt
+            var pushpin;
+            // Was this an existing pin? If so, we attached it to the form:
+            if (!(pushpin = g("pointForm").pin)) {
+                // No, this was a new place. Create the pin.
+                // Map centre when '+' was clicked:
+                var centerLocation = g("pointForm").location 
+                    || window.map.tryPixelToLocation(new Microsoft.Maps.Point(0, 0));
+                pushpin = new Microsoft.Maps.Pushpin(
+                    centerLocation, 
+                    { 
+                        title: label, 
+                        enableHoverStyle: true, 
+                        text: getUserName()[0] // first char of user's name
+                    }
+                );
+                g("pointForm").location = null; // Form will re-used for another point later
+
+                pushpin.description = words;
+                pushpin.stripped = stripped;
+                pushpin.author = getUserName();
+                window.map.entities.push(pushpin);
+                Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
+                    if (e) { showPin(e.primitive); }
+                });
+                pushpin.RowKey = hashLocation(centerLocation);
+                window.placeIndex[pushpin.RowKey] = pushpin;
+                laundry(pushpin); // queue for saving to server
+                startImageUpload(window.inlineImages);
+            } else if (pushpin.getTitle() != label || pushpin.description != stripped) {
+                // Was an existing place and the text has changed. Send updates to server.
+                g("pointForm").pin = null; // Form will be re-used later. Avoid confusion.
+                pushpin.setOptions({ title: label });
+                pushpin.description = words;
+                pushpin.stripped = stripped;
+                laundry(pushpin); // queue for saving to server
+                startImageUpload(window.inlineImages);
+            }
+        }
+
+        // List of pins that have been changed and need to be saved to server
+        function laundry(pin) {
+            if (pin && !window.laundryList.includes(pin)) window.laundryList.push(pin);
+            trySave();
+        }
+
+        // Try to save to server. Keep trying at regular intervals.
+        // As user moves around, there may be poor connection to internet. 
+        // So keep a list of the pins to be saved, and try every minute or so.
+        // Knock things off the list when they've been saved.
+        // User must keep this page open until they have a signal.
+        function trySave() {
+            if (window.saveTimer) { clearTimeout(window.saveTimer); window.saveTimer = null; }
+            if (window.laundryList.length == 0) {
+                window.saveTimer = setTimeout(function () { trySave(); }, 5 * 60000);
+                $("#laundryFlag").hide();
+                return;
+            }
+            // Show user there's still stuff to be saved.
+            // Important when walking in places with poor signal.
+            $("#laundryFlag").show();
+
+            // Pick the first thing on the list (but don't remove it until we know it's saved):
+            var pin = window.laundryList[0];
+            // Collect the bits of data we have to send:
+            var textToUpload = pin.stripped || pin.description;
+            textToUpload = textToUpload.replace(new RegExp(picUrl, 'g'), "/image/");
+            var tableRow = {
+                // First two properties are a unique identifier for the pin. Names are set by Azure table service.
+                // Currently, we only use the RowKey:
+                PartitionKey: "p1", RowKey: pin.RowKey, 
+                Title: pin.getTitle(), // label
+                Latitude: pin.getLocation().latitude, 
+                Longitude: pin.getLocation().longitude,
+                Text: pin.stripped || pin.description, // stripped exists if it was edited
+                Updated: new Date().toISOString(), // actually the server overwrites this
+                User: pin.author // keep original author even if current user has edited
+            };
+            // Server function name is bunnyup. Includes an authorization code:
+            var url = "https://moylgrove-history.azurewebsites.net/api/bunnyup?code=NbvRWDCsLFzS/SRKZgE5T312dY/sXm9JJhRnZFg1HPJtp9B5XNSZwg==";
+            /*$.ajax(url, {method:"PUT", data:s})
+            .done(function(d, e, j){
+                var ix = window.laundryList.indexOf(pin);
+                if (ix>=0) { window.laundryList.splice(ix, 1); }
+                window.saveTimer = setTimeout(function(){trySave();}, 100);
+            })
+            .fail(function(d,e,j) {
+                window.saveTimer = setTimeout(function(){trySave();}, 5*60000);
+            }); */
+            // Send data to server. (Function name is misleading.)
+            fetch(url,
+                {
+                    body: JSON.stringify(tableRow),
+                    headers: {
+                        'content-type': 'application/json'
+                    },
+                    method: 'PUT',
+                    credentials: "same-origin"
+                })
+                .then(function (r) { // Called when the 
+                    if (r && r.ok) {
+                        // Remove pin from laundry list. It mightn't be the first:
+                        var ix = window.laundryList.indexOf(pin);
+                        if (ix>=0) { window.laundryList.splice(ix, 1); }
+                        // Go on to next list item. Allow a short interval for map movements etc:
+                        setTimeout(function () { trySave(); }, 100);
+                    }
+                    else { throw ("" + r.status + " " + r.statusText); }
+                })
+                .catch(function (error) { // Called if the transfer didn't work.
+                    // Most likely poor mobile or wifi signal.
+                    // Try again in five minutes:
+                    window.saveTimer = setTimeout(function(){trySave();}, 60000);
+                })
+                ;
+        }
+
+
+        // Create a unique id for a pin by interleaving digits of the lat & long.
+        // The idea of doing it from the lat & long is that when searched in the table,
+        // pins that are near to each other on the ground will be near in the table.
+        // So a rough "find all the nearby pins" is just a matter of truncating the id as a search term.
+        function hashLocation(location) {
+            var x = (location.longitude + 300).toFixed(6);
+            var y = (location.latitude + 200).toFixed(6);
+            var key = "";
+            for (var i = 0; i < x.length; i++) {
+                if (x.charAt(i) != ".") {
+                    key += x.charAt(i) + y.charAt(i);
+                }
+            }
+            return key;
+        }
+
+        // User has clicked the button to insert a photo in the text.
+        function insertPic() {
+            // So we can restore the cursor after closing the camera:
+            window.insertPoint = window.getSelection();
+            // Ignore unless the cursor is in the description:
+            if ($(window.insertPoint.focusNode).parents("#words").length>0) {
+                // Open the video:
+                $("#cameraGrab").show();
+                navigator.mediaDevices.getUserMedia({ video: { width: camwidth, height: camheight, facingMode: 'environment' } })
+                    .then(function (stream) {
+                        window.cameraStream = stream;
+                        var video = g('video');
+                        video.srcObject = stream;
+                        video.play();
+                    })
+                    .catch(function (error) {
+                        window.alert(error.message || error.name);
+                        $("#cameraGrab").hide();
+                    });
+            }
+        }
+
+        // User is cancelling the photo:
+        function cancelPhoto() {
+            $("#cameraGrab").hide();
+            // Release camera:
+            window.cameraStream.getTracks().forEach(function (track) { track.stop(); });
+            // Put back the cursor:
+            window.focus(window.insertPoint.focusNode);
+        }
+
+        // User has tapped to snap a photo:
+        function snapPhoto() {
+            // Transfer the current image to a canvas:
+            var canvas = g("photoCanvas");
+            var context = canvas.getContext("2d");
+            context.drawImage(g('video'), 0, 0, camwidth, camheight);
+            // Close the camera frame:
+            $("#cameraGrab").hide();
+            // Release camera:
+            window.cameraStream.getTracks().forEach(function (track) { track.stop(); });
+            // Restore the cursor to where it was:
+            window.focus(window.insertPoint.focusNode);
+
+            // Invent an id for the photo:
+            var imgId = "" + Date.now(); // milliseconds since 1969
+
+            // Insert an img element in the text:
+            document.execCommand("insertHTML", null, "<img id='" + imgId + "' />");
+            // Set the source of the image to the data from the canvas:
+            var img = g(imgId);
+            if (img){ // Occasionally cursor gets lost and img insertion fails
+                // Save the image inline in the text:
+                img.src = canvas.toDataURL("image/png");
+                // Note the img element for when user saves the text:
+                window.inlineImages.push(img);
+                // Save image as a file for uploading:
+                if (canvas.toBlob) {
+                    canvas.toBlob(function(blob) {
+                        window.convertedImages[imgId] = blob;
+                        },
+                    "image/jpeg",0.7);
+                } else if (canvas.msToBlob){
+                    window.convertedImages[imgId] = canvas.msToBlob();
+                }
+            }
+        }
+
+        // 
+        function startImageUpload(imgElements) {
+            imgElements.forEach(function(img){
+                try {
+                window.imageUploadQueue.push(
+                    {
+                        id: img.id,
+                        blob: window.convertedImages[img.id]
+                    }
+                );
+                delete window.convertedImages[img.id];
+                } catch(error) {}
+            });
+            uploadImages();
+        }
+
+        function uploadImages(){
+            if (window.imageUploadTimer) {clearTimeout(window.imageUploadTimer);window.imageUploadTimer = null;}
+            if (window.imageUploadQueue.length == 0)
+            {
+                $("#picLaundryFlag").hide();
+                return;
+            }
+            $("#picLaundryFlag").show();
+            var item = window.imageUploadQueue[0];
+            var filename = item.id + ".jpg";
+            var file;
+            //var file = new File([item.blob], filename);
+            var file = item.blob; file.name = filename;
+            window.blobService.createBlockBlobFromBrowserFile("bunny-img", filename, file, {},  function (error, result, response){
+                if (!error) {
+                    //var ix = window.imageUploadQueue.indexOf(item);
+                    //window.imageUploadQueue.splice(ix, 1);
+                    window.imageUploadQueue.shift();
+                    window.imageUploadTimer = setTimeout(uploadImages, 100);
+                } else {
+                    // Probably failed because out of wifi or mobile signal.
+                    // Try again in a minute
+                    window.imageUploadTimer = setTimeout(uploadImages, 60000);
+                }
+            });
+        }
+
+        // Remove the inline images and replace them with links
+        function stripInlineImages(wordsElement, inlineImageList) {
+            // Replace all the inline sources with links
+            // First work on the doc elements to remove the big inline src
+            // but don't put in the links, to avoid attempted download.
+            // Alt is a convenient place to keep the link meanwhile, and will
+            // come through the conversion to string.
+            inlineImageList.forEach (function (img) {
+                img.src = ""; img.alt = "/image/" + img.id + ".jpg";
+            });
+            // Convert to string, remove empty src, and insert link src
+            var wordsString = wordsElement.innerHTML.replace(/src *= *"" */, "").replace(/alt *=/, "src=");
+
+            return wordsString;
+        }
+
+        // Signin 
+        // At present we just ask the user for a name without any authentication
+        // or password. The name is stored in a cookie, so they only have to give it once.
+        // Drawback: users can pretend to be each other, adopt anonymous identities, etc.
+        // TODO: Add 3rd-party authentication with local moniker.
+        // TODO: Check that users have chosen unique monikers.
+        function getUserName() {
+            if (window.userName) return window.userName;
+            window.userName = getCookie("username");
+            if (!window.userName) { signin(); }
+            return window.userName;
+        }
+
+        function signin() {
+            $("#signinDialog").show();
+        }
+
+        // User clicked Save on sign-in dialog:
+        function signInClose() {
+            var name = $('#userNameInput').val().trim();
+            if (name) {
+                $('#signinDialog').hide();
+                // Once you've chosen a name, it sticks for about 3 years:
+                setCookie("username", name, 1000);
+                window.userName = name;
+                // Update the name on the form if necessary:
+                if (window.pointFormIsCurrentUser) {
+                    setFormUserName(name, true);
+                }
+            }
+        }
+
+        // Set the name in the place form.
+        function setFormUserName(name, isCurrentUser) {
+            window.pointFormIsCurrentUser = isCurrentUser;
+            if (isCurrentUser) {
+                // Tap to sign in with a different name:
+                $("#username").html("<span onclick=signin() style='color:blue'>" + name + "</span>");
+            } else {
+                $("#username").html(name);
+            }
+        }
+
+    </script>
+
+</head>
+
+<body>
+    <div id='theMap'>
+        <!-- Background only shows before the map has loaded -->
+        <h2 style="color:darkgreen; font-family: 'Times New Roman', Times, serif">&nbsp;
+            <br />
+            <br /> Just a moment please... </h2>
+    </div>
+    <!-- Center mark showing where '+' will add a new place -->
+    <div class='noselect' style="text-align: center; color:red;width:100%;position:absolute;left:0;top:50%;">^</div>
+    <!-- Red '+' button -->
+    <div id='addControl'>
+        <div id='addButton' onclick="showPointForm()">+</div>
+    </div>
+
+    <!-- The remaining elements only appear when the script calls $("#xxx").show() -->
+
+    <!-- Form for inspecting, editing, or adding a pin on the map -->
+    <div id='pointForm' style='display:none'>
+        <div>
+            <table style="width:100%">
+                <tr style="height: 10px">
+                    <td style="width:90%">
+                        <span id="username"></span>
+                    </td>
+                    <td>
+                        <div style="white-space:nowrap">
+                            <span onclick="insertPic()" class='button'>+pic</span>
+                            <span onclick="savePoint()" class='button' style="background-color:green;">save</span>
+                            <span onclick="$('#pointForm').hide()" class='button' style="background-color:red;">&nbsp;X&nbsp;</span>
+                        </div>
+                    </td>
+                </tr>
+                <tr><td colspan="2"><div id="label" class="label" contenteditable="true">Label</div></td></tr>
+            </table>
+            <div id="wordsbox" style="position: relative; width:100%;height:90%">
+                <div id="words" class="text" contenteditable="true">Words</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Form for taking a photo -->
+    <div id='cameraGrab' class="noselect, camera">
+        <video id="video" width="100%" autoplay onclick='snapPhoto()' class="noselect"></video>
+        <br />
+        <button onclick="cancelPhoto()">Cancel</button> <button id="snap" onclick='snapPhoto()'>Snap</button>
+    </div>
+
+    <!-- Canvas for processing the captured photo. Never appears on the screen. -->
+    <canvas id="photoCanvas" width=480 height=240 style='display:none;'></canvas>
+
+    <!-- Ask the user their name. TODO: Add a group name -->
+    <div id="signinDialog" class="dialog">
+            <div>
+                <h2>Give us a name</h2>
+                <p><input id="userNameInput" type="text" size="40" value=""/></p>
+                <p> </p>
+                <p><input type="button" value="save" onclick="signInClose()"/></p>
+            </div>
+    </div>
+
+    <!-- The laundry flag is thin red line at the top of the screen that shows while there are items waiting to be saved. -->
+    <!-- The user should keep the page open until the flag disappears. -->
+    <div id="picLaundryFlag" style="background-color:orange;display:none;position:fixed;top:0;right:0;left:0;height:2px;"></div>
+    <div id="laundryFlag" style="background-color:red;display:none;position:fixed;top:0;right:0;left:0;height:2px;"></div>
+
+</body>
+
+</html>
