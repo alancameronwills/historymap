@@ -3,7 +3,7 @@
 
 ## To edit and test
 
-* Download all the files to a PC and install them under C:\inetpub\wwwroot. 
+* Download all the files to a PC and put them under C:\inetpub\wwwroot. 
 * In a browser on the same machine, run http://localhost.
   * If no response, press Windows key, type *Windows features* and enable **Internet Information Services**
 * To edit, run [VSCode](https://code.visualstudio.com/) in administrator mode.  
