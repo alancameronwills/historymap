@@ -1,4 +1,4 @@
-// Code for main page of History Map
+// Code for main page of History Map.
 
 // Function app URLs
 var imgUrl = "https://moylgrove-history.azurewebsites.net/images/";  // Photos
