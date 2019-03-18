@@ -1,5 +1,5 @@
 # History Map client code
-[History Map](https://www.moylgrove.wales/the-history-map) client for Moylgrove and beyond.
+[History Map](https://www.moylgrove.wales/the-history-map) client for Moylgrove and beyond
 
 ## Interesting files
 
