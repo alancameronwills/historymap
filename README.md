@@ -87,6 +87,14 @@ To update the code:
 •	I’ve written a small tool for uploading census data from a spreadsheet.
 •	http://Crossbrowsertesting.com is one of various tools for exercising the UI on multiple devices and browsers. It has a monthly subs, which I’ve given up at present.
 
+## Automated Testing & Monitoring
+
+Microsoft Application Insights is useful for a variety of things:
+* Availability tests check that index.htm and edit.htm are available and load OK. They don't test the functionality. I get an email if they fail.
+* Counts of users and what they're doing.
+* Performance of various functions.
+
+I also have an automated GUI test that runs on a PC. It just runs at intervals, not when the code is updated.
 
 
 ## Improving the phone app
