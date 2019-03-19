@@ -1,4 +1,4 @@
-// Code for editor page of History Map
+// Code for editor page of History Map 
 
 var azureWS = "https://moylgrove-history.azurewebsites.net/";
 var picUrlPrefix = azureWS + "images/";
