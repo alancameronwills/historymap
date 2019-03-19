@@ -1,0 +1,21 @@
+{
+  "short_name": "HMap",
+  "name": "History Map",
+  "icons": [
+    {
+      "src": "/img/favicon96.png",
+      "type": "image/png",
+      "sizes": "96x96"
+    },
+    {
+      "src": "/img/favicon32.png",
+      "type": "image/png",
+      "sizes": "32x32"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "lightgreen",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "lightgreen"
+}
