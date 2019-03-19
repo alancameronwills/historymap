@@ -3,12 +3,12 @@
   "name": "History Map",
   "icons": [
     {
-      "src": "/img/favicon96.png",
+      "src": "img/favicon96.png",
       "type": "image/png",
       "sizes": "96x96"
     },
     {
-      "src": "/img/favicon32.png",
+      "src": "img/favicon32.png",
       "type": "image/png",
       "sizes": "32x32"
     }
