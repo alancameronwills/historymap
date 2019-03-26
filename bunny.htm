@@ -618,7 +618,7 @@
                 img.src = ""; img.alt = "/image/" + img.id + ".jpg";
             });
             // Convert to string, remove empty src, and insert link src
-            var wordsString = wordsElement.innerHTML.replace(/src *= *"" */, "").replace(/alt *=/, "src=");
+            var wordsString = wordsElement.innerHTML.replace(/src *= *"" */g, "").replace(/alt *=/g, "src=");
 
             return wordsString;
         }
