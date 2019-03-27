@@ -153,6 +153,10 @@
             text-align: right;
         }
 
+        .deadbutton {
+            background: lightgrey;
+        }
+
         .deleteButton {
             color: red;
             background-color: #ffe0ff;
@@ -720,14 +724,22 @@
             }
         }
 
-        // In label field, Enter key skips from title to description.
+        // Misc initial setup.
         $(function () {
+            // In label field, Enter key skips from title to description.
             $('#label').keypress(function (event) {
                 if (event.keyCode == 13 || event.which == 13) {
                     $('#words').focus();
                     event.preventDefault();
                 }
             });
+            // Ungrey "+pic" when focus is in description.
+            g("words").addEventListener("focus", function (el, ev){
+                $("#picButton").removeClass("deadbutton");
+            }, true); // capture on the way down
+            g("words").addEventListener("blur", function (el, ev){
+                $("#picButton").addClass("deadbutton");
+            }, true); // capture on the way down
         });
 
     </script>
@@ -760,7 +772,7 @@
                     </td>
                     <td>
                         <div style="white-space:nowrap">
-                            <span onclick="insertPic()" class='button'>+pic</span>
+                            <span id="picButton" onclick="insertPic()" class='button deadbutton'>+pic</span>
                             <span onclick="savePoint()" class='button' style="background-color:green;">save</span>
                             <span onclick="$('#pointForm').hide()" class='button'
                                 style="background-color:red;">&nbsp;X&nbsp;</span>
