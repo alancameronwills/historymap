@@ -93,19 +93,26 @@
             bottom: 0px;
         }
 
-        #addControl {
+        #topLeftControls {
             top: 0;
             left: 0;
             position: fixed;
         }
 
-        #addButton {
+        .topLeftButton {
             background: red;
             width: 40px;
             height: 40px;
             font-size: 30px;
             color: white;
             text-align: center;
+            margin: 1px;
+            user-select: none;
+            display: inline-block;
+        }
+
+        .topLeftButton :hover {
+            cursor: pointer;
         }
 
         #pointForm {
@@ -212,6 +219,23 @@
             return confirmationMessage;              // Gecko, WebKit, Chrome <34
         });
 
+        // This code will run every time the GPS gets a new position:
+        function updatePosition(pos) {
+            // User has clicked pause button?
+            if (window.paused) return;
+
+            // Ignore if < 3s since last update:
+            var t = new Date().getTime();
+            if (window.lastMoveTime && t - window.lastMoveTime < 3000) return;
+            window.lastMoveTime = t;
+
+            // Shift map to current location:
+            window.here = new Microsoft.Maps.Location(pos.coords.latitude, pos.coords.longitude);
+            window.map.setView({ center: window.here });
+
+            setCookie("mapCenter", "" + pos.coords.latitude + "," + pos.coords.longitude);
+        }
+
 
         // Called when the script for Bing maps has loaded and is ready to draw a map:
         function loadMap() {
@@ -243,34 +267,19 @@
                 // Load places from the database (and look for new places every minute):
                 periodicallyGetPlaces();
 
-                if (!window.location.queryParameters.nowalk) {
-                    // Move map as user walks:
-                    window.navigatorWatch = navigator.geolocation.watchPosition(
-                        // This code will run every time the GPS gets a new position:
-                        function (pos) {
-                            // Ignore if < 3s since last update:
-                            var t = new Date().getTime();
-                            if (window.lastMoveTime && t - window.lastMoveTime < 3000) return;
-                            window.lastMoveTime = t;
+                // Move map as user walks:
+                window.navigatorWatch = navigator.geolocation.watchPosition(
+                    updatePosition,
+                    // Not much we can do if GPS returns an error, other than try again later:
+                    function (err) { },
 
-                            // Shift map to current location:
-                            window.here = new Microsoft.Maps.Location(pos.coords.latitude, pos.coords.longitude);
-                            window.map.setView({ center: window.here });
-
-                            setCookie("mapCenter", "" + pos.coords.latitude + "," + pos.coords.longitude);
-                        },
-
-                        // Not much we can do if GPS returns an error, other than try again later:
-                        function (err) { },
-
-                        // Various options:
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 9000,  // Stop trying after 9 seconds (e.g. if in a tunnel)
-                            maximumAge: 3000 // We accept location calculated anything up to 3 seconds ago
-                        }
-                    );
-                }
+                    // Various options:
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 9000,  // Stop trying after 9 seconds (e.g. if in a tunnel)
+                        maximumAge: 3000 // We accept location calculated anything up to 3 seconds ago
+                    }
+                );
 
                 // Minor convenience: If user selects OS map, zoom out so that actual OS shows:
                 Microsoft.Maps.Events.addHandler(window.map, 'maptypechanged', function () {
@@ -748,6 +757,32 @@
             }, true); // capture on the way down
         });
 
+        function flashMessage(msg) {
+            var msgDiv = $("#topMessage");
+            msgDiv.text(msg);
+            msgDiv.css("display", "inline-block");
+            setTimeout(function () {
+                msgDiv.css("display", "none");
+            }, 2000);
+        }
+
+        window.paused = false;
+
+        function onPauseButton() {
+            var b = $("#pauseButton");
+            if (window.paused) {
+                b.css("background-color", "red");
+                b.html("<small><b>||</b></small>");
+                window.paused = false;
+                flashMessage("Tracking resumed");
+                navigator.geolocation.getCurrentPosition(updatePosition);
+            } else {
+                b.css("background-color", "green");
+                b.html("<b>&gt;</b>");
+                window.paused = true;
+                flashMessage("Tracking location suspended");
+            }
+        }
     </script>
 
 </head>
@@ -762,8 +797,10 @@
     <!-- Center mark showing where '+' will add a new place -->
     <div class='noselect' style="text-align: center; color:red;width:100%;position:absolute;left:0;top:50%;">^</div>
     <!-- Red '+' button -->
-    <div id='addControl'>
-        <div id='addButton' onclick="showPointForm()">+</div>
+    <div id='topLeftControls'>
+        <div id='addButton' class='topLeftButton' onclick="showPointForm()">+</div>
+        <div id='pauseButton' class='topLeftButton' onclick="onPauseButton()"><small><b>||</b></small></div>
+        <div id='topMessage' style="background-color:white"></div>
     </div>
 
     <!-- The remaining elements only appear when the script calls $("#xxx").show() -->
