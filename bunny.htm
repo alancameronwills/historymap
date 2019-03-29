@@ -217,12 +217,14 @@
         function loadMap() {
             // Wait until all scripts have loaded:
             $(document).ready(function () {
+
                 // Arbitrary place to centre the map before GPS location is acquired:
                 window.here = new Microsoft.Maps.Location(52.068287, -4.747708);
-                // But hope to improve on it:
-                navigator.geolocation.getCurrentPosition(function (pos) {
-                    if (pos) window.here = pos;
-                });
+
+                var centerFromCookie = getCookie("mapCenter");
+                if (centerFromCookie) {
+                    window.here = Microsoft.Maps.Location.parseLatLong(centerFromCookie) || window.here;
+                }
 
                 // Load map:
                 window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
@@ -241,30 +243,34 @@
                 // Load places from the database (and look for new places every minute):
                 periodicallyGetPlaces();
 
-                // Move map as user walks:
-                window.navigatorWatch = navigator.geolocation.watchPosition(
-                    // This code will run every time the GPS gets a new position:
-                    function (pos) {
-                        // Ignore if < 3s since last update:
-                        var t = new Date().getTime();
-                        if (window.lastMoveTime && t - window.lastMoveTime < 3000) return;
-                        window.lastMoveTime = t;
+                if (!window.location.queryParameters.nowalk) {
+                    // Move map as user walks:
+                    window.navigatorWatch = navigator.geolocation.watchPosition(
+                        // This code will run every time the GPS gets a new position:
+                        function (pos) {
+                            // Ignore if < 3s since last update:
+                            var t = new Date().getTime();
+                            if (window.lastMoveTime && t - window.lastMoveTime < 3000) return;
+                            window.lastMoveTime = t;
 
-                        // Shift map to current location:
-                        window.here = new Microsoft.Maps.Location(pos.coords.latitude, pos.coords.longitude);
-                        window.map.setView({ center: window.here });
-                    },
+                            // Shift map to current location:
+                            window.here = new Microsoft.Maps.Location(pos.coords.latitude, pos.coords.longitude);
+                            window.map.setView({ center: window.here });
 
-                    // Not much we can do if GPS returns an error, other than try again later:
-                    function (err) { },
+                            setCookie("mapCenter", "" + pos.coords.latitude + "," + pos.coords.longitude);
+                        },
 
-                    // Various options:
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 9000,  // Stop trying after 9 seconds (e.g. if in a tunnel)
-                        maximumAge: 3000 // We accept location calculated anything up to 3 seconds ago
-                    }
-                );
+                        // Not much we can do if GPS returns an error, other than try again later:
+                        function (err) { },
+
+                        // Various options:
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 9000,  // Stop trying after 9 seconds (e.g. if in a tunnel)
+                            maximumAge: 3000 // We accept location calculated anything up to 3 seconds ago
+                        }
+                    );
+                }
 
                 // Minor convenience: If user selects OS map, zoom out so that actual OS shows:
                 Microsoft.Maps.Events.addHandler(window.map, 'maptypechanged', function () {
@@ -734,10 +740,10 @@
                 }
             });
             // Ungrey "+pic" when focus is in description.
-            g("words").addEventListener("focus", function (el, ev){
+            g("words").addEventListener("focus", function (el, ev) {
                 $("#picButton").removeClass("deadbutton");
             }, true); // capture on the way down
-            g("words").addEventListener("blur", function (el, ev){
+            g("words").addEventListener("blur", function (el, ev) {
                 $("#picButton").addClass("deadbutton");
             }, true); // capture on the way down
         });
