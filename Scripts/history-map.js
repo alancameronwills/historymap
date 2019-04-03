@@ -620,10 +620,10 @@ function gotTable(results) {
         $("#searchPanel")[0].style.visibility = "visible";
     }
 
-    if (window.goToPlace || window.location.queryParameters.place) {
-        go(window.goToPlace || window.location.queryParameters.place, true);
-        window.goToPlace = null;
+    if (window.location.queryParameters.place != null) {
+        go(window.location.queryParameters.place, true);
     }
+
 }
 
 // User selected a map type - OS or aerial photo.
@@ -674,25 +674,11 @@ function updateZoneChoice() {
     var zoneChoice = getZoneChoiceFromUI();
 
     if (window.zoneSelection == zoneChoice) return;
-    var newzone = "";
-    zoneChoice.split(" ").forEach(function (z) {if (window.zoneSelection.indexOf(z)<0) {newzone = z;}});
     window.zoneSelection = zoneChoice;
 
     showZoneChoiceOnUI(zoneChoice);
     setZoneCookie(zoneChoice);
     displayZone(zoneChoice);
-    switch (newzone) {
-        case "moylgrove" : window.goToPlace = "22955220562895215251"; break;
-        case "stdogmaels" : window.goToPlace = "22955230189135759715"; break;
-        case "cardigan": window.goToPlace = "22955230389148947930"; break;
-    }
-    window.zoneSelection.split(" ").forEach(function (z) {
-        switch (z) {
-            case "moylgrove" : window.zoneBounds.moylgrove.setOptions({visible:false}); break;
-            case "stdogmaels" : window.zoneBounds.stdogmaels.setOptions({visible:false}); break;
-            case "cardigan": window.zoneBounds.cardigan.setOptions({visible:false}); break
-        }
-    });
 }
 
 // Display the map pins and side index for the selected zones.
@@ -726,22 +712,7 @@ function displayZone(zoneChoice) {
             gotTable(data);
         });
     }
-    setZoneAreas();
     window.loadedTime = new Date().getTime();
-}
-
-function setZoneAreas() {
-    window.zoneBounds = {};
-    window.zoneBounds.cardigan = setZoneArea(cardiganInnerBounds);
-    window.zoneBounds.stdogmaels = setZoneArea(stDogsInnerBounds);
-    window.zoneBounds.moylgrove = setZoneArea(moylgroveBounds);
-
-}
-
-function setZoneArea(ring) {
-    var poly = new Microsoft.Maps.Polygon(ring, {fillColor:new Microsoft.Maps.Color(0.5, 255, 0, 0)});
-    window.map.entities.push(poly);
-    return poly;
 }
 
 // On map API has completed loading
