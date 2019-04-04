@@ -409,11 +409,43 @@ function DeleteConfirmed(id) {
     );
 }
 
+var doingRetry = null;
+
+// We're trying to jump to a place that isn't in the current index.
+// Probably because it's outside the currently selected zone.
+// Find out where it is and extend the zone selection to include it.
+function retryZone(id, fromList) {
+    if (doingRetry == id) {
+        // Avoid retry loop.
+        return;
+    }
+    doingRetry = id;
+    // Retrieve place from server:
+    $.get(apiUrl + "place?id="+id, function(data, status){
+        if (data.length == 0) return;
+        // A zone the place is in:
+        var zone = data[0].HomeZone; 
+        if (zone) {
+            if (window.zoneSelection.indexOf(zone) < 0)
+            {
+                setZoneChoice(window.zoneSelection + " " + zone);
+            }
+        }
+    });
+
+}
+
 // On user clicks a place
 function go(id, fromList) {
     $("#message").hide();
     $("#blog").fadeOut();
     var place = window.items[id];
+    if (!place) {
+        // Not in current index probably because it's outside the currently selected zone.
+        retryZone(id, fromList);
+        return;
+    }
+    doingRetry = null;
     selectOnList(id, fromList);
     selectOnMap(place, fromList);
     if (!window.noHistory) {
@@ -609,6 +641,7 @@ function makePin(place) {
             Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
                 e.primitive.tooltip.setOptions({ visible: false });
                 var place = e.primitive.place;
+                delete window.location.queryParameters.place;
                 // Title of principal must be ~= name of zone
                 setZoneChoice(place.title.toLocaleLowerCase().replace(/ /, ""));
                 setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
@@ -697,14 +730,14 @@ function mapChange(v) {
     }
 }
 
-// User has opened and closed zone selection menu.
+// From the drop-down menu.
 function getZoneChoiceFromUI() {
     var selection = "";
     $("#zoneSelect").children("input").each(function (i, e) { if (e.checked) selection += " " + e.value; });
     return selection.trim();
 }
 
-// Set the UI to reflect the current zone selection, obtained from a cookie.
+// Set the drowpdown menu to reflect the current zone selection, obtained from a cookie.
 function showZoneChoiceOnUI(zones) {
     if (zones) {
         $("#zone").html("<p>" + zones.replace(/ .*/, "...") + "</p>");
@@ -720,20 +753,20 @@ function setZoneCookie(zones) {
 }
 
 function getZoneChoiceFromCookie() {
-    var z = getCookie("zones");
-    if (!z) z = "moylgrove";
-    return z;
+    return getCookie("zones") || "moylgrove"
 }
 
 
-// User may have changed the zone selection
+// Zone dropdown: User may have changed the zone selection
 function updateZoneChoice() {
     var zoneChoice = getZoneChoiceFromUI();
     if (window.zoneSelection == zoneChoice) return;
+    // Forget any previous navigation to a specific place:
+    delete window.location.queryParameters.place;
     setZoneChoice(zoneChoice);
 }
 
-
+// Move to and display a different zone
 function setZoneChoice(zoneChoice) {
     window.zoneSelection = zoneChoice;
     showZoneChoiceOnUI(zoneChoice);
