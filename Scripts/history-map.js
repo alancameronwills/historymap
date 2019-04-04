@@ -607,29 +607,32 @@ function makePin(place) {
             pushpin.tooltip.setMap(map);
 
             Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                //e.primitive.tooltip.setOptions({visible:false});
+                e.primitive.tooltip.setOptions({ visible: false });
                 var place = e.primitive.place;
                 // Title of principal must be ~= name of zone
                 setZoneChoice(place.title.toLocaleLowerCase().replace(/ /, ""));
                 setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
                 window.map.setView({ center: place.location });
             });
+
             Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
                 e.primitive.tooltip.setOptions({
                     location: e.target.getLocation(),
                     visible: true
                 });
-            }); 
+            });
             Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
-                e.primitive.tooltip.setOptions({visible: false});
+                e.primitive.tooltip.setOptions({ visible: false });
             });
-        }
-        if (!window.noHistory) {
-            Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                if (e) {
-                    go(e.primitive.place.id, false);
-                }
-            });
+
+        } else { // Ordinary place
+            if (!window.noHistory) {
+                Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
+                    if (e) {
+                        go(e.primitive.place.id, false);
+                    }
+                });
+            }
         }
     }
 }
