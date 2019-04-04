@@ -47,7 +47,7 @@ function keyup(e) {
         }
         if (toSelect) {
             if (window.khighlit) { window.khighlit.removeClass("keySelectedItem"); }
-            window.khighlit = $(toSelect); 
+            window.khighlit = $(toSelect);
             window.khighlit[0].scrollIntoView(); // [0] unwraps dom object from JQuery
             window.khighlit.addClass("keySelectedItem"); // highlight selection
             category = "found";
@@ -555,7 +555,7 @@ var principalPinTemplate = ['<svg xmlns="http://www.w3.org/2000/svg" width="180"
 
 // Default colour, shape, and label of a pin:
 function pinOptions(place) {
-    if (place.principal && place.principal>0) {
+    if (place.principal && place.principal > 0) {
         // Represents a town whose places aren't currently in the displayed area
         return {
             title: "",
@@ -592,19 +592,42 @@ function makePin(place) {
         pushpin.id = place.id;
         pushpin.place = place;
         place.pin = pushpin;
+        // If this is a big icon for a whole town:
+        if (place.principal && place.principal > 0) {
+
+            //Create an infobox to use as a tooltip when hovering.
+            pushpin.tooltip = new Microsoft.Maps.Infobox(map.getCenter(), {
+                visible: false,
+                showCloseButton: false,
+                offset: new Microsoft.Maps.Point(-75, 30),
+                description: "Click to see places here",
+                maxWidth: 400,
+                showPointer: true
+            });
+            pushpin.tooltip.setMap(map);
+
+            Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
+                //e.primitive.tooltip.setOptions({visible:false});
+                var place = e.primitive.place;
+                // Title of principal must be ~= name of zone
+                setZoneChoice(place.title.toLocaleLowerCase().replace(/ /, ""));
+                setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
+                window.map.setView({ center: place.location });
+            });
+            Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
+                e.primitive.tooltip.setOptions({
+                    location: e.target.getLocation(),
+                    visible: true
+                });
+            }); 
+            Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
+                e.primitive.tooltip.setOptions({visible: false});
+            });
+        }
         if (!window.noHistory) {
             Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
                 if (e) {
-                    var place = e.primitive.place;
-                    if (place.principal && place.principal>0) {
-                        // Title of principal must be ~= name of zone
-                        setZoneChoice(place.title.toLocaleLowerCase().replace(/ /, "")); 
-                        setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
-                        window.map.setView({ center: place.location });
-                    }
-                    else {
-                        go(place.id, false);
-                    }
+                    go(e.primitive.place.id, false);
                 }
             });
         }
