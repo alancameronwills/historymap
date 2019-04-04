@@ -551,11 +551,10 @@ window.addEventListener("storage", function (event) {
             pushpin.myColor = options.color;
             newPlace.pin = pushpin;
             if (newPlace.cf != oldPlace.cf) showPlaceList();
+            go(newPlace.id, false);
         } else {
-            makePin(newPlace);
-            showPlaceList();
+            window.location.assign("./?place=" + newPlace.id);
         }
-        go(newPlace.id, false);
     }
 });
 
