@@ -539,6 +539,7 @@ function makePlace(t) {
         pic2: "" + t.Pic2,
         text: t.Text,
         year: "" + t.Year,
+        principal: t.Principal,
         updated: new Date(t.Updated || "2010-01-01T00:00:00.000Z")
     };
     // For alphabetic sorting:
@@ -546,17 +547,36 @@ function makePlace(t) {
     return place;
 }
 
-// Default colour and tag of a pin.
+// Big marker for towns that aren't currently displayed:
+var principalPinTemplate = ['<svg xmlns="http://www.w3.org/2000/svg" width="180" height="45">',
+    '<rect x="0" y="0" width="180" height="45" rx="15" ry="15" fill="blue" />',
+    '<text x="15" y="30" fill="white" font-family="sans-serif" font-size="24px">{text}</text>',
+    '</svg>'].join("");
+
+// Default colour, shape, and label of a pin:
 function pinOptions(place) {
+    if (place.principal && place.principal>0) {
+        // Represents a town whose places aren't currently in the displayed area
+        return {
+            title: "",
+            text: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
+            icon: principalPinTemplate
+        };
+    }
+
     var postcodeLetter = !window.noHistory && place.year
         ? ("" + place.year).substr(1, 2)
         : place.postcode ? place.postcode.substr(-1, 1) : "";
-    var thisPinColor = place.text.length > 300 ? "#FF0000" : "#A00000";
+
+    // Principal < 0 is a town pin whose places are in the displayed area.
+    // Otherwise, pin colour indicates whether there's much to read.
+    var thisPinColor = place.principal ? "blue" : place.text.length > 300 ? "#FF0000" : "#A00000";
     return {
         title: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
         text: postcodeLetter, subTitle: place.subtitle, color: thisPinColor, enableHoverStyle: true
     };
 }
+
 
 function makePin(place) {
     if (place.cf.length > 0) {
@@ -567,14 +587,24 @@ function makePin(place) {
             place.location,
             options
         );
+        window.map.entities.push(pushpin);
         pushpin.myColor = options.color;
         pushpin.id = place.id;
-        window.map.entities.push(pushpin);
+        pushpin.place = place;
         place.pin = pushpin;
         if (!window.noHistory) {
             Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
                 if (e) {
-                    go(e.primitive.id, false);
+                    var place = e.primitive.place;
+                    if (place.principal && place.principal>0) {
+                        // Title of principal must be ~= name of zone
+                        setZoneChoice(place.title.toLocaleLowerCase().replace(/ /, "")); 
+                        setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
+                        window.map.setView({ center: place.location });
+                    }
+                    else {
+                        go(place.id, false);
+                    }
                 }
             });
         }
@@ -669,13 +699,17 @@ function getZoneChoiceFromCookie() {
     return z;
 }
 
+
 // User may have changed the zone selection
 function updateZoneChoice() {
     var zoneChoice = getZoneChoiceFromUI();
-
     if (window.zoneSelection == zoneChoice) return;
-    window.zoneSelection = zoneChoice;
+    setZoneChoice(zoneChoice);
+}
 
+
+function setZoneChoice(zoneChoice) {
+    window.zoneSelection = zoneChoice;
     showZoneChoiceOnUI(zoneChoice);
     setZoneCookie(zoneChoice);
     displayZone(zoneChoice);
@@ -692,7 +726,6 @@ function displayZone(zoneChoice) {
 
     $("#houselist").html("");
 
-    if (!zoneChoice) return;
     $("#houselist").html("<p>Getting places...</p>");
 
     // Download from server:
