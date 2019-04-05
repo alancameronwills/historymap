@@ -330,6 +330,10 @@ function SavePlace() {
         return;
     }
     var s = gatherToSave();
+    if (s.Text.length > 64000) {
+        window.alert("The description is too long. Limit is 64k.");
+        return;
+    }
     if (!s.Title) {
         window.alert("Can't save yet: Enter a title in the pink box.");
         return;
@@ -609,6 +613,10 @@ function checkSignin() {
                 setCookie("useridp", idp, 1000);
             }
         });  */
+}
+
+function setLengthColour(jqtext) {
+    jqtext.css("background-color", (jqtext.html().length > 64000) ? "pink" : "white");
 }
 
 function setUserName(name, fromCookie) {
