@@ -432,7 +432,7 @@ var doingRetry = null;
 // We're trying to jump to a place that isn't in the current index.
 // Probably because it's outside the currently selected zone.
 // Find out where it is and extend the zone selection to include it.
-function retryZone(id, fromList) {
+function retryZone(id, includePrevious) {
     if (doingRetry == id) {
         // Avoid retry loop.
         return;
@@ -446,7 +446,7 @@ function retryZone(id, fromList) {
         if (zone) {
             if (window.zoneSelection.indexOf(zone) < 0)
             {
-                setZoneChoice(window.zoneSelection + " " + zone);
+                setZoneChoice((includePrevious ? window.zoneSelection + " " : "") + zone);
             }
         }
     });
@@ -460,11 +460,11 @@ function go(id, fromList) {
     var place = window.items[id];
     if (!place) {
         // Not in current index probably because it's outside the currently selected zone.
-        retryZone(id, fromList);
+        retryZone(id, true);
         return;
     }
     if (place.principal && place.principal>0) {
-        retryZone(id, fromList);
+        retryZone(id, false);
         return;
     }
     doingRetry = null;
@@ -778,7 +778,7 @@ function setZoneCookie(zones) {
 }
 
 function getZoneChoiceFromCookie() {
-    return getCookie("zones") || "moylgrove"
+    return getCookie("zones");
 }
 
 
@@ -864,8 +864,16 @@ function loadMap() {
             function () { $(this).children(".dropDownMenu").css("display", "none"); updateZoneChoice(); }
         );
         var zoneChoice = getZoneChoiceFromCookie();
+        if (!zoneChoice) {
+            if (location.queryParameters.place) {
+
+            }
+            else zoneChoice = "moylgrove";
+        }
+        var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
         window.zoneSelection = zoneChoice;
         showZoneChoiceOnUI(zoneChoice);
         displayZone(zoneChoice);
     })
 };
+
