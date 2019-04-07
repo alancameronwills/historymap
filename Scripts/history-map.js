@@ -131,7 +131,8 @@ function selectOnMap(place, fromList) {
             // Don't change the zoom level if it would change the map type:
             var currentZoom = window.map.getZoom();
             var isOS = window.map.getMapTypeId() == "os";
-            var newzoom = isOS && place.zoom > 17 ? 17 : place.zoom;
+            var zoom = proximity(place);
+            var newzoom = isOS && zoom > 17 ? 17 : zoom;
 
             // Move place into view:
             window.map.setView({ zoom: newzoom });
@@ -139,6 +140,23 @@ function selectOnMap(place, fromList) {
         }
     }
 }
+
+var latKm = 0.000089; // Pembs. 
+var longKm = 0.000144;
+
+function proximity(place) {
+    var min = 1000000;
+    window.orderedList.forEach(function (otherPlace) {
+        if (otherPlace === place) return false;
+        var dlat = (place.location.latitude-otherPlace.location.latitude)/latKm;
+        var dlon = (place.location.longitude - otherPlace.location.longitude)/longKm;
+        var product = dlat*dlat + dlon*dlon;
+        if (product < min) min= product;
+    });
+    return min<16 ? 19 : min < 50 ? 17 : 16;
+}
+
+
 
 // Display the upper picture, which can be a streetview.
 // If streetview, the url is abbreviated from the Google URL.
