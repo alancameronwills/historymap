@@ -15,8 +15,8 @@
     <script src="Scripts/azure-storage.common.js"></script>
     <script src="Scripts/azure-storage.blob.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <!-- Map API. When loaded, callback loadMap() -->
-    <script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?key=AryU5OBCq3C8xwf-lo7yDEdItLzoyMQfVuxBkgeZIXFXWDsqLW0WBuNmudPAqj3M&callback=loadMap'
+    <!-- Map API. When loaded, callback mapModuleLoaded() -->
+    <script type='text/javascript' src='https://www.bing.com/api/maps/mapcontrol?key=AryU5OBCq3C8xwf-lo7yDEdItLzoyMQfVuxBkgeZIXFXWDsqLW0WBuNmudPAqj3M&callback=mapModuleLoaded'
         async defer></script>
     <!-- Scripts for this page -->
     <script src="Scripts/history.js"></script>
@@ -70,12 +70,12 @@
             </td>
             <td>
                 <span id="latlong"></span> &nbsp;&nbsp; Zoom in:
-                <input id="zoom" type="checkbox" title="The map zooms closer to distinguish places in cluttered areas." /> &nbsp;&nbsp;SA43 3
-                <input id="postcode" type="text" maxlength="2" style="width:25px;" pattern="[A-Za-z]{2}" />
+                <input id="zoom" type="checkbox" title="The map zooms closer to distinguish places in cluttered areas." /> &nbsp;&nbsp;Postcode:
+                <input id="postcode" type="text" maxlength="9" style="width:100px;" pattern="[A-Za-z0-9 ]*" />
             </td>
             <td align="right">
                 <span id="username"></span>
-                <div class="toolbutton" title="Save your changes" onclick="SavePlace()">Save</div>
+                <div class="toolbutton" title="Save your changes" onclick="onSavePlace()">Save</div>
             </td>
         </tr>
         <tr valign="top">
@@ -86,7 +86,7 @@
             <td>
                 <div style="border-style:hidden;">
                     <input id="title" class="input" placeholder="place name" type="text" style="width:290px;font-size:large;color:royalblue;font-weight:bold;"
-                        onchange="updatePlaceName()" required="required" />
+                        onchange="onUpdatePlaceName()" required="required" />
                     <div class="prompt">&nbsp;Built c.</div>
                     <input id="year" type="number" min="1600" max="2050" class="input" style="width:50px" />
                 </div>
@@ -100,13 +100,13 @@
                         </div>
                         <div style='position:absolute;top:0px;left:0;width:150px;height:50px;background-color:rgb(40,40,40);border-radius:4px;color:white'>
                             <div style="vertical-align:middle;">
-                                <input type="radio" name="mapSelector" value="os" onchange="mapChange('os')" />Ordnance Survey
+                                <input type="radio" name="mapSelector" value="os" onchange="onMapTypeSelect('os')" />Ordnance Survey
                                 <br/>
-                                <input type="radio" name="mapSelector" value="aerial" onchange="mapChange('aerial')" checked="checked" />Aerial photos
+                                <input type="radio" name="mapSelector" value="aerial" onchange="onMapTypeSelect('aerial')" checked="checked" />Aerial photos
                             </div>
                         </div>
                         <div style='position:absolute;top:120px;right:34px;height:35px;width:35px;'>
-                            <img src='img/target.png' title="Centre map on place" onclick="CentreMapOnPlace()" />
+                            <img src='img/target.png' title="Centre map on place" onclick="onCentreMapOnPlace()" />
                         </div>
                     </div>
                 </div>
@@ -122,16 +122,16 @@
             </td>
             <td>
                 <div id="toolBar1">
-                    <div class="toolbutton" onclick="formatDoc('formatblock','h4')" title="Sub heading">H</div>
-                    <div class="toolbutton" onclick="formatDoc('formatblock','div')" title="Plain paragraph">¶</div>
-                    <div class="toolbutton" onclick="formatDoc('InsertText','â')">â</div>
-                    <div class="toolbutton" onclick="formatDoc('InsertText','ê')">ê</div>
-                    <div class="toolbutton" onclick="formatDoc('InsertText','î')">î</div>
-                    <div class="toolbutton" onclick="formatDoc('InsertText','ô')">ô</div>
-                    <div class="toolbutton" onclick="formatDoc('InsertText','û')">û</div>
-                    <div class="toolbutton" onclick="formatDoc('InsertText','ŵ')">ŵ</div>
-                    <div class="toolbutton" onclick="formatDoc('InsertText','ŷ')">ŷ</div>
-                    <div class="toolbutton" onclick="createLink()" title="Link a phrase to another web page">Link</div>
+                    <div class="toolbutton" onclick="onFormatDoc('formatblock','h4')" title="Sub heading">H</div>
+                    <div class="toolbutton" onclick="onFormatDoc('formatblock','div')" title="Plain paragraph">¶</div>
+                    <div class="toolbutton" onclick="onFormatDoc('InsertText','â')">â</div>
+                    <div class="toolbutton" onclick="onFormatDoc('InsertText','ê')">ê</div>
+                    <div class="toolbutton" onclick="onFormatDoc('InsertText','î')">î</div>
+                    <div class="toolbutton" onclick="onFormatDoc('InsertText','ô')">ô</div>
+                    <div class="toolbutton" onclick="onFormatDoc('InsertText','û')">û</div>
+                    <div class="toolbutton" onclick="onFormatDoc('InsertText','ŵ')">ŵ</div>
+                    <div class="toolbutton" onclick="onFormatDoc('InsertText','ŷ')">ŷ</div>
+                    <div class="toolbutton" onclick="onCreateLink()" title="Link a phrase to another web page">Link</div>
                 </div>
 
                 <div id="text" style="background-color:white;padding:5px;width:400px;height:300px;border-style:solid;border-width:1px;overflow:auto;"
@@ -160,18 +160,18 @@
                     <img id="photo1img" style="display:none" width="300px" />
                     <div id="photo1google" style="display:none"></div>
                 </div>
-                <input type="button" onclick="showDeleteDialog(DeletePhoto1, 'the picture')" value="X" class="deleteButton" title="Delete this picture or street view"
+                <input type="button" onclick="showDeleteDialog(onDeletePhoto1, 'the picture')" value="X" class="deleteButton" title="Delete this picture or street view"
                 />
             </td>
             <td>
                 Upload a photo:&nbsp;&nbsp;
-                <input id="pic1file" onchange="UploadFile(this.files[0])" type="file" title="upload" name="Upload" id="uploadpic1" />
+                <input id="pic1file" onchange="onUploadFile(this.files[0])" type="file" title="upload" name="Upload" id="uploadpic1" />
                 <br/> - or -
                 <br/> Paste a link to a picture, or Google Street View:
                 <br/>
                 <input id="photo1url" type="text" style="width:300px" pattern="<iframe.*</iframe>|http.*(jpg|jpeg|png|gif) *" placeholder="<iframe... or http...jpg|.png|.gif"
-                    onchange="ShowPhoto1()" onfocus="this.select()" />
-                <input type="button" onclick="ShowPhoto1()" value="+" style="background-color:lightgreen;" title="Set the photo or street view."
+                    onchange="onLinkPhoto1()" onfocus="this.select()" />
+                <input type="button" onclick="onLinkPhoto1()" value="+" style="background-color:lightgreen;" title="Set the photo or street view."
                 />
                 <br/>
                 <br/>
@@ -201,19 +201,19 @@
                         <br/>Paste the URLs of pictures on the web into the line at the right</p>
                     <img id="photo2img" style="display:none" width="300px" />
                 </div>
-                <input type="button" onclick="showDeleteDialog(DeletePhoto2, 'the picture from the slide show')" value="X" class="deleteButton"
+                <input type="button" onclick="showDeleteDialog(onDeletePhoto2, 'the picture from the slide show')" value="X" class="deleteButton"
                     title="Delete this picture from the slide show." />
             </td>
             <td>
                 Upload photos:&nbsp;&nbsp;
-                <input id="pic2file" onchange="UploadFile2(this.files)" type="file" title="upload" name="Upload" id="uploadpic2" multiple
+                <input id="pic2file" onchange="onUploadFile2(this.files)" type="file" title="upload" name="Upload" id="uploadpic2" multiple
                 />
                 <br/> or paste the web address of a picture on the web:
                 <br/>
                 <input id="photo2url" type="text" style="width:300px" pattern="http.*(jpg|jpeg|png|gif) *" placeholder="http...jpg|.png|.gif"
-                    onchange="AddPhoto2($('#photo2url')[0].value, true)" onfocus="this.select()" title="Paste the URL (web address) of a picture."
+                    onchange="onAddPhoto2($('#photo2url')[0].value)" onfocus="this.select()" title="Paste the URL (web address) of a picture."
                 />
-                <input type="button" value="+" onclick="AddPhoto2($('#photo2url')[0].value, true)" style="background-color:lightgreen;" title="Add the picture to this slide show."
+                <input type="button" value="+" onclick="onAddPhoto2($('#photo2url')[0].value)" style="background-color:lightgreen;" title="Add the picture to this slide show."
                 />
                 <div id="photo2Gallery" style="overflow-y:auto;height:200px" title="Click a picture to show it on the left">
 

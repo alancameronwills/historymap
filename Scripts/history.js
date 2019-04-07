@@ -1,6 +1,6 @@
 // Common code for history map index.htm and edit.htm
 
-function g(id) {return document.getElementById(name);}
+function g(id) {return document.getElementById(id);}
 
 // Get query parameters
 location.queryParameters = {};
@@ -11,7 +11,8 @@ location.search.substr(1).split("&").forEach(function (pair) {
         decodeURIComponent(parts[1].replace(/\+/g, " "));
 });
 
-// For searching and sorting
+// For searching and sorting place names
+// Remove puntuation, spacing, Welsh chars, so that Tŷ Wylan == Ty-wylan
 function comparable(title) {
     return title.toLocaleLowerCase().replace(/[- '",]+/g, "").replace(/^the/, ""
         .replace(/[âêîôûŵŷ]/, function (c) { return { "â": "a", "ê": "e", "î": "i", "ô": "o", "û": "u", "ŵ": "w", "ŷ": "y" }[c]; }));
@@ -39,7 +40,7 @@ function getCookie(cname) {
     return "";
 }
 
-
+// Determines whether one element is contained in another
 function isInNode(element, nodeId) {
     if (!element) return false;
     if (!element.id) return isInNode(element.parentElement, nodeId);
@@ -97,7 +98,8 @@ var isAdvancedBrowser = function () {
 }();
 
 
-
+// Regions where density of places is high, so that going there should zoom in closer.
+// Currently this is just the centre of Moylgrove. Need to make this a more dynamic thing in go().
 function zoomed(lat, long) {
     var f1lat = 52.068478, f1long = -4.747869, f2lat = 52.065769, f2long = -4.753887, diameter = 0.008579508;
     return Math.sqrt(Math.pow(lat - f1lat, 2) + Math.pow(long - f1long, 2))
