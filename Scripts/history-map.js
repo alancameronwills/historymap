@@ -463,6 +463,10 @@ function go(id, fromList) {
         retryZone(id, fromList);
         return;
     }
+    if (place.principal && place.principal>0) {
+        retryZone(id, fromList);
+        return;
+    }
     doingRetry = null;
     selectOnList(id, fromList);
     selectOnMap(place, fromList);
@@ -659,8 +663,7 @@ function makePin(place) {
                 e.primitive.tooltip.setOptions({ visible: false });
                 var place = e.primitive.place;
                 delete window.location.queryParameters.place;
-                // Title of principal must be ~= name of zone
-                setZoneChoice(place.title.toLocaleLowerCase().replace(/ /, ""));
+                setZoneChoice(zoneFromPrincipal(place));
                 setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
                 window.map.setView({ center: place.location });
             });
@@ -685,6 +688,11 @@ function makePin(place) {
             }
         }
     }
+}
+
+// Title of principal must be ~= name of zone
+function zoneFromPrincipal(place) {
+    return place.title.toLocaleLowerCase().replace(/ /, "");
 }
 
 function showPlaceList() {
@@ -726,7 +734,7 @@ function gotTable(results) {
         $("#searchPanel")[0].style.visibility = "visible";
     }
 
-    if (window.location.queryParameters.place != null) {
+    if (window.location.queryParameters.place) {
         go(window.location.queryParameters.place, true);
     }
 
