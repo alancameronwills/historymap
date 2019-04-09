@@ -1,13 +1,8 @@
 // Code for editor page of History Map 
 
-var azureWS = "https://moylgrove-history.azurewebsites.net/";
-var picUrlPrefix = azureWS + "images/";
-var codePrefix = azureWS + "api/";
-var sourcePrefix = azureWS + "h/";
 
 window.blobService = AzureStorage.createBlobService('moylgrovehistory',
     'FYrLaOQASw3oLaEscmMUWtV70VbcTFGZXxwp0GuaTvJZKguM/C9AiI1nAKp6uw7AP4+k1gXwXTKNw9pcLDiFYA==');
-
 
 //
 // Initialize map and location
@@ -31,7 +26,7 @@ function mapModuleLoaded() {
         if (location.queryParameters.id) { // location here is current URL
             window.place = { RowKey: -1, UpdateTrail: "" };
             // REST get details of place to edit:
-            fetch("{0}/place?id={1}".format(codePrefix, location.queryParameters.id))
+            fetch("{0}/place?id={1}".format(apiUrl, location.queryParameters.id))
                 .then(function (response) { return response.json(); }) // Decode string to object
                 .then(function (tt) {
                     var t = tt[0];
@@ -227,7 +222,7 @@ function ShowPhoto1(url) {
     if (url.match(/.*(jpg|jpeg|png|gif)$/i)) {
         $("#photo1prompt").hide();
         $("#photo1google").html("").hide();
-        var picBlob = url.replace(/^images\//, picUrlPrefix);
+        var picBlob = url.replace(/^images\//, imgUrl);
         $("#photo1img").show()[0].src = picBlob;
         window.place.Pic1 = url;
         category = "pic";
@@ -307,7 +302,7 @@ var slideCount = 0;
 // Append a photo to the gallery. select => Show in the enlarged pic.
 function AddPhoto2(url, select) {
     if (!url || !(url.match(/\.(jpg|jpeg|png|gif)$/i))) { return; }
-    var picBlob = url.replace(/^images\//, picUrlPrefix);
+    var picBlob = url.replace(/^images\//, imgUrl);
     $("#photo2Gallery").append("<img id='slide{1}' src='{0}' title='Click to show at left' onclick='ShowPhoto2({1})' style='max-width:100px;max-height:100px;display:inline;'/> "
         .format(picBlob, ++slideCount));
     var gallery = $("#photo2Gallery")[0];
@@ -323,7 +318,7 @@ function AddPhoto2(url, select) {
 // Display the selected pic in the larger box.
 function ShowPhoto2(id) {
     var url = $("#slide" + id)[0].src;
-    var picBlob = url.replace(/^images\//, picUrlPrefix);
+    var picBlob = url.replace(/^images\//, imgUrl);
     $("#photo2img").show()[0].src = picBlob;
     $("#photo2prompt").hide();
     $("#photo2")[0].currentId = id;
@@ -520,7 +515,7 @@ function nodeIsInLink(n) {
 // Save edited place
 //
 
-var fixLinks = new RegExp(sourcePrefix, "g");
+var fixLinks = new RegExp(sourceUrl, "g");
 /// Get bits of data from form, prep to saving.
 function gatherToSave() {
     var s = {};
@@ -539,7 +534,7 @@ function gatherToSave() {
 
     s.Pic2 = "";
     $("#photo2Gallery img").each(function (ix, img) {
-        s.Pic2 += (ix > 0 ? ';' : '') + img.url.replace(picUrlPrefix, "images/");
+        s.Pic2 += (ix > 0 ? ';' : '') + img.url.replace(imgUrl, "images/");
     });
 
     // User and date
@@ -574,7 +569,7 @@ function onSavePlace() {
     appInsights.trackEvent("save", { title: s.Title, user: window.userName }, {});
 
     var jsn = JSON.stringify(s);
-    fetch(codePrefix + "updateplace?code=sKLci6i34PkB9LlwMjgj3ukP7cj5yfTKpQcH0Mv7eQkgOrXi7/tB4w==",
+    fetch(apiUrl + "updateplace?code=sKLci6i34PkB9LlwMjgj3ukP7cj5yfTKpQcH0Mv7eQkgOrXi7/tB4w==",
         {
             body: jsn,
             headers: {
@@ -658,7 +653,7 @@ window.signinDone = function () {
 
 function checkSignin() {
     $.ajax({
-        url: codePrefix + "test", xhrFields: { withCredentials: true }, complete: function (data, status) {
+        url: apiUrl + "test", xhrFields: { withCredentials: true }, complete: function (data, status) {
             var headers = data && data.responseJSON ? data.responseJSON.headers : {};
             var n = headers["x-ms-client-principal-name"] || null;
             setUserName(n);
@@ -671,7 +666,7 @@ function checkSignin() {
     });
 
     /*
-                $.ajax({url:codePrefix + "test", xhrFields:{withCredentials:true}}, function (data, status) {
+                $.ajax({url:apiUrl + "test", xhrFields:{withCredentials:true}}, function (data, status) {
                         var n = data && data.headers ? data.headers["x-ms-client-principal-name"] : null;
                         setUserName(n);
                         setCookie("username", name, 1000);
@@ -682,7 +677,7 @@ function checkSignin() {
                 }); 
      */
     /*
-    fetch(codePrefix + "test", { credentials: "same-origin" })
+    fetch(apiUrl + "test", { credentials: "same-origin" })
         .then(function (r){r.json();})
         .then(function(r){
             var name = r && r.headers ? r.headers["x-ms-client-principal-name"] : "";
@@ -733,7 +728,7 @@ function getUserName() {
 // Used to help make links from one place to another.
 function getAllPlaces() {
     window.places = {};
-    var fetchApi = codePrefix + "places?fields=RowKey,Title";
+    var fetchApi = apiUrl + "places?fields=RowKey,Title";
     $.get(fetchApi, function (results, status) {
         $.each(results, function (i, v) {
             if (v && v.Title) {

@@ -1,5 +1,11 @@
 // Common code for history map index.htm and edit.htm
 
+var azureWS = "https://moylgrove-history.azurewebsites.net/";
+var imgUrl = azureWS + "images/";
+var apiUrl = azureWS + "api/";
+var sourceUrl = azureWS + "h/";
+var avUrl = azureWS + "av/";      // Audio
+
 function g(id) {return document.getElementById(id);}
 
 // Get query parameters

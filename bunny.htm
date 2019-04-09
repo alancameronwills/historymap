@@ -343,7 +343,7 @@
                         }
                     );
                     // Attach some extra data to the pin:
-                    pushpin.author = t.User;      // Author of the place
+                    pushpin.author = t.User || "_anon";      // Author of the place
                     pushpin.description = t.Text; // Description with photos etc
                     pushpin.RowKey = t.RowKey;    // Unique ID of the place
                     window.placeIndex[pushpin.RowKey] = pushpin;

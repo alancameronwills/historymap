@@ -1,113 +1,121 @@
 // Code for main page of History Map.
 
-// Function app URLs
-var imgUrl = "https://moylgrove-history.azurewebsites.net/images/";  // Photos
-var apiUrl = "https://moylgrove-history.azurewebsites.net/api/";    // Place text
-var avUrl = "https://moylgrove-history.azurewebsites.net/av/";      // Audio
+window.pinColor = "#A00000";
 
 // Reload with https unless testing locally.
 if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
     window.location = window.location.href.replace("http:", "https:");
 }
 
-window.pinColor = "#A00000";
 
-//
-// Keyboard search on left-side index of places.
-// As user types a place name, index scrolls. Punctuation ignored.
-// Up and down keys work. Hit Enter to open selected place.
-// After a few seconds inactivity, matching restarts at beginning of name.
-//
-window.khighlit = null; // Current scrolled-to but not opened place.
-var keystrokeTimestamp = null;  // Most recent keystroke
-var kstring = ""; // Name as typed so far
-var kselected = -1;
-// Called on key up anywhere in doc except search entry:
-function keyup(e) {
-    var t = new Date().getTime();
-    var category = "fail";
-    if (e.key.length == 1 && !e.altKey && !e.ctrlKey && !e.metaKey) {
-        var ch = e.key.toLocaleLowerCase();
-        if (ch >= "a" && ch <= "z") {
-            if (keystrokeTimestamp && t - keystrokeTimestamp < 2000) {
-                kstring += ch;
-            }
-            else {
-                kstring = ch;
-            }
-        }
-        if (e.cancelBubble != null) e.cancelBubble = true;
-        var toSelect = null;
-        for (var i in window.orderedList) {
-            if (orderedList[i].cf.localeCompare(kstring) >= 0) {
-                kselected = orderedList[i].id;
-                toSelect = "#h" + kselected; // ids assigned to UI lines in index
-                break;
-            }
-        }
-        if (toSelect) {
-            if (window.khighlit) { window.khighlit.removeClass("keySelectedItem"); }
-            window.khighlit = $(toSelect);
-            window.khighlit[0].scrollIntoView(); // [0] unwraps dom object from JQuery
-            window.khighlit.addClass("keySelectedItem"); // highlight selection
-            category = "found";
-        }
-        else { category = "not found"; }
-        keystrokeTimestamp = t;
-    }
-    else if (kselected >= 0 && e.keyCode == 27) { // esc
-        if (window.khighlit) { window.khighlit.removeClass("keySelectedItem"); }
-        keystrokeTimestamp = null;
-        kstring = "";
-        kselected = -1;
-    } else if (e.keyCode == 38 || e.keyCode == 40) { // arrows
-        if (window.khighlit) {
-            window.khighlit.removeClass("keySelectedItem");
-            var toSelect = e.keyCode == 40 ? window.khighlit.next() : window.khighlit.prev();
-            if (toSelect) {
-                window.khighlit = toSelect;
-                window.khighlit[0].scrollIntoView();
-                window.khighlit.addClass("keySelectedItem");
-                kselected = toSelect[0].id.substr(1);
-                category = "arrow";
-            }
-            keystrokeTimestamp = t;
-        }
-    } else if (kselected >= 0 && e.keyCode < 16) { // Enter or Tab keys
-        go(kselected, true); // Show the selected item
-        keystrokeTimestamp = null;
-        kstring = "";
-        kselected = -1;
-        category = "go";
+// Initialization on document loaded:
+$(function() {
+    window.noHistory = window.location.queryParameters.history == "0";
+    if (window.noHistory) {
+        // Map is just for identifying places. No text or photos.
+        $("#helpButton").hide();
+        $("#historyTitle").text("Places");
     }
 
-    // Monitor stats of user behaviour:
-    appInsights.trackEvent("key", { "category": category }, {});
+    // Initialize zone selection UI
+    $("#zoneSelect")[0].action = updateZoneChoice;
+    $(".dropdown").hover(
+        function () { $(this).children(".dropDownMenu").css("display", "block"); },
+        function () { $(this).children(".dropDownMenu").css("display", "none")[0].action(); }
+    );
+});
+
+// On map API has completed loading
+function loadMap() {
+    $(function () {
+        var mapCenter = new Microsoft.Maps.Location(52.068287, -4.747708);
+        var centerFromCookie = getCookie("mapCenter");
+        if (centerFromCookie) {
+            mapCenter = Microsoft.Maps.Location.parseLatLong(centerFromCookie) || mapCenter;
+        }
+        window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
+            {
+                mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+                center: mapCenter,
+                showLocateMeButton: false,
+                disableKeyboardInput: true,
+                zoom: 16
+            });
+        setUpMapClick();
+        if (!window.noHistory) {
+            setUpMapMenu();
+        }
+
+        // Detrmine which zone we're looking at and display the points
+        var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
+        window.zoneSelection = zoneChoice;
+        showZoneChoiceOnUI(zoneChoice);
+        displayZone(zoneChoice);
+    });
 }
 
 
-// Highlight place on the left-side index.
-// item == null -> just clear the selection
-// fromList : user clicked the place on the index, not the map
-function selectOnList(item, fromList) {
-    // Clear keystroke-match highlight:
-    if (window.khighlit) { window.khighlit.removeClass("keySelectedItem"); }
-    // Clear highlight of currently showing place:
-    if (window.selectedItem) {
-        $("#" + window.selectedItem).removeClass("selectedItem");
+// Display the map pins and side index for the selected zones.
+function displayZone(zoneChoice) {
+    // First clear the existing content:
+    clearMapSelection();
+    window.items = {};
+    window.map.entities.clear();
+    window.interesting = [];
+    window.orderedList = [];
+
+    $("#houselist").html("<p>Getting places...</p>");
+
+    // Download from server:
+    var fetchApi = apiUrl + "places?z=" + zoneChoice.replace(/ /g, '+');
+
+    if (typeof fetch !== 'undefined') {
+        appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "true" }, {});
+        fetch(fetchApi)
+            .then(function (response) { return response.json(); })
+            .then(gotTable) // Async
+            .catch(function (err) {
+                window.alert("Sorry - problem getting the map data. Please tell alan@pantywylan.org");
+            });
+    } else {
+        appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "false" }, {});
+        $.get(fetchApi, function (data, status) {
+            gotTable(data);
+        });
     }
-    if (item) {
-        window.selectedItem = "h" + item;
-        var jItem = $("#" + window.selectedItem);
-        jItem.addClass("selectedItem");
-        if (!fromList) {
-            // User clicked on map, so need to scroll index.
-            jItem[0].scrollIntoView();
-            //var offset = jItem.offset();
-            //$("#houselist").animate({scrollTop:offset.top-20});
-        }
-    }
+    window.loadedTime = new Date().getTime();
 }
+
+
+// List of places in the selected zones has arrived.
+function gotTable(results) {
+    if (results == null) return;
+    window.orderedList = [];
+    window.interesting = [];
+    for (var i = 0, t; t = results[i]; i++) {
+        if (!t.Title) continue; // index or other housekeeping
+        try {
+            var place = makePlace(t);
+            // For lookup by id:
+            window.items[place.id] = place;
+            makePin(place);
+        } catch (error) { }
+    }
+    showPlaceList();
+
+    // NoHistory is a queryparameter set if we're just showing a map of house names.
+    if (!window.noHistory) {
+        // Census and gravestone data currently only available for Moylgrove.            
+        $("#searchPanel")[0].style.visibility = 
+            (window.zoneSelection.indexOf("moylgrove")>=0) ? "visible" : "hidden";
+    }
+
+    if (window.location.queryParameters.place) {
+        go(window.location.queryParameters.place, true);
+    }
+
+}
+
 
 // Highlight place on map.
 // place == null to just clear the selection
@@ -252,9 +260,7 @@ function showMainText(id, place) {
             + "<td><a href='#' onclick='editPlace(\"{0}\",\"{1}\")'>{4}</a></td>"
             + "<td align='center'><a href='#' onclick='showLink(\"{0}\")'>Share</a></td>"
             + "<td align='right'><a href='mailto:?subject=Directions&body=Click this link for directions:%0A https://www.google.co.uk/maps/dir//{2},{3}/@{2},{3},11z '>Send directions</a></td></tr></table>")
-            .format(id, place.title.replace("'", ""), place.location.latitude, place.location.longitude,
-                (window.isAdmin ? "Edit" : "Add/change pics or info")
-            ));
+            .format(id, place.title.replace("'", ""), place.location.latitude, place.location.longitude, "Edit"));
     description = description.replace(/{{/, "<article src='").replace(/}}/, "'/>");
     $("#textbox").html(description);
     $("#textbox").fadeIn("slow");
@@ -501,12 +507,7 @@ function setUpMapMenu() {
                     eventHandler: function () {
                         var loc = window.menuBox.getLocation();
                         window.menuBox.setOptions({ visible: false });
-                        if (window.isAdmin) {
-                            window.open("editor.htm?cmd=add&lat={0}&long={1}".format(loc.latitude, loc.longitude), "_blank");
-                        }
-                        else {
-                            window.open("mailto:alan@pantywylan.org?subject=add%20{0},{1}&body=Please describe what you'd like to add, and attach any photos:".format(loc.latitude, loc.longitude), "_self");
-                        }
+                        window.open("editor.htm?cmd=add&lat={0}&long={1}".format(loc.latitude, loc.longitude), "_blank");
                     }
                 }
             ]
@@ -713,33 +714,6 @@ function showPlaceList() {
     $("#houselist").html(listContent);
 }
 
-// List of places in the selected zones has arrived.
-function gotTable(results) {
-    if (results == null) return;
-    window.orderedList = [];
-    window.interesting = [];
-    for (var i = 0, t; t = results[i]; i++) {
-        if (!t.Title) continue; // index or other housekeeping
-        try {
-            var place = makePlace(t);
-            // For lookup by id:
-            window.items[place.id] = place;
-            makePin(place);
-        } catch (error) { }
-    }
-    showPlaceList();
-
-    if (!window.noHistory) {
-        setUpMapMenu();
-        $("#searchPanel")[0].style.visibility = "visible";
-    }
-
-    if (window.location.queryParameters.place) {
-        go(window.location.queryParameters.place, true);
-    }
-
-}
-
 // User selected a map type - OS or aerial photo.
 function mapChange(v) {
     if (v == "os") {
@@ -799,81 +773,4 @@ function setZoneChoice(zoneChoice) {
     displayZone(zoneChoice);
 }
 
-// Display the map pins and side index for the selected zones.
-function displayZone(zoneChoice) {
-    // First clear the existing content:
-    clearMapSelection();
-    window.items = {};
-    window.map.entities.clear();
-    window.interesting = [];
-    window.orderedList = [];
-
-    $("#houselist").html("");
-
-    $("#houselist").html("<p>Getting places...</p>");
-
-    // Download from server:
-    var fetchApi = apiUrl + "places?z=" + zoneChoice.replace(/ /g, '+');
-
-    if (typeof fetch !== 'undefined') {
-        appInsights.trackEvent("load", { admin: isAdmin, noHistory: window.noHistory, fetch: "true" }, {});
-        fetch(fetchApi)
-            .then(function (response) { return response.json(); })
-            .then(gotTable)
-            .catch(function (err) {
-                window.alert("Sorry - problem getting the map data. Please tell alan@pantywylan.org");
-            });
-    } else {
-        appInsights.trackEvent("load", { admin: isAdmin, noHistory: window.noHistory, fetch: "false" }, {});
-        $.get(fetchApi, function (data, status) {
-            gotTable(data);
-        });
-    }
-    window.loadedTime = new Date().getTime();
-}
-
-// On map API has completed loading
-function loadMap() {
-    $(document).ready(function () {
-        document.body.onkeyup = keyup;
-        window.isAdmin = true; //window.location.queryParameters.edit == "YrHenYsgol";
-        window.noHistory = window.location.queryParameters.history == "0";
-        if (window.noHistory) {
-            // Map is just for identifying places. No text or photos.
-            $("#helpButton").hide();
-            $("#historyTitle").text("Places");
-        }
-        var mapCenter = new Microsoft.Maps.Location(52.068287, -4.747708);
-        var centerFromCookie = getCookie("mapCenter");
-        if (centerFromCookie) {
-            mapCenter = Microsoft.Maps.Location.parseLatLong(centerFromCookie) || mapCenter;
-        }
-        window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
-            {
-                mapTypeId: Microsoft.Maps.MapTypeId.aerial,
-                center: mapCenter,
-                showLocateMeButton: false,
-                disableKeyboardInput: true,
-                zoom: 16
-            });
-        setUpMapClick();
-
-        // Detrmine which zone we're looking at and display the points
-        $(".dropdown").hover(
-            function () { $(this).children(".dropDownMenu").css("display", "block"); },
-            function () { $(this).children(".dropDownMenu").css("display", "none"); updateZoneChoice(); }
-        );
-        var zoneChoice = getZoneChoiceFromCookie();
-        if (!zoneChoice) {
-            if (location.queryParameters.place) {
-
-            }
-            else zoneChoice = "moylgrove";
-        }
-        var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
-        window.zoneSelection = zoneChoice;
-        showZoneChoiceOnUI(zoneChoice);
-        displayZone(zoneChoice);
-    })
-};
 
