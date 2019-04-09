@@ -338,7 +338,7 @@
                         new Microsoft.Maps.Location(t.Latitude, t.Longitude),
                         {
                             title: t.Title,  // label
-                            text: t.User[0], // first letter of author's name
+                            text: t.User? t.User[0] : "", // first letter of author's name
                             enableHoverStyle: true
                         }
                     );
