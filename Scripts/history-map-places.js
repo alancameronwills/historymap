@@ -3,7 +3,7 @@
 // As user types a place name, index scrolls. Punctuation ignored.
 // Up and down keys work. Hit Enter to open selected place.
 // After a few seconds inactivity, matching restarts at beginning of name.
-//
+// 
 
 window.khighlit = null; // Current scrolled-to but not opened place.
 var keystrokeTimestamp = null;  // Most recent keystroke
