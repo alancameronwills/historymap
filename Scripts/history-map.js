@@ -69,7 +69,7 @@ function displayZone(zoneChoice) {
     // Download from server:
     var fetchApi = apiUrl + "places?z=" + zoneChoice.replace(/ /g, '+');
 
-    if (typeof fetch !== 'undefined') {
+    if (typeof fetch === 'undefined') {
         appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "true" }, {});
         fetch(fetchApi)
             .then(function (response) { return response.json(); })
