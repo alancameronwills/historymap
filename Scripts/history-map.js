@@ -470,6 +470,7 @@ function go(id, fromList) {
         return;
     }
     if (place.principal && place.principal>0) {
+        window.map.setView({ center: place.location });
         retryZone(id, false);
         return;
     }
@@ -484,6 +485,7 @@ function go(id, fromList) {
         getGraves(id);
         getAudio(id);
     }
+    
 
     // Monitor user behaviour: How long after opening map places are opened.
     var t = 0;
