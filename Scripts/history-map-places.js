@@ -102,3 +102,24 @@ function selectOnList(item, fromList) {
         }
     }
 }
+
+
+function showPlaceList() {
+    window.orderedList = window.orderedList.sort(function (a, b) {
+        return a.cf.localeCompare(b.cf);
+    });
+    window.interesting = window.interesting.sort(function (a, b) {
+        return b.updated - a.updated;
+    }).slice(0, 5);
+
+    var listContent = "";
+    for (var i in window.orderedList) {
+        var item = window.orderedList[i];
+        var isInteresting = !window.noHistory && $.inArray(item, window.interesting) >= 0;
+        var isPrincipal = !!item.principal;
+
+        listContent += "<div id='h{0}' {2} onClick='go(\"{0}\",true)' title='\"{0}\"'>{1}</div>".
+            format(item.id, item.title, (isPrincipal ? "class='principal'" : isInteresting ? "class='interesting'" : ""));
+    }
+    $("#houselist").html(listContent);
+}

@@ -53,6 +53,11 @@
             background-color: rgb(223, 223, 179);
         }
 
+        .principal {
+            background-color: rgb(7, 110, 245);
+            color: white;
+        }
+
         .selectedItem {
             background-color: #404040;
             color: white;

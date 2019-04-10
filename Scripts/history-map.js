@@ -61,8 +61,6 @@ function displayZone(zoneChoice) {
     clearMapSelection();
     window.items = {};
     window.map.entities.clear();
-    window.interesting = [];
-    window.orderedList = [];
 
     $("#houselist").html("<p>Getting places...</p>");
 
@@ -696,24 +694,6 @@ function makePin(place) {
 // Title of principal must be ~= name of zone
 function zoneFromPrincipal(place) {
     return place.title.toLocaleLowerCase().replace(/ /, "");
-}
-
-function showPlaceList() {
-    window.orderedList = window.orderedList.sort(function (a, b) {
-        return a.cf.localeCompare(b.cf);
-    });
-    window.interesting = window.interesting.sort(function (a, b) {
-        return b.updated - a.updated;
-    }).slice(0, 5);
-
-    var listContent = "";
-    for (var i in window.orderedList) {
-        var item = window.orderedList[i];
-        var isInteresting = !window.noHistory && $.inArray(item, window.interesting) >= 0;
-
-        listContent += "<div id='h{0}' {2} onClick='go(\"{0}\",true)' title='\"{0}\"'>{1}</div>".format(item.id, item.title, (isInteresting ? "class='interesting'" : ""));
-    }
-    $("#houselist").html(listContent);
 }
 
 // User selected a map type - OS or aerial photo.
