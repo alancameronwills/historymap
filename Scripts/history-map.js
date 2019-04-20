@@ -1,16 +1,18 @@
 // Code for main page of History Map.
 
-window.pinColor = "#A00000";
-
 // Reload with https unless testing locally.
 if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
     window.location = window.location.href.replace("http:", "https:");
 }
 
 
+window.pinColor = "#A00000";
+
+// noHistory --> map is just for identifying places - no text, photos, search, etc
+window.noHistory = window.location.queryParameters.history == "0";
+
 // Initialization on document loaded:
 $(function() {
-    window.noHistory = window.location.queryParameters.history == "0";
     if (window.noHistory) {
         // Map is just for identifying places. No text or photos.
         $("#helpButton").hide();
@@ -26,7 +28,7 @@ $(function() {
 });
 
 // On map API has completed loading
-function loadMap() {
+function mapModuleLoaded() {
     $(function () {
         var mapCenter = new Microsoft.Maps.Location(52.068287, -4.747708);
         var centerFromCookie = getCookie("mapCenter");
@@ -44,6 +46,7 @@ function loadMap() {
         setUpMapClick();
         if (!window.noHistory) {
             setUpMapMenu();
+            setUpPlacePopup(window.map);
         }
 
         // Detrmine which zone we're looking at and display the points
@@ -54,6 +57,26 @@ function loadMap() {
     });
 }
 
+function setUpPlacePopup(map) {
+                //Create an infobox to show start of place text on hover
+                window.placePopup = new Microsoft.Maps.Infobox(map.getCenter(), {
+                    visible: false,
+                    showCloseButton: false,
+                    offset: new Microsoft.Maps.Point(0, 10),
+                    description: "",
+                    maxWidth: 400,
+                    maxHeight: 200,
+                    showPointer: true
+                });
+                window.placePopup.setMap(map);
+                
+                Microsoft.Maps.Events.addHandler(window.placePopup, 'click', function (e) {
+                    var place = e.target.place;
+                    if (place) {
+                        go(place.id, false);
+                    }
+                });
+}
 
 // Display the map pins and side index for the selected zones.
 function displayZone(zoneChoice) {
@@ -459,6 +482,7 @@ function retryZone(id, includePrevious) {
 
 // On user clicks a place
 function go(id, fromList) {
+    window.placePopup.setOptions({ visible: false });
     $("#message").hide();
     $("#blog").fadeOut();
     var place = window.items[id];
@@ -524,15 +548,14 @@ function setUpMapMenu() {
 
 function setUpMapClick() {
     Microsoft.Maps.Events.addHandler(window.map, "click", function (e) {
-        clearMapSelection();
+        if ($("#message").is(":visible")) {
+            $("#message").fadeOut();
+        }
+        else { clearMapSelection(); }
     });
 }
 
 function clearMapSelection() {
-    if ($("#message").is(":visible")) {
-        $("#message").fadeOut();
-    }
-    else {
         $("#textbox").fadeOut();
         $("#audiodiv").hide();
         $("#firstpic").fadeOut();
@@ -543,7 +566,6 @@ function clearMapSelection() {
         selectOnMap(null, false);
         selectOnList(null, false);
         if (window.fader != null) { clearInterval(fader); window.fader = null; }
-    }
     if (window.menuBox != null) { window.menuBox.setOptions({ visible: false }); }
 }
 
@@ -686,9 +708,45 @@ function makePin(place) {
                         go(e.primitive.place.id, false);
                     }
                 });
+                Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
+                    var place = e.primitive.place;
+                    if (!place) return;
+                    var striptext = place.text.replace(/<.*?>/gs,"").trim();
+                    if (!striptext) return;
+                    var shorttext = striptext.length > 200 
+                        ? striptext.substr(0, 200) + "..."
+                        : striptext;
+                    var picUrl = "";
+                    if (place.pic1 && place.pic1[0] != "!") {
+                        picUrl = place.pic1;
+                    } else if (place.pic2) {
+                        picUrl = place.pic2.split(";")[0];
+                    }
+                    if (picUrl) {
+                        picUrl = picUrl.replace(/^images\//, imgUrl);
+                        shorttext = "<table width='100%' border='0'><tr valign='top'><td>" +
+                            "<img src='" + picUrl + "' width=100 align='left' />" +
+                            "</td><td>" + shorttext + "</td></tr></table>";
+                    }
+                    
+                    window.placePopup.setOptions({
+                        location: e.target.getLocation(),
+                        description: shorttext,
+                        title: place.title,
+                        visible: true
+                    });
+                    window.placePopup.place = place;
+                });
+                Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
+                    window.placePopup.setOptions({ visible: false });
+                });
             }
         }
     }
+}
+
+function strip (s) {
+    return ;
 }
 
 // Title of principal must be ~= name of zone
