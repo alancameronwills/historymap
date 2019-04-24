@@ -1,101 +1,142 @@
 <!DOCTYPE html>
 <html>
-    <head>
-        <style>
-html, body {
-	margin: 0;
-	padding: 0;
-	height: 100%;
-}
 
-body {
-	margin: 30px;
-	background: rgb(15, 15, 15);
-	color: rgb(134, 254, 25);
-	text-shadow: 0 0 rgba(134, 254, 25, 0.5);
-	font-family: 'Arial', sans-serif;
-	text-align: center;
-}
+<head>
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-.compass {
-	position: relative;
-	width: 260px;
-	height: 260px;
-	margin: 20px auto;
-	background: #222;
-	padding: 20px;
-	border-radius: 40px;
-	border: 5px solid #444;
-	overflow: hidden;
-}
+    <!--<script src="Scripts/fulltilt.min.js"></script>-->
+    
+    <style>
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
 
-.compass .disc {
-	position: absolute;
-	top: 20px;
-	left: 20px;
-	z-index: 200;
-	background: url('img/compass.svg');
-	width: 260px;
-	height: 260px;
-	background-size: 100%;
-}
+        body {
+            margin: 30px;
+            background: rgb(15, 15, 15);
+            color: rgb(134, 254, 25);
+            text-shadow: 0 0 rgba(134, 254, 25, 0.5);
+            font-family: 'Arial', sans-serif;
+            text-align: center;
+        }
 
-.compass .arrow {
-	position: absolute;
-	top: 20px;
-	left: 20px;
-	z-index: 1000;
-	background: url('img/arrow.svg');
-	width: 260px;
-	height: 260px;
-	background-size: 100%;
-}
-</style>
-<script>
-    document.addEventListener("DOMContentLoaded", function(event) {
+        .compass {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            margin: 20px auto;
+            background: #222;
+            padding: 20px;
+            border-radius: 40px;
+            border: 5px solid #444;
+            overflow: hidden;
+        }
 
-if (window.DeviceOrientationEvent) {
-window.addEventListener('deviceorientation', function(eventData) {
-  // gamma: Tilting the device from left to right. Tilting the device to the right will result in a positive value.
-var tiltLR = eventData.gamma;
-// beta: Tilting the device from the front to the back. Tilting the device to the front will result in a positive value.
-var tiltFB = eventData.beta;
-// alpha: The direction the compass of the device aims to in degrees.
-var dir = eventData.alpha
+        .compass .disc {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 200;
+            background: url('img/compass.svg');
+            width: 260px;
+            height: 260px;
+            background-size: 100%;
+        }
 
-// Call the function to use the data on the page.
-deviceOrientationHandler(tiltLR, tiltFB, dir);
-}, false);
-} else {
-document.getElementById("msg").innerHTML = "No API."
-};
+        .compass .arrow {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            z-index: 1000;
+            background: url('img/arrow.svg');
+            width: 260px;
+            height: 260px;
+            background-size: 100%;
+        }
+    </style>
+    <script>
+        function g (id) {return document.getElementById(id);}
+        
+        document.addEventListener("DOMContentLoaded", function (event) {
 
-function deviceOrientationHandler(tiltLR, tiltFB, dir) {
-  document.getElementById("tiltLR").innerHTML = Math.ceil(tiltLR);
-  document.getElementById("tiltFB").innerHTML = Math.ceil(tiltFB);
-  document.getElementById("direction").innerHTML = Math.ceil(dir);
-  
-  // Rotate the disc of the compass.
-  var compassDisc = document.getElementById("compassDiscImg");
-  compassDisc.style.webkitTransform = "rotate("+ dir +"deg)";
-  compassDisc.style.MozTransform = "rotate("+ dir +"deg)";
-  compassDisc.style.transform = "rotate("+ dir +"deg)";
-}
+            if (window.DeviceOrientationEvent) {
+                window.addEventListener('deviceorientation', function (eventData) {
+                    // gamma: Tilting the device from left to right. Tilting the device to the right will result in a positive value.
+                    var tiltLR = eventData.gamma;
+                    // beta: Tilting the device from the front to the back. Tilting the device to the front will result in a positive value.
+                    var tiltFB = eventData.beta;
+                    // alpha: The direction the compass of the device aims to in degrees.
+                    var dir = eventData.alpha
 
-});
-</script>
-    </head>
+                    // Call the function to use the data on the page.
+                    deviceOrientationHandler(tiltLR, tiltFB, dir);
+                }, false);
+            } else {
+                g("msg").innerHTML = "No API."
+            };
+
+
+            function deviceOrientationHandler(tiltLR, tiltFB, dir) {
+                g("tiltLR").innerHTML = Math.ceil(tiltLR);
+                g("tiltFB").innerHTML = Math.ceil(tiltFB);
+                g("direction").innerHTML = Math.ceil(dir);
+                var orientation = screen.msOrientation || screen.mozOrientation || (screen.orientation || {}).type;
+                g("orientation").innerHTML = "" + orientation;
+
+                var adir = (dir + (orientation === "landscape-primary" ? 270 : 
+                        orientation === "landscape-secondary" ? 90 : 0)) % 360;
+                if (tiltFB < -90 || tiltFB > 90) adir = (adir+180)%360;
+
+                setCompass(adir);
+            }
+
+        });
+        /*
+       FULLTILT.getDeviceOrientation({'type':'world'})
+        .then (function(orientationControl){
+            g("msg").innerHTML = "go";
+            orientationControl.listen(function() {
+                g("msg").innerHTML = "get";
+                var euler = orientationControl.getScreenAdjustedEuler();
+                setCompass(euler.alpha);
+                g("tiltLR").innerHTML = Math.ceil(euler.gamma);
+                g("tiltFB").innerHTML = Math.ceil(euler.beta);
+                g("direction").innerHTML = Math.ceil(euler.alpha);
+            });
+        })
+        .catch(function (m){
+            g("msg").innerHTML = m;
+        });
+        */
+
+        function setCompass(adir){
+                // Rotate the disc of the compass.
+                var compassDisc = g("compassDiscImg");
+                compassDisc.style.webkitTransform = "rotate(" + adir + "deg)";
+                compassDisc.style.MozTransform = "rotate(" + adir + "deg)";
+                compassDisc.style.transform = "rotate(" + adir + "deg)";
+
+        }
+    </script>
+</head>
+
 <body>
     <div id="msg"></div>
-	<div class="compass">
-		<div class="arrow"></div>
-		<div class="disc" id="compassDiscImg"></div>
-	</div>
+    <div class="compass">
+        <div class="arrow"></div>
+        <div class="disc" id="compassDiscImg"></div>
+    </div>
 
-	<div class="orientation-data">
-		<div>Tilt F-B: <span id="tiltFB"></span></div>
-		<div>Tilt L-R: <span id="tiltLR"></span></div>
-		<div>Direction: <span id="direction"></span></div>
-	</div>
+    <div class="orientation-data">
+        <div>Tilt F-B: <span id="tiltFB"></span></div>
+        <div>Tilt L-R: <span id="tiltLR"></span></div>
+        <div>Direction: <span id="direction"></span></div>
+        <div>Orientation:<span id="orientation"></span></div>
+    </div>
 </body>
+
 </html>
