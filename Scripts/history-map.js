@@ -711,7 +711,7 @@ function makePin(place) {
                 Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
                     var place = e.primitive.place;
                     if (!place) return;
-                    var striptext = place.text.replace(/<.*?>/gs,"").trim();
+                    var striptext = place.text.replace(/<[^>]*>/g,"").trim();
                     if (!striptext) return;
                     var shorttext = striptext.length > 200 
                         ? striptext.substr(0, 200) + "..."
