@@ -12,7 +12,7 @@ window.pinColor = "#A00000";
 window.noHistory = window.location.queryParameters.history == "0";
 
 // Initialization on document loaded:
-$(function() {
+$(function () {
     if (window.noHistory) {
         // Map is just for identifying places. No text or photos.
         $("#helpButton").hide();
@@ -49,6 +49,8 @@ function mapModuleLoaded() {
             setUpPlacePopup(window.map);
         }
 
+        Microsoft.Maps.Events.addHandler(map, 'viewchangeend', setStreetOsLayer);
+
         // Detrmine which zone we're looking at and display the points
         var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
         window.zoneSelection = zoneChoice;
@@ -57,25 +59,41 @@ function mapModuleLoaded() {
     });
 }
 
+// OS Landranger Map only goes up to zoom 17. Above that, display OS Standard.
+function setStreetOsLayer() {
+    if (window.map.getZoom() > 17 && window.map.getMapTypeId() == "os") {
+        if (!window.streetOSLayer) {
+            window.streetOSLayer = new Microsoft.Maps.TileLayer({
+                mercator: new Microsoft.Maps.TileSource({
+                    uriConstructor: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{zoom}/{x}/{y}.png?key=EdWjANvDrAHw6PiwplDo'
+                })
+            });
+            map.layers.insert(window.streetOSLayer);
+        }
+        else window.streetOSLayer.setVisible(1);
+    }
+    else { if (window.streetOSLayer) window.streetOSLayer.setVisible(0); }
+}
+
 function setUpPlacePopup(map) {
-                //Create an infobox to show start of place text on hover
-                window.placePopup = new Microsoft.Maps.Infobox(map.getCenter(), {
-                    visible: false,
-                    showCloseButton: false,
-                    offset: new Microsoft.Maps.Point(0, 10),
-                    description: "",
-                    maxWidth: 400,
-                    maxHeight: 200,
-                    showPointer: true
-                });
-                window.placePopup.setMap(map);
-                
-                Microsoft.Maps.Events.addHandler(window.placePopup, 'click', function (e) {
-                    var place = e.target.place;
-                    if (place) {
-                        go(place.id, false);
-                    }
-                });
+    //Create an infobox to show start of place text on hover
+    window.placePopup = new Microsoft.Maps.Infobox(map.getCenter(), {
+        visible: false,
+        showCloseButton: false,
+        offset: new Microsoft.Maps.Point(0, 10),
+        description: "",
+        maxWidth: 400,
+        maxHeight: 200,
+        showPointer: true
+    });
+    window.placePopup.setMap(map);
+
+    Microsoft.Maps.Events.addHandler(window.placePopup, 'click', function (e) {
+        var place = e.target.place;
+        if (place) {
+            go(place.id, false);
+        }
+    });
 }
 
 // Display the map pins and side index for the selected zones.
@@ -127,14 +145,13 @@ function gotTable(results) {
     // NoHistory is a queryparameter set if we're just showing a map of house names.
     if (!window.noHistory) {
         // Census and gravestone data currently only available for Moylgrove.            
-        $("#searchPanel")[0].style.visibility = 
-            (window.zoneSelection.indexOf("moylgrove")>=0) ? "visible" : "hidden";
+        $("#searchPanel")[0].style.visibility =
+            (window.zoneSelection.indexOf("moylgrove") >= 0) ? "visible" : "hidden";
     }
 
     if (window.location.queryParameters.place) {
         go(window.location.queryParameters.place, true);
     }
-
 }
 
 
@@ -177,12 +194,12 @@ function proximity(place) {
     var min = 1000000;
     window.orderedList.forEach(function (otherPlace) {
         if (otherPlace === place) return false;
-        var dlat = (place.location.latitude-otherPlace.location.latitude)/latKm;
-        var dlon = (place.location.longitude - otherPlace.location.longitude)/longKm;
-        var product = dlat*dlat + dlon*dlon;
-        if (product < min) min= product;
+        var dlat = (place.location.latitude - otherPlace.location.latitude) / latKm;
+        var dlon = (place.location.longitude - otherPlace.location.longitude) / longKm;
+        var product = dlat * dlat + dlon * dlon;
+        if (product < min) min = product;
     });
-    return min<16 ? 19 : min < 50 ? 17 : 16;
+    return min < 16 ? 19 : min < 50 ? 17 : 16;
 }
 
 
@@ -466,13 +483,12 @@ function retryZone(id, includePrevious) {
     }
     doingRetry = id;
     // Retrieve place from server:
-    $.get(apiUrl + "place?id="+id, function(data, status){
+    $.get(apiUrl + "place?id=" + id, function (data, status) {
         if (data.length == 0) return;
         // A zone the place is in:
-        var zone = data[0].HomeZone; 
+        var zone = data[0].HomeZone;
         if (zone) {
-            if (window.zoneSelection.indexOf(zone) < 0)
-            {
+            if (window.zoneSelection.indexOf(zone) < 0) {
                 setZoneChoice((includePrevious ? window.zoneSelection + " " : "") + zone);
             }
         }
@@ -491,7 +507,7 @@ function go(id, fromList) {
         retryZone(id, true);
         return;
     }
-    if (place.principal && place.principal>0) {
+    if (place.principal && place.principal > 0) {
         window.map.setView({ center: place.location });
         retryZone(id, false);
         return;
@@ -507,7 +523,7 @@ function go(id, fromList) {
         getGraves(id);
         getAudio(id);
     }
-    
+
 
     // Monitor user behaviour: How long after opening map places are opened.
     var t = 0;
@@ -556,16 +572,16 @@ function setUpMapClick() {
 }
 
 function clearMapSelection() {
-        $("#textbox").fadeOut();
-        $("#audiodiv").hide();
-        $("#firstpic").fadeOut();
-        $("#secondpic").fadeOut();
-        $("#message").fadeOut();
-        $("#census").fadeOut();
-        $("#blog").fadeOut().children("iframe").attr("src", null);
-        selectOnMap(null, false);
-        selectOnList(null, false);
-        if (window.fader != null) { clearInterval(fader); window.fader = null; }
+    $("#textbox").fadeOut();
+    $("#audiodiv").hide();
+    $("#firstpic").fadeOut();
+    $("#secondpic").fadeOut();
+    $("#message").fadeOut();
+    $("#census").fadeOut();
+    $("#blog").fadeOut().children("iframe").attr("src", null);
+    selectOnMap(null, false);
+    selectOnList(null, false);
+    if (window.fader != null) { clearInterval(fader); window.fader = null; }
     if (window.menuBox != null) { window.menuBox.setOptions({ visible: false }); }
 }
 
@@ -711,9 +727,9 @@ function makePin(place) {
                 Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
                     var place = e.primitive.place;
                     if (!place) return;
-                    var striptext = place.text.replace(/<[^>]*>/g,"").trim();
+                    var striptext = place.text.replace(/<[^>]*>/g, "").trim();
                     if (!striptext) return;
-                    var shorttext = striptext.length > 200 
+                    var shorttext = striptext.length > 200
                         ? striptext.substr(0, 200) + "..."
                         : striptext;
                     var picUrl = "";
@@ -728,7 +744,7 @@ function makePin(place) {
                             "<img src='" + picUrl + "' width=100 align='left' />" +
                             "</td><td>" + shorttext + "</td></tr></table>";
                     }
-                    
+
                     window.placePopup.setOptions({
                         location: e.target.getLocation(),
                         description: shorttext,
@@ -745,8 +761,8 @@ function makePin(place) {
     }
 }
 
-function strip (s) {
-    return ;
+function strip(s) {
+    return;
 }
 
 // Title of principal must be ~= name of zone
@@ -756,17 +772,14 @@ function zoneFromPrincipal(place) {
 
 // User selected a map type - OS or aerial photo.
 function mapChange(v) {
+    if (!window.map) return;
     if (v == "os") {
-        if (window.map.getZoom() > 17) { // Zoom out to minimum for OS
-            window.map.setView({ zoom: 17, mapTypeId: Microsoft.Maps.MapTypeId.ordnanceSurvey });
-        }
-        else {
-            window.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.ordnanceSurvey });
-        }
+        window.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.ordnanceSurvey });
     }
     else {
         window.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.aerial });
     }
+    setStreetOsLayer();
 }
 
 // From the drop-down menu.
