@@ -70,7 +70,8 @@
                     // beta: Tilting the device from the front to the back. Tilting the device to the front will result in a positive value.
                     var tiltFB = eventData.beta;
                     // alpha: The direction the compass of the device aims to in degrees.
-                    var dir = eventData.alpha
+                    // ... except that in Safari use webkitCompassHeading because alpha is relative to first use
+                    var dir = event.webkitCompassHeading ? event.webkitCompassHeading : eventData.alpha;                    
 
                     // Call the function to use the data on the page.
                     deviceOrientationHandler(tiltLR, tiltFB, dir);
