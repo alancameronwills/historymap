@@ -498,7 +498,7 @@ function retryZone(id, includePrevious) {
 
 // On user clicks a place
 function go(id, fromList) {
-    window.placePopup.setOptions({ visible: false });
+    if (window.placePopup) window.placePopup.setOptions({ visible: false });
     $("#message").hide();
     $("#blog").fadeOut();
     var place = window.items[id];
