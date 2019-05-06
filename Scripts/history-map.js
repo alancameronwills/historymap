@@ -182,7 +182,8 @@ function selectOnMap(place, fromList) {
 
             // Move place into view:
             window.map.setView({ zoom: newzoom });
-            window.map.setView({ center: place.location, centerOffset: { x: 20 /*window.innerWidth/4*/, y: 0 - window.innerHeight / 4 } });
+            var yOffset = window.noHistory ? 0 : 0 - window.innerHeight / 4 ;
+            window.map.setView({ center: place.location, centerOffset: { x: 20 /*window.innerWidth/4*/, y: yOffset } });
         }
     }
 }
