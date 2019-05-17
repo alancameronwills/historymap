@@ -28,12 +28,10 @@
     </style>
     
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="Scripts/history.js"></script>
     <script src="Scripts/azure-storage.common.js"></script>
     <script src="Scripts/azure-storage.table.js"></script>
     <script>
-
-        var clientIdGoogle = "618549524630-84s1ilqebb28o52jo82ou1kib9ajfmgp.apps.googleusercontent.com"; // Client_Google_Id
-        var clientSecretGoogle = "gI0G78GYlQgqYOAm0HISEM4-"; // Client_Google_Secret
 
         function signin(provider)
         {
@@ -43,7 +41,7 @@
         function signinGoogle()
         {
 
-            var url = "https://accounts.google.com/o/oauth2/v2/auth?client_id="+ clientIdGoogle 
+            var url = "https://accounts.google.com/o/oauth2/v2/auth?client_id="+ window.keys.Client_Google_Id 
             + "&redirect_uri=" + window.location.origin + "/history/signin-google.htm"
             + "&response_type=token&scope=profile email";
             window.open(url, "signin");
@@ -51,7 +49,7 @@
         function ajaxTest()
         {
             
-            $.ajax(  "https://history-auth-moylgrove.azurewebsites.net/api/HttpTriggerCSharp1?code=VD1eJRugfa0sNGVT3e86F9K7A7FNAsz//h4H40n2D86mhBxbtEgA7g==")
+            $.ajax(  "https://history-auth-moylgrove.azurewebsites.net/api/HttpTriggerCSharp1?code=" + window.keys.Client_HttpTrigger_FK)
             .always(function (data, status, jqXHR){
                 if (status == "success")
                 {
