@@ -572,7 +572,7 @@ function onSavePlace() {
 
     var jsn = JSON.stringify(s);
     fetch(apiUrl + "updateplace?code=" + window.keys.Client_UpdatePlace_FK, 
-        {
+        { 
             body: jsn,
             headers: {
                 'content-type': 'application/json'
