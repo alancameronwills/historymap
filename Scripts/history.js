@@ -17,6 +17,22 @@ location.search.substr(1).split("&").forEach(function (pair) {
         decodeURIComponent(parts[1].replace(/\+/g, " "));
 });
 
+// Placeholder replaced in some scripts
+if (!onKeysArrived) {function onKeysArrived(){}}
+
+// On initialization, get API keys
+$(function() {
+    $.ajax({
+        url: 'https://moylgrove-history.azurewebsites.net/api/Keys?code=5gJHMkN6fOy5OaQkRslNe884xX2Hlb4kMGavabHETYxT5nNsbvQm6A==',
+        type: 'GET',
+        contentType: 'application/json',
+        success: function (data, e, r) {
+            window.keys = data;
+            onKeysArrived();
+        }
+    });
+});
+
 // For searching and sorting place names
 // Remove puntuation, spacing, Welsh chars, so that Tŷ Wylan == Ty-wylan
 function comparable(title) {
@@ -24,7 +40,9 @@ function comparable(title) {
         .replace(/[âêîôûŵŷ]/, function (c) { return { "â": "a", "ê": "e", "î": "i", "ô": "o", "û": "u", "ŵ": "w", "ŷ": "y" }[c]; }));
 }
 
+/// Default 30 days
 function setCookie(cname, cvalue, exdays) {
+    if (!exdays) exdays = 30;
     var d = new Date();
     d.setTime(d.getTime() + (exdays * 24 * 60 * 60 * 1000));
     document.cookie = cname + "=" + cvalue + "; expires=" + d.toUTCString();

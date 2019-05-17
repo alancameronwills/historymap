@@ -13,6 +13,7 @@ window.noHistory = window.location.queryParameters.history == "0";
 
 // Initialization on document loaded:
 $(function () {
+    
     if (window.noHistory) {
         // Map is just for identifying places. No text or photos.
         $("#helpButton").hide();
@@ -24,7 +25,7 @@ $(function () {
     $(".dropdown").hover(
         function () { $(this).children(".dropDownMenu").css("display", "block"); },
         function () { $(this).children(".dropDownMenu").css("display", "none")[0].action(); }
-    );
+    );    
 });
 
 // On map API has completed loading

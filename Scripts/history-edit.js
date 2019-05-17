@@ -1,9 +1,9 @@
 // Code for editor page of History Map 
 
-
-window.blobService = AzureStorage.createBlobService('moylgrovehistory',
-    'FYrLaOQASw3oLaEscmMUWtV70VbcTFGZXxwp0GuaTvJZKguM/C9AiI1nAKp6uw7AP4+k1gXwXTKNw9pcLDiFYA==');
-
+function onKeysArrived() {
+    window.blobService = AzureStorage.createBlobService('moylgrovehistory',
+        window.keys.Client_BlobService_K);
+}
 //
 // Initialize map and location
 //
@@ -37,6 +37,7 @@ function mapModuleLoaded() {
                     $("#subtitle")[0].value = t.Subtitle;
                     $("#year")[0].value = t.Year;
                     $("#postcode")[0].value = t.Postcode;
+                    $("#tags")[0].value = t.Tags || "";
                     $("#zoom")[0].checked = t.Zoom == "1";
                     $("#text").html(trimQuotes(t.Text));
                     ShowPhoto1(t.Pic1);
@@ -191,7 +192,7 @@ function onUpdatePlaceName() {
 // Used for a quick check whether anything on the form has changed
 function hash() {
     var s = gatherToSave();
-    var long = s.Title + s.Subtitle + s.Year + s.Postcode + s.Zoom + s.Text + s.Longitude + s.Latitude + s.Pic1 + s.Pic2;
+    var long = s.Title + s.Subtitle + s.Year + s.Postcode + s.Zoom + s.Text + s.Longitude + s.Latitude + s.Pic1 + s.Pic2 + s.Tags;
     return hashCode(long);
 }
 
@@ -525,6 +526,7 @@ function gatherToSave() {
     s.Subtitle = $("#subtitle")[0].value.trim();
     s.Year = $("#year")[0].value.trim();
     s.Postcode = $("#postcode")[0].value.trim();
+    s.Tags = $("#tags")[0].value.trim();
     s.Zoom = ($("#zoom")[0].checked ? "1" : "0");
     s.Text = $("#text").html().replace(fixLinks, "./"); // Links to other places in Map.
     var loc = window.map.getPinCenter();
@@ -569,7 +571,7 @@ function onSavePlace() {
     appInsights.trackEvent("save", { title: s.Title, user: window.userName }, {});
 
     var jsn = JSON.stringify(s);
-    fetch(apiUrl + "updateplace?code=sKLci6i34PkB9LlwMjgj3ukP7cj5yfTKpQcH0Mv7eQkgOrXi7/tB4w==",
+    fetch(apiUrl + "updateplace?code=" + window.keys.CLient_UpdatePlace_FK, 
         {
             body: jsn,
             headers: {
@@ -664,30 +666,6 @@ function checkSignin() {
             }
         }
     });
-
-    /*
-                $.ajax({url:apiUrl + "test", xhrFields:{withCredentials:true}}, function (data, status) {
-                        var n = data && data.headers ? data.headers["x-ms-client-principal-name"] : null;
-                        setUserName(n);
-                        setCookie("username", name, 1000);
-                        var idp = data && data.headers ? data.headers["x-ms-client-principal-idp"] : "";
-                        if (idp) {
-                            setCookie("useridp", idp, 1000);
-                        }
-                }); 
-     */
-    /*
-    fetch(apiUrl + "test", { credentials: "same-origin" })
-        .then(function (r){r.json();})
-        .then(function(r){
-            var name = r && r.headers ? r.headers["x-ms-client-principal-name"] : "";
-            setUserName(name, false);
-            setCookie("username", name, 1000);
-            var idp = r && r.headers ? r.headers["x-ms-client-principal-idp"] : "";
-            if (idp) {
-                setCookie("useridp", idp, 1000);
-            }
-        });  */
 }
 
 function setLengthColour(jqtext) {
