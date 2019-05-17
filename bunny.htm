@@ -190,9 +190,8 @@
     <script src="Scripts/azure-storage.common.js"></script>
     <script src="Scripts/azure-storage.blob.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
-    <script type='text/javascript'
-        src='https://www.bing.com/api/maps/mapcontrol?key=AryU5OBCq3C8xwf-lo7yDEdItLzoyMQfVuxBkgeZIXFXWDsqLW0WBuNmudPAqj3M&callback=loadMap'
-        async defer></script>
+
+    <!-- Loads map and utilities -->
     <script src="Scripts/history.js"></script>
     <script>
 
@@ -237,7 +236,7 @@
 
 
         // Called when the script for Bing maps has loaded and is ready to draw a map:
-        function loadMap() {
+        function mapModuleLoaded() {
             // Wait until all scripts have loaded:
             $(document).ready(function () {
 

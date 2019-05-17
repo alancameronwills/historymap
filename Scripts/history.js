@@ -28,6 +28,7 @@ $(function() {
         contentType: 'application/json',
         success: function (data, e, r) {
             window.keys = data;
+            if (mapModuleLoaded) {doLoadMap();}
             onKeysArrived();
         }
     });
@@ -129,4 +130,14 @@ function zoomed(lat, long) {
     return Math.sqrt(Math.pow(lat - f1lat, 2) + Math.pow(long - f1long, 2))
         + Math.sqrt(Math.pow(lat - f2lat, 2) + Math.pow(long - f2long, 2))
         < diameter;
+}
+
+function doLoadMap () {
+       var head= document.getElementsByTagName('head')[0];
+       var script= document.createElement('script');
+       script.async = true;
+       script.defer = true;
+       script.type= 'text/javascript';
+       script.src='https://www.bing.com/api/maps/mapcontrol?key='+window.keys.Client_Map_K+'&callback=mapModuleLoaded';
+       head.appendChild(script);
 }
