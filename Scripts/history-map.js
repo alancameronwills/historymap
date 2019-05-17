@@ -66,7 +66,7 @@ function setStreetOsLayer() {
         if (!window.streetOSLayer) {
             window.streetOSLayer = new Microsoft.Maps.TileLayer({
                 mercator: new Microsoft.Maps.TileSource({
-                    uriConstructor: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{zoom}/{x}/{y}.png?key=EdWjANvDrAHw6PiwplDo'
+                    uriConstructor: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{zoom}/{x}/{y}.png?key=' + window.keys.Client_OS_K 
                 })
             });
             map.layers.insert(window.streetOSLayer);
@@ -308,7 +308,7 @@ function showMainText(id, place) {
 }
 
 function getBlog(url) {
-    var geturl = url.replace("http://", "https://moylgrove-history.azurewebsites.net/api/fetch?code=wk50OFyaS7UzdnIPuIlePvMI6HdRUgbayS8lB8VyUyRjPizJyIEb7Q==&src=");
+    var geturl = url.replace("http://", "https://moylgrove-history.azurewebsites.net/api/fetch?code=" + window.keys.Client_Fetch_FK + "&src=");
     $("#blog").fadeIn().children("iframe").attr("src", geturl);
 }
 
@@ -462,7 +462,7 @@ function DeletePlace(id) {
 
 function DeleteConfirmed(id) {
     $.ajax({
-        url: apiUrl + 'remove?code=U38IwtWc7nxEpwdGjVwVAdLH/Y5evmuX3JZAxQiAwXSpkx48utDyMg==',
+        url: apiUrl + 'remove?code=' + window.keys.Client_Remove_FK, 
         type: 'PUT',
         data: '{ "RowKey" : "' + id + '"}',
         contentType: 'application/json',
