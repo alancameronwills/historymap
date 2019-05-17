@@ -199,8 +199,7 @@
         // At server end, a proxy translates this to the blob container, which is set for public access.
         var picUrl = "https://moylgrove-history.azurewebsites.net/bunnypic/";
 
-        window.blobService = AzureStorage.createBlobService('moylgrovehistory',
-            'FYrLaOQASw3oLaEscmMUWtV70VbcTFGZXxwp0GuaTvJZKguM/C9AiI1nAKp6uw7AP4+k1gXwXTKNw9pcLDiFYA=='); //Client_BlobService_K
+        window.blobService = AzureStorage.createBlobService('moylgrovehistory', window.keys.Client_BlobService_K);
 
         window.placeIndex = {};  // Pins on the map.
         window.laundryList = []; // Edited or created pins waiting to be uploaded to server.
@@ -491,7 +490,7 @@
                 User: pin.author // keep original author even if current user has edited
             };
             // Server function name is bunnyup. Includes an authorization code:
-            var url = "https://moylgrove-history.azurewebsites.net/api/bunnyup?code=NbvRWDCsLFzS/SRKZgE5T312dY/sXm9JJhRnZFg1HPJtp9B5XNSZwg=="; //Client_Bunnyup_FK
+            var url = "https://moylgrove-history.azurewebsites.net/api/bunnyup?code=" + window.keys.Client_Bunnyup_FK;
             /*$.ajax(url, {method:"PUT", data:s})
             .done(function(d, e, j){
                 var ix = window.laundryList.indexOf(pin);

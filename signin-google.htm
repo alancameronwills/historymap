@@ -59,7 +59,7 @@
                     $("#list").html("");
                     $("#sig").text("");
                     $("#ajaxResponse").html("");
-            $.ajax({ url: "https://moylgrove-history.azurewebsites.net/api/auth?code=y784SvbVAv76iR6Dn2/IV9ddXIELTNO3kY53k6/vj7/xqCGff5NJqA==",
+            $.ajax({ url: "https://moylgrove-history.azurewebsites.net/api/auth?code=" + window.keys.Client_Auth_FK,
                 type:"GET",
                 headers: {Authorization: "Bearer " + window.token} }) 
             .always(function (data, status, jqXHR){
