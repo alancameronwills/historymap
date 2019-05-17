@@ -659,7 +659,7 @@ function checkSignin() {
             var headers = data && data.responseJSON ? data.responseJSON.headers : {};
             var n = headers["x-ms-client-principal-name"] || null;
             setUserName(n);
-            setCookie("username", name, 1000);
+            setCookie("username", n, 1000);
             var idp = headers["x-ms-client-principal-idp"] || "";
             if (idp) {
                 setCookie("useridp", idp, 1000);
