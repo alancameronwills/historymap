@@ -571,7 +571,7 @@ function onSavePlace() {
     appInsights.trackEvent("save", { title: s.Title, user: window.userName }, {});
 
     var jsn = JSON.stringify(s);
-    fetch(apiUrl + "updateplace?code=" + window.keys.CLient_UpdatePlace_FK, 
+    fetch(apiUrl + "updateplace?code=" + window.keys.Client_UpdatePlace_FK, 
         {
             body: jsn,
             headers: {
