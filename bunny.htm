@@ -198,7 +198,9 @@
         // At server end, a proxy translates this to the blob container, which is set for public access.
         var picUrl = "https://moylgrove-history.azurewebsites.net/bunnypic/";
 
-        window.blobService = AzureStorage.createBlobService('moylgrovehistory', window.keys.Client_BlobService_K);
+        function onKeysArrived () {
+            window.blobService = AzureStorage.createBlobService('moylgrovehistory', window.keys.Client_BlobService_K);
+        }
 
         window.placeIndex = {};  // Pins on the map.
         window.laundryList = []; // Edited or created pins waiting to be uploaded to server.

@@ -664,7 +664,7 @@ function pinOptions(place) {
 
     // Principal < 0 is a town pin whose places are in the displayed area.
     // Otherwise, pin colour indicates whether there's much to read.
-    var thisPinColor = place.principal ? "blue" : place.text.length > 300 ? "#FF0000" : "#A00000";
+    var thisPinColor = place.principal ? "blue" : place.text.length > 100 ? "#FF0000" : "#A00000";
     return {
         title: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
         text: postcodeLetter, subTitle: place.subtitle, color: thisPinColor, enableHoverStyle: true
@@ -675,7 +675,7 @@ function pinOptions(place) {
 function makePin(place) {
     if (place.cf.length > 0) {
         window.orderedList.push(place);
-        if (place.text.length > 1000) { window.interesting.push(place); }
+        if (place.text.length > 100) { window.interesting.push(place); }
         var options = pinOptions(place);
         var pushpin = new Microsoft.Maps.Pushpin(
             place.location,
