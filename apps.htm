@@ -9,6 +9,8 @@
         var api = "https://moylgrove-history.azurewebsites.net/api/apps";
         var cookedUser = "";
         $(function () {
+            
+            $("#userAgent").text(navigator.userAgent.match(/Android [689]/)?"yes":"no");
             $.get(api, function (data, status) {
                 if (data.length > 0) {
                     var table = document.createElement("TABLE");
@@ -86,6 +88,7 @@
         </tr>
     </table>
     <div id="appList"></div>
+    <div id="userAgent"></div>
 </body>
 
 </html>

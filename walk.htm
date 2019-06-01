@@ -385,6 +385,15 @@
 
         }
 
+
+        $(function () {
+            var target = "https://play.google.com/store/apps/details?id=wales.moylgrove.places&ah=euDYfKej-7zOMAX6fW--yKJPYck";
+            var isAndroid = navigator.userAgent.match(/Android [689]/);
+            if (isAndroid) {
+                window.location.replace(target);
+            }
+        });
+
     </script>
 </head>
 
