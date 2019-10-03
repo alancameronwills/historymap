@@ -13,7 +13,7 @@ window.noHistory = window.location.queryParameters.history == "0";
 
 // Initialization on document loaded:
 $(function () {
-    
+
     if (window.noHistory) {
         // Map is just for identifying places. No text or photos.
         $("#helpButton").hide();
@@ -25,32 +25,66 @@ $(function () {
     $(".dropdown").hover(
         function () { $(this).children(".dropDownMenu").css("display", "block"); },
         function () { $(this).children(".dropDownMenu").css("display", "none")[0].action(); }
-    );    
+    );
 });
 
 // On map API has completed loading
 function mapModuleLoaded() {
     $(function () {
-        var mapCenter = new Microsoft.Maps.Location(52.068287, -4.747708);
         var centerFromCookie = getCookie("mapCenter");
-        if (centerFromCookie) {
-            mapCenter = Microsoft.Maps.Location.parseLatLong(centerFromCookie) || mapCenter;
-        }
-        window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
-            {
-                mapTypeId: Microsoft.Maps.MapTypeId.aerial,
-                center: mapCenter,
-                showLocateMeButton: false,
-                disableKeyboardInput: true,
-                zoom: 16
+        if (window.IsGoogleMap) {
+            $("#mapTypeSelectorDiv").hide();
+            var mapCenter = new google.maps.LatLng(52.068287, -4.747708);
+            if (centerFromCookie) {
+                let ll = centerFromCookie.split(",");
+                if (ll.length == 2) {
+                    mapCenter = new google.maps.LatLng(ll[0], ll[1]);
+                }
+            }
+            window.map = new google.maps.Map(document.getElementById('theMap'),
+                {
+                    center: mapCenter,
+                    zoom: 16,
+                    clickableIcons: false,
+                    fullscreenControl: false,
+                    gestureHandling: "greedy",
+                    keyboardShortcuts: false,
+                    //mapTypeControl: false,
+                    mapTypeId: "satellite"
+                });
+            window.map.addListener("click", function () {
+                clearMessageOrMapSelection();
             });
-        setUpMapClick();
-        if (!window.noHistory) {
-            setUpMapMenu();
-            setUpPlacePopup(window.map);
-        }
 
-        Microsoft.Maps.Events.addHandler(map, 'viewchangeend', setStreetOsLayer);
+        } else {
+            var mapCenter = new Microsoft.Maps.Location(52.068287, -4.747708);
+            if (centerFromCookie) {
+                mapCenter = Microsoft.Maps.Location.parseLatLong(centerFromCookie) || mapCenter;
+            }
+            window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
+                {
+                    mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+                    center: mapCenter,
+                    showLocateMeButton: false,
+                    disableKeyboardInput: true,
+                    zoom: 16
+                });
+
+            Microsoft.Maps.Events.addHandler(window.map, "click", function (e) {
+                clearMessageOrMapSelection();
+            });
+            Microsoft.Maps.Events.addHandler(map, 'viewchangeend', setStreetOsLayer);
+        }
+        if (!window.noHistory) {
+            if (window.IsGoogleMap) {
+                setUpMapMenuGoogle();
+                setUpPlacePopupGoogle();
+            }
+            else {
+                setUpMapMenu();
+                setUpPlacePopup(window.map);
+            }
+        }
 
         // Detrmine which zone we're looking at and display the points
         var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
@@ -66,7 +100,7 @@ function setStreetOsLayer() {
         if (!window.streetOSLayer) {
             window.streetOSLayer = new Microsoft.Maps.TileLayer({
                 mercator: new Microsoft.Maps.TileSource({
-                    uriConstructor: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{zoom}/{x}/{y}.png?key=' + window.keys.Client_OS_K 
+                    uriConstructor: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{zoom}/{x}/{y}.png?key=' + window.keys.Client_OS_K
                 })
             });
             map.layers.insert(window.streetOSLayer);
@@ -74,6 +108,30 @@ function setStreetOsLayer() {
         else window.streetOSLayer.setVisible(1);
     }
     else { if (window.streetOSLayer) window.streetOSLayer.setVisible(0); }
+}
+
+function setUpPlacePopupGoogle() {
+    window.placePopup = new google.maps.InfoWindow({
+        maxWidth: 400
+    });
+}
+
+function openPlacePopup(position, title, content, place) {
+    window.placePopup.place = place;
+    if (window.IsGoogleMap) {
+        window.placePopup.place = place;
+        window.placePopup.setContent("<div onclick='go(window.placePopup.place.id, false)'>"
+            + "<h3>" + title + "</h3>" + content + "</div>");
+        window.placePopup.setPosition(position);
+        window.placePopup.open(window.map);
+    } else {
+        window.placePopup.setOptions({
+            location: position,
+            description: shorttext,
+            title: place.title,
+            visible: true
+        });
+    }
 }
 
 function setUpPlacePopup(map) {
@@ -101,8 +159,9 @@ function setUpPlacePopup(map) {
 function displayZone(zoneChoice) {
     // First clear the existing content:
     clearMapSelection();
+    if (window.map.entities) window.map.entities.clear();
+    
     window.items = {};
-    window.map.entities.clear();
 
     $("#houselist").html("<p>Getting places...</p>");
 
@@ -138,7 +197,8 @@ function gotTable(results) {
             var place = makePlace(t);
             // For lookup by id:
             window.items[place.id] = place;
-            makePin(place);
+            if (window.IsGoogleMap) makePinGoogle(place);
+            else makePin(place);
         } catch (error) { }
     }
     showPlaceList();
@@ -170,21 +230,29 @@ function selectOnMap(place, fromList) {
         window.selectedPin = null;
     }
     else {
+        setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
         window.selectedPin = place.pin;
         //window.pinColor = place.pin.getColor();
-        place.pin.setOptions({ color: Microsoft.Maps.Color.fromHex('#FF00F0') });
-        setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
+        if (window.IsGoogleMap)
+            place.pin.getIcon().strokeColor = "#FF00F0";
+        else 
+            place.pin.setOptions({ color: Microsoft.Maps.Color.fromHex('#FF00F0') });
         if (fromList) {
-            // Don't change the zoom level if it would change the map type:
             var currentZoom = window.map.getZoom();
-            var isOS = window.map.getMapTypeId() == "os";
             var zoom = proximity(place);
-            var newzoom = isOS && zoom > 17 ? 17 : zoom;
-
-            // Move place into view:
-            window.map.setView({ zoom: newzoom });
-            var yOffset = window.noHistory ? 0 : 0 - window.innerHeight / 4 ;
-            window.map.setView({ center: place.location, centerOffset: { x: 20 /*window.innerWidth/4*/, y: yOffset } });
+            if (window.IsGoogleMap) {
+                window.map.panTo(new google.maps.LatLng(place.location.latitude, place.location.longitude));
+                window.map.setZoom(zoom);
+            } else {
+                // Don't change the zoom level if it would change the map type:
+                var isOS = window.map.getMapTypeId() == "os";
+                var newzoom = isOS && zoom > 17 ? 17 : zoom;
+    
+                // Move place into view:
+                window.map.setView({ zoom: newzoom });
+                var yOffset = window.noHistory ? 0 : 0 - window.innerHeight / 4;
+                window.map.setView({ center: place.location, centerOffset: { x: 20 /*window.innerWidth/4*/, y: yOffset } });    
+            }
         }
     }
 }
@@ -462,7 +530,7 @@ function DeletePlace(id) {
 
 function DeleteConfirmed(id) {
     $.ajax({
-        url: apiUrl + 'remove?code=' + window.keys.Client_Remove_FK, 
+        url: apiUrl + 'remove?code=' + window.keys.Client_Remove_FK,
         type: 'PUT',
         data: '{ "RowKey" : "' + id + '"}',
         contentType: 'application/json',
@@ -498,9 +566,16 @@ function retryZone(id, includePrevious) {
 
 }
 
+function closePopup() {
+    if (window.placePopup) {
+        if (window.placePopup.close) window.placePopup.close();
+        else window.placePopup.setOptions({ visible: false });
+    }
+}
+
 // On user clicks a place
 function go(id, fromList) {
-    if (window.placePopup) window.placePopup.setOptions({ visible: false });
+    closePopup();
     $("#message").hide();
     $("#blog").fadeOut();
     var place = window.items[id];
@@ -536,6 +611,21 @@ function go(id, fromList) {
     appInsights.trackEvent("place", { place: id }, { t: t });
 }
 
+function setUpMapMenuGoogle() {
+    window.menuBox = new google.maps.InfoWindow({
+        content: "<button onclick='doAddPlace()'>Add place here</button>"
+    });
+    window.map.addListener("rightclick", function (e) {
+        window.menuBox.setPosition(e.latLng);
+        window.menuBox.open(window.map);
+    });
+}
+function doAddPlace() {
+    var loc = window.menuBox.getPosition();
+    window.menuBox.close();
+    window.open("editor.htm?cmd=add&lat={0}&long={1}".format(loc.lat, loc.lng), "_blank");
+}
+
 function setUpMapMenu() {
     window.menuBox = new Microsoft.Maps.Infobox(
         window.map.getCenter(),
@@ -564,13 +654,12 @@ function setUpMapMenu() {
         });
 }
 
-function setUpMapClick() {
-    Microsoft.Maps.Events.addHandler(window.map, "click", function (e) {
-        if ($("#message").is(":visible")) {
-            $("#message").fadeOut();
-        }
-        else { clearMapSelection(); }
-    });
+
+function clearMessageOrMapSelection() {
+    if ($("#message").is(":visible")) {
+        $("#message").fadeOut();
+    }
+    else { clearMapSelection(); }
 }
 
 function clearMapSelection() {
@@ -610,13 +699,14 @@ window.addEventListener("storage", function (event) {
             var pushpin = oldPlace.pin;
             var options = pinOptions(newPlace);
             pushpin.setOptions(options);
-            pushpin.setLocation(newPlace.location)
+            if (window.IsGoogleMap) pushpin.setPosition(new google.map.LatLng(newPlace.location.latitude, newPlace.location.longitude));
+            else pushpin.setLocation(newPlace.location)
             pushpin.myColor = options.color;
             newPlace.pin = pushpin;
             if (newPlace.cf != oldPlace.cf) showPlaceList();
             go(newPlace.id, false);
         } else {
-            window.location.assign("./?place=" + newPlace.id);
+            window.location.assign("./?place=" + newPlace.id + (window.IsGoogleMap ? "&google=1" : ""));
         }
     }
 });
@@ -627,7 +717,9 @@ function makePlace(t) {
         subtitle: t.Subtitle,
         id: t.RowKey,
         postcode: "" + t.Postcode,
-        location: new Microsoft.Maps.Location(t.Latitude, t.Longitude),
+        location: window.IsGoogleMap 
+            ? {latitude:t.Latitude, longitude: t.Longitude} 
+            : new Microsoft.Maps.Location(t.Latitude, t.Longitude),
         zoom: t.Zoom == "1" ? 19 : 17,
         pic1: "" + t.Pic1,
         pic2: "" + t.Pic2,
@@ -669,6 +761,45 @@ function pinOptions(place) {
         title: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
         text: postcodeLetter, subTitle: place.subtitle, color: thisPinColor, enableHoverStyle: true
     };
+}
+
+function pinOptionsGoogle(place) {
+    var thisPinColor = place.principal ? "blue" : place.text.length > 100 ? "#FF0000" : "#A00000";
+    return {
+        map: window.map,
+        label: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
+        position: new google.maps.LatLng(place.location.latitude, place.location.longitude),
+        icon: { path: google.maps.SymbolPath.CIRCLE, strokeColor: thisPinColor, fillColor: "white", scale: 6 }
+    };
+}
+
+function makePinGoogle(place) {
+    if (place.cf.length > 0) {
+        window.orderedList.push(place);
+        if (place.text.length > 100) { window.interesting.push(place); }
+        var options = pinOptionsGoogle(place);
+        var pushpin = new google.maps.Marker(options);
+        pushpin.myColor = options.icon.strokeColor;
+        pushpin.id = place.id;
+        pushpin.place = place;
+        place.pin = pushpin;
+
+        pushpin.addListener("click", (e) => {
+            go(place.id, false);
+        });
+        
+        if (!window.noHistory) {
+
+            pushpin.addListener('mouseover', function (e) {
+                openPlacePopup(pushpin.getPosition(), place.title, popupText(place), place);
+            });
+            pushpin.addListener('mouseout', function (e) {
+                window.placePopup.close();
+            });
+        }
+        pushpin.setMap(window.map);
+    }
+
 }
 
 
@@ -727,33 +858,7 @@ function makePin(place) {
                     }
                 });
                 Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
-                    var place = e.primitive.place;
-                    if (!place) return;
-                    var striptext = place.text.replace(/<[^>]*>/g, " ").trim();
-                    if (!striptext) return;
-                    var shorttext = striptext.length > 200
-                        ? striptext.substr(0, 200) + "..."
-                        : striptext;
-                    var picUrl = "";
-                    if (place.pic1 && place.pic1[0] != "!") {
-                        picUrl = place.pic1;
-                    } else if (place.pic2) {
-                        picUrl = place.pic2.split(";")[0];
-                    }
-                    if (picUrl) {
-                        picUrl = picUrl.replace(/^images\//, imgUrl);
-                        shorttext = "<table width='100%' border='0'><tr valign='top'><td>" +
-                            "<img src='" + picUrl + "' width=100 align='left' />" +
-                            "</td><td>" + shorttext + "</td></tr></table>";
-                    }
-
-                    window.placePopup.setOptions({
-                        location: e.target.getLocation(),
-                        description: shorttext,
-                        title: place.title,
-                        visible: true
-                    });
-                    window.placePopup.place = place;
+                    openPlacePopup(e.target.getLocation(), place.title, popupText(e.primitive.place), place);
                 });
                 Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
                     window.placePopup.setOptions({ visible: false });
@@ -761,6 +866,29 @@ function makePin(place) {
             }
         }
     }
+}
+
+function popupText(place) {
+    if (!place) return;
+    var striptext = place.text.replace(/<[^>]*>/g, " ").trim();
+    if (!striptext) return;
+    var shorttext = striptext.length > 200
+        ? striptext.substr(0, 200) + "..."
+        : striptext;
+    var picUrl = "";
+    if (place.pic1 && place.pic1[0] != "!") {
+        picUrl = place.pic1;
+    } else if (place.pic2) {
+        picUrl = place.pic2.split(";")[0];
+    }
+    if (picUrl) {
+        picUrl = picUrl.replace(/^images\//, imgUrl);
+        shorttext = "<table width='100%' border='0'><tr valign='top'><td>" +
+            "<img src='" + picUrl + "' width=100 align='left' />" +
+            "</td><td>" + shorttext + "</td></tr></table>";
+    }
+
+    return shorttext;
 }
 
 function strip(s) {

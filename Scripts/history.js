@@ -35,7 +35,7 @@ $(function() {
 });
 
 // For searching and sorting place names
-// Remove puntuation, spacing, Welsh chars, so that Tŷ Wylan == Ty-wylan
+// Remove punctuation, spacing, Welsh chars, so that Tŷ Wylan == Ty-wylan
 function comparable(title) {
     return title.toLocaleLowerCase().replace(/[- '",]+/g, "").replace(/^the/, ""
         .replace(/[âêîôûŵŷ]/, function (c) { return { "â": "a", "ê": "e", "î": "i", "ô": "o", "û": "u", "ŵ": "w", "ŷ": "y" }[c]; }));
@@ -138,6 +138,12 @@ function doLoadMap () {
        script.async = true;
        script.defer = true;
        script.type= 'text/javascript';
-       script.src='https://www.bing.com/api/maps/mapcontrol?key='+window.keys.Client_Map_K+'&callback=mapModuleLoaded';
+       if (window.location.queryParameters["google"]) {
+           window.IsGoogleMap = true;
+           script.src = 'https://maps.googleapis.com/maps/api/js?key=' + window.keys.Client_Google_Map_K + '&callback=mapModuleLoaded';
+       } else {
+           window.IsGoogleMap = false;
+           script.src='https://www.bing.com/api/maps/mapcontrol?key='+window.keys.Client_Map_K+'&callback=mapModuleLoaded';
+        }
        head.appendChild(script);
 }
