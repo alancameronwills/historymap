@@ -20,147 +20,33 @@ $(function () {
         $("#historyTitle").text("Places");
     }
 
+
+});
+
+function onMapLoaded() {
+    var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
+    window.zoneSelection = zoneChoice;
+    showZoneChoiceOnUI(zoneChoice);
     // Initialize zone selection UI
     $("#zoneSelect")[0].action = updateZoneChoice;
     $(".dropdown").hover(
         function () { $(this).children(".dropDownMenu").css("display", "block"); },
         function () { $(this).children(".dropDownMenu").css("display", "none")[0].action(); }
     );
-});
-
-// On map API has completed loading
-function mapModuleLoaded() {
-    $(function () {
-        var centerFromCookie = getCookie("mapCenter");
-        if (window.IsGoogleMap) {
-            $("#mapTypeSelectorDiv").hide();
-            var mapCenter = new google.maps.LatLng(52.068287, -4.747708);
-            if (centerFromCookie) {
-                let ll = centerFromCookie.split(",");
-                if (ll.length == 2) {
-                    mapCenter = new google.maps.LatLng(ll[0], ll[1]);
-                }
-            }
-            window.map = new google.maps.Map(document.getElementById('theMap'),
-                {
-                    center: mapCenter,
-                    zoom: 16,
-                    clickableIcons: false,
-                    fullscreenControl: false,
-                    gestureHandling: "greedy",
-                    keyboardShortcuts: false,
-                    //mapTypeControl: false,
-                    mapTypeId: "satellite"
-                });
-            window.map.addListener("click", function () {
-                clearMessageOrMapSelection();
-            });
-
-        } else {
-            var mapCenter = new Microsoft.Maps.Location(52.068287, -4.747708);
-            if (centerFromCookie) {
-                mapCenter = Microsoft.Maps.Location.parseLatLong(centerFromCookie) || mapCenter;
-            }
-            window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
-                {
-                    mapTypeId: Microsoft.Maps.MapTypeId.aerial,
-                    center: mapCenter,
-                    showLocateMeButton: false,
-                    disableKeyboardInput: true,
-                    zoom: 16
-                });
-
-            Microsoft.Maps.Events.addHandler(window.map, "click", function (e) {
-                clearMessageOrMapSelection();
-            });
-            Microsoft.Maps.Events.addHandler(map, 'viewchangeend', setStreetOsLayer);
-        }
-        if (!window.noHistory) {
-            if (window.IsGoogleMap) {
-                setUpMapMenuGoogle();
-                setUpPlacePopupGoogle();
-            }
-            else {
-                setUpMapMenu();
-                setUpPlacePopup(window.map);
-            }
-        }
-
-        // Detrmine which zone we're looking at and display the points
-        var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
-        window.zoneSelection = zoneChoice;
-        showZoneChoiceOnUI(zoneChoice);
-        displayZone(zoneChoice);
-    });
+    displayZone(zoneChoice);
 }
 
-// OS Landranger Map only goes up to zoom 17. Above that, display OS Standard.
-function setStreetOsLayer() {
-    if (window.map.getZoom() > 17 && window.map.getMapTypeId() == "os") {
-        if (!window.streetOSLayer) {
-            window.streetOSLayer = new Microsoft.Maps.TileLayer({
-                mercator: new Microsoft.Maps.TileSource({
-                    uriConstructor: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{zoom}/{x}/{y}.png?key=' + window.keys.Client_OS_K
-                })
-            });
-            map.layers.insert(window.streetOSLayer);
-        }
-        else window.streetOSLayer.setVisible(1);
-    }
-    else { if (window.streetOSLayer) window.streetOSLayer.setVisible(0); }
-}
-
-function setUpPlacePopupGoogle() {
-    window.placePopup = new google.maps.InfoWindow({
-        maxWidth: 400
-    });
-}
-
-function openPlacePopup(position, title, content, place) {
-    window.placePopup.place = place;
-    if (window.IsGoogleMap) {
-        window.placePopup.place = place;
-        window.placePopup.setContent("<div onclick='go(window.placePopup.place.id, false)'>"
-            + "<h3>" + title + "</h3>" + content + "</div>");
-        window.placePopup.setPosition(position);
-        window.placePopup.open(window.map);
-    } else {
-        window.placePopup.setOptions({
-            location: position,
-            description: shorttext,
-            title: place.title,
-            visible: true
-        });
-    }
-}
-
-function setUpPlacePopup(map) {
-    //Create an infobox to show start of place text on hover
-    window.placePopup = new Microsoft.Maps.Infobox(map.getCenter(), {
-        visible: false,
-        showCloseButton: false,
-        offset: new Microsoft.Maps.Point(0, 10),
-        description: "",
-        maxWidth: 400,
-        maxHeight: 200,
-        showPointer: true
-    });
-    window.placePopup.setMap(map);
-
-    Microsoft.Maps.Events.addHandler(window.placePopup, 'click', function (e) {
-        var place = e.target.place;
-        if (place) {
-            go(place.id, false);
-        }
-    });
-}
 
 // Display the map pins and side index for the selected zones.
 function displayZone(zoneChoice) {
     // First clear the existing content:
+    // console.log("displayZone 1");
     clearMapSelection();
-    if (window.map.entities) window.map.entities.clear();
-    
+    // console.log("displayZone 2");
+    window.map.clear();
+
+    // console.log("displayZone 3");
+
     window.items = {};
 
     $("#houselist").html("<p>Getting places...</p>");
@@ -188,18 +74,19 @@ function displayZone(zoneChoice) {
 
 // List of places in the selected zones has arrived.
 function gotTable(results) {
+    //console.log("gotTable 1");
     if (results == null) return;
     window.orderedList = [];
     window.interesting = [];
     for (var i = 0, t; t = results[i]; i++) {
         if (!t.Title) continue; // index or other housekeeping
         try {
+            //console.log("gotTable " + t.Title);
             var place = makePlace(t);
             // For lookup by id:
             window.items[place.id] = place;
-            if (window.IsGoogleMap) makePinGoogle(place);
-            else makePin(place);
-        } catch (error) { }
+            window.map.makePin(place);
+        } catch (error) { console.log(error); }
     }
     showPlaceList();
 
@@ -220,41 +107,15 @@ function gotTable(results) {
 // place == null to just clear the selection
 // fromList : user chose place from the left-side index, not the map
 function selectOnMap(place, fromList) {
-    // Clear current highlight:
-    if (window.selectedPin != null) {
-        // myColor is an additional property we added to keep the default colour of each pin:
-        window.selectedPin.setOptions({ color: window.selectedPin.myColor, enableClickedStyle: false });
-    }
-
-    if (place == null) {
-        window.selectedPin = null;
-    }
-    else {
+    // console.log("selectOnMap 1");
+    window.map.highlightPin(place ? place.pin : null);
+    if (place != null) {
         setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
-        window.selectedPin = place.pin;
-        //window.pinColor = place.pin.getColor();
-        if (window.IsGoogleMap)
-            place.pin.getIcon().strokeColor = "#FF00F0";
-        else 
-            place.pin.setOptions({ color: Microsoft.Maps.Color.fromHex('#FF00F0') });
         if (fromList) {
-            var currentZoom = window.map.getZoom();
-            var zoom = proximity(place);
-            if (window.IsGoogleMap) {
-                window.map.panTo(new google.maps.LatLng(place.location.latitude, place.location.longitude));
-                window.map.setZoom(zoom);
-            } else {
-                // Don't change the zoom level if it would change the map type:
-                var isOS = window.map.getMapTypeId() == "os";
-                var newzoom = isOS && zoom > 17 ? 17 : zoom;
-    
-                // Move place into view:
-                window.map.setView({ zoom: newzoom });
-                var yOffset = window.noHistory ? 0 : 0 - window.innerHeight / 4;
-                window.map.setView({ center: place.location, centerOffset: { x: 20 /*window.innerWidth/4*/, y: yOffset } });    
-            }
+            window.map.showPlace(place, proximity(place), true);
         }
     }
+    // console.log("selectOnMap 2");
 }
 
 var latKm = 0.000089; // Pembs. 
@@ -566,16 +427,9 @@ function retryZone(id, includePrevious) {
 
 }
 
-function closePopup() {
-    if (window.placePopup) {
-        if (window.placePopup.close) window.placePopup.close();
-        else window.placePopup.setOptions({ visible: false });
-    }
-}
-
 // On user clicks a place
 function go(id, fromList) {
-    closePopup();
+    window.map.closePopup();
     $("#message").hide();
     $("#blog").fadeOut();
     var place = window.items[id];
@@ -585,7 +439,7 @@ function go(id, fromList) {
         return;
     }
     if (place.principal && place.principal > 0) {
-        window.map.setView({ center: place.location });
+        window.map.showPlace(place);
         retryZone(id, false);
         return;
     }
@@ -611,47 +465,10 @@ function go(id, fromList) {
     appInsights.trackEvent("place", { place: id }, { t: t });
 }
 
-function setUpMapMenuGoogle() {
-    window.menuBox = new google.maps.InfoWindow({
-        content: "<button onclick='doAddPlace()'>Add place here</button>"
-    });
-    window.map.addListener("rightclick", function (e) {
-        window.menuBox.setPosition(e.latLng);
-        window.menuBox.open(window.map);
-    });
-}
 function doAddPlace() {
-    var loc = window.menuBox.getPosition();
-    window.menuBox.close();
+    var loc = window.map.menuBox.getPosition();
+    window.map.menuBox.close();
     window.open("editor.htm?cmd=add&lat={0}&long={1}".format(loc.lat, loc.lng), "_blank");
-}
-
-function setUpMapMenu() {
-    window.menuBox = new Microsoft.Maps.Infobox(
-        window.map.getCenter(),
-        {
-            visible: false,
-            showPointer: true,
-            offset: new Microsoft.Maps.Point(0, 0),
-            actions: [
-                {
-                    label: "Add place here  .",
-                    eventHandler: function () {
-                        var loc = window.menuBox.getLocation();
-                        window.menuBox.setOptions({ visible: false });
-                        window.open("editor.htm?cmd=add&lat={0}&long={1}".format(loc.latitude, loc.longitude), "_blank");
-                    }
-                }
-            ]
-        });
-    window.menuBox.setMap(window.map);
-    Microsoft.Maps.Events.addHandler(window.map, "rightclick",
-        function (e) {
-            window.menuBox.setOptions({
-                location: e.location,
-                visible: true
-            });
-        });
 }
 
 
@@ -697,10 +514,7 @@ window.addEventListener("storage", function (event) {
                 window.interesting.push(newPlace);
             }
             var pushpin = oldPlace.pin;
-            var options = pinOptions(newPlace);
-            pushpin.setOptions(options);
-            if (window.IsGoogleMap) pushpin.setPosition(new google.map.LatLng(newPlace.location.latitude, newPlace.location.longitude));
-            else pushpin.setLocation(newPlace.location)
+            window.map.setPin(pushpin, newPlace);
             pushpin.myColor = options.color;
             newPlace.pin = pushpin;
             if (newPlace.cf != oldPlace.cf) showPlaceList();
@@ -717,9 +531,7 @@ function makePlace(t) {
         subtitle: t.Subtitle,
         id: t.RowKey,
         postcode: "" + t.Postcode,
-        location: window.IsGoogleMap 
-            ? {latitude:t.Latitude, longitude: t.Longitude} 
-            : new Microsoft.Maps.Location(t.Latitude, t.Longitude),
+        location: window.map.makePosition(t.Latitude, t.Longitude),
         zoom: t.Zoom == "1" ? 19 : 17,
         pic1: "" + t.Pic1,
         pic2: "" + t.Pic2,
@@ -763,110 +575,6 @@ function pinOptions(place) {
     };
 }
 
-function pinOptionsGoogle(place) {
-    var thisPinColor = place.principal ? "blue" : place.text.length > 100 ? "#FF0000" : "#A00000";
-    return {
-        map: window.map,
-        label: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
-        position: new google.maps.LatLng(place.location.latitude, place.location.longitude),
-        icon: { path: google.maps.SymbolPath.CIRCLE, strokeColor: thisPinColor, fillColor: "white", scale: 6 }
-    };
-}
-
-function makePinGoogle(place) {
-    if (place.cf.length > 0) {
-        window.orderedList.push(place);
-        if (place.text.length > 100) { window.interesting.push(place); }
-        var options = pinOptionsGoogle(place);
-        var pushpin = new google.maps.Marker(options);
-        pushpin.myColor = options.icon.strokeColor;
-        pushpin.id = place.id;
-        pushpin.place = place;
-        place.pin = pushpin;
-
-        pushpin.addListener("click", (e) => {
-            go(place.id, false);
-        });
-        
-        if (!window.noHistory) {
-
-            pushpin.addListener('mouseover', function (e) {
-                openPlacePopup(pushpin.getPosition(), place.title, popupText(place), place);
-            });
-            pushpin.addListener('mouseout', function (e) {
-                window.placePopup.close();
-            });
-        }
-        pushpin.setMap(window.map);
-    }
-
-}
-
-
-function makePin(place) {
-    if (place.cf.length > 0) {
-        window.orderedList.push(place);
-        if (place.text.length > 100) { window.interesting.push(place); }
-        var options = pinOptions(place);
-        var pushpin = new Microsoft.Maps.Pushpin(
-            place.location,
-            options
-        );
-        window.map.entities.push(pushpin);
-        pushpin.myColor = options.color;
-        pushpin.id = place.id;
-        pushpin.place = place;
-        place.pin = pushpin;
-        // If this is a big icon for a whole town:
-        if (place.principal && place.principal > 0) {
-
-            //Create an infobox to use as a tooltip when hovering.
-            pushpin.tooltip = new Microsoft.Maps.Infobox(map.getCenter(), {
-                visible: false,
-                showCloseButton: false,
-                offset: new Microsoft.Maps.Point(-75, 30),
-                description: "Click to see places here",
-                maxWidth: 400,
-                showPointer: true
-            });
-            pushpin.tooltip.setMap(map);
-
-            Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                e.primitive.tooltip.setOptions({ visible: false });
-                var place = e.primitive.place;
-                delete window.location.queryParameters.place;
-                setZoneChoice(zoneFromPrincipal(place));
-                setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
-                window.map.setView({ center: place.location });
-            });
-
-            Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
-                e.primitive.tooltip.setOptions({
-                    location: e.target.getLocation(),
-                    visible: true
-                });
-            });
-            Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
-                e.primitive.tooltip.setOptions({ visible: false });
-            });
-
-        } else { // Ordinary place
-            if (!window.noHistory) {
-                Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                    if (e) {
-                        go(e.primitive.place.id, false);
-                    }
-                });
-                Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
-                    openPlacePopup(e.target.getLocation(), place.title, popupText(e.primitive.place), place);
-                });
-                Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
-                    window.placePopup.setOptions({ visible: false });
-                });
-            }
-        }
-    }
-}
 
 function popupText(place) {
     if (!place) return;
@@ -898,18 +606,6 @@ function strip(s) {
 // Title of principal must be ~= name of zone
 function zoneFromPrincipal(place) {
     return place.title.toLocaleLowerCase().replace(/ /, "");
-}
-
-// User selected a map type - OS or aerial photo.
-function mapChange(v) {
-    if (!window.map) return;
-    if (v == "os") {
-        window.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.ordnanceSurvey });
-    }
-    else {
-        window.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.aerial });
-    }
-    setStreetOsLayer();
 }
 
 // From the drop-down menu.

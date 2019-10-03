@@ -14,8 +14,9 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
 
     <!-- Default script and styles. Loads map module. -->
-    <script src="Scripts/history.js"></script>
-    <script src="Scripts/history-map-places.js"></script>
+    <script src="Scripts/history.js?v=1"></script>
+    <script src="Scripts/map.js?v=1"></script>
+    <script src="Scripts/history-map-places.js?v=1"></script>
     <script src="Scripts/history-map.js?v=1"></script>
 
     
@@ -52,9 +53,9 @@
             </div>
         </div>
         <div style="position:absolute;top:0px;right:0px;display:block;" id="mapTypeSelectorDiv">
-            <input type="radio" name="mapSelector" value="os" onchange="mapChange('os')" />Ordnance Survey
+            <input type="radio" name="mapSelector" value="os" onchange="window.map.mapChange('os')" />Ordnance Survey
             <br />
-            <input type="radio" name="mapSelector" value="aerial" onchange="mapChange('aerial')"
+            <input type="radio" name="mapSelector" value="aerial" onchange="window.map.mapChange('aerial')"
                 checked="checked" />Aerial
             photos
         </div>
@@ -95,7 +96,7 @@
         <iframe seamless style="position:absolute;height:100%;width:100%;overflow:auto"></iframe>
     </div>
     <!-- Additional pictures, shown in a slide show. -->
-    <div id="secondpic" style="display:none;position:absolute;bottom:0px;right:1px;max-width:40vw;"></div>
+    <div id="secondpic" style="display:none;position:absolute;bottom:0px;right:1px;max-width:40vw;z-index:201;"></div>
     <!-- Popups -->
     <div id="message"
         style="display:none;position:absolute;top:30vh;left:40vw;width:450px;height:100px;background-color:white;padding:20px;">
