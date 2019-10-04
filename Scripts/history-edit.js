@@ -1,5 +1,7 @@
 // Code for editor page of History Map 
 
+var rightClickAction = ["Move place to here", "window.map.moveSinglePin()"];
+
 function onKeysArrived() {
     window.blobService = AzureStorage.createBlobService('moylgrovehistory',
         window.keys.Client_BlobService_K);
@@ -8,9 +10,16 @@ function onKeysArrived() {
 // Initialize map and location
 //
 
-// On map system load
-function mapModuleLoaded() {
-    $(document).ready(function () {
+
+function initMapCentre() {
+    var lat = location.queryParameters.lat;
+    var long = location.queryParameters.long;
+
+    return lat && long ? "" + lat + "," + long : getCookie("mapCenter") || "52.068287,-4.747708";
+}
+
+// On map load
+function onMapLoaded() {
         window.place = {
             RowKey: -1, UpdateTrail: "", dirty: false,
         };
@@ -30,9 +39,9 @@ function mapModuleLoaded() {
                 .then(function (response) { return response.json(); }) // Decode string to object
                 .then(function (tt) {
                     var t = tt[0];
-                    window.place = t;
+                    window.place = makePlace(t);
                     var title = trimQuotes(t.Title).replace(/&#39;/, "'").replace(/&quot;/, "\"");
-                    window.map = createSinglePinMap(setPinLocation(t.Latitude, t.Longitude), title);
+                    createSinglePin(window.place);
                     $("#title")[0].value = title;
                     $("#subtitle")[0].value = t.Subtitle;
                     $("#year")[0].value = t.Year;
@@ -54,43 +63,30 @@ function mapModuleLoaded() {
             var long = location.queryParameters.long;
             // Create id for new place. 
             window.place = { RowKey: hashLocation({ longitude: long, latitude: lat }), UpdateTrail: "" };
-            window.map = createSinglePinMap(setPinLocation(lat, long), "new place");
+            createSinglePin(window.place);
             $("#text").html("");
             if (zoomed(lat, long)) $("#zoom")[0].checked = true;
             window.oldHash = hash();
         }
-    })
 };
 
 // Make a map with a single pushpin
-function createSinglePinMap(center, title) {
-    var map = new Microsoft.Maps.Map(g('theMap'),
-        {
-            mapTypeId: Microsoft.Maps.MapTypeId.aerial,
-            center: center,
-            zoom: 19,
-            showLocateMeButton: false,
-            showMapTypeSelector: false
-        });
-
+function createSinglePin(place) {
     // Attach the pin to the map:
-    map.singlePushpin = new Microsoft.Maps.Pushpin(
-        center,
-        { title: title, color: "#A00000", text: "+" }
-    );
-    map.entities.push(map.singlePushpin);
+    window.map.singlePin = window.map.makePin(place);
+    window.map.showPlace(place);
 
-    // Right-click handler
-    setUpMapMenu(map);
 
+    /*
     // Functions for changing the pin:
-    map.setTitle = function (title) { this.singlePushpin.setOptions({ title: title }); }
-    map.movePinTo = function (loc, moveMap) {
+    window.map.setTitle = function (title) { this.singlePushpin.setOptions({ title: title }); }
+    window.map.movePinTo = function (loc, moveMap) {
         this.singlePushpin.setLocation(loc);
         if (moveMap) {
             this.setView({ center: loc });
         }
     }
+    
     // Pan map to show pin at centre
     map.recenter = function () {
         this.setView({center: this.singlePushpin.getLocation()});
@@ -98,41 +94,14 @@ function createSinglePinMap(center, title) {
     map.getPinCenter = function () {
         return this.singlePushpin.getLocation();
     }
-
-    return map;
+    */
 }
 
-// Create a right-click menu for the map
-function setUpMapMenu(map) {
-    var menuBox = new Microsoft.Maps.Infobox(
-        map.getCenter(),
-        {
-            visible: false,
-            showPointer: true,
-            offset: new Microsoft.Maps.Point(0, 0),
-            actions: [
-                {
-                    label: "Move place to here  .",
-                    eventHandler: function () {
-                        var loc = menuBox.getLocation();
-                        menuBox.setOptions({ visible: false });
-                        window.map.movePinTo(setPinLocation(loc.latitude, loc.longitude), false);
-                    }
-                }
-            ]
-        });
-    menuBox.setMap(map);
-    Microsoft.Maps.Events.addHandler(map, "rightclick",
-        function (e) {
-            menuBox.setOptions({
-                location: e.location,
-                visible: true
-            });
-        });
-    Microsoft.Maps.Events.addHandler(map, "click", function (e) {
-        if (menuBox != null) { menuBox.setOptions({ visible: false }); }
-    });
+function moveSinglePin() {
+    singlePlace.location = window.map.menuBox.getPosition();
+    singlePin.setPlace(singlePlace);
 }
+
 
 
 // User clicked to put the map back on the place (maybe after panning it around and losing the place)
@@ -142,12 +111,11 @@ function onCentreMapOnPlace() {
 
 // Set the various places in the UI the lat & long appear. Return the Location.
 function setPinLocation(lat, long) {
-    var loc = lat && long ? new Microsoft.Maps.Location(lat, long) : new Microsoft.Maps.Location(52.068287, -4.747708);
-    var latString = loc.latitude.toFixed(6);
-    var longString = loc.longitude.toFixed(6);
+    var latString = (lat || 52.068287).toFixed(6);
+    var longString = (long || -4.747708).toFixed(6);
     $("#latlong").text("{0}, {1}".format(latString, longString));
     $("#googleLink")[0].href = "https://www.google.co.uk/maps/@{0},{1},400m/data=!3m1!1e3".format(latString, longString);
-    return loc;
+    return window.map.mapCoords(latString + "," + longString);
 }
 
 

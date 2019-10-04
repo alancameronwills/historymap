@@ -131,3 +131,24 @@ function zoomed(lat, long) {
         + Math.sqrt(Math.pow(lat - f2lat, 2) + Math.pow(long - f2long, 2))
         < diameter;
 }
+
+
+function makePlace(t) {
+    var place = {
+        title: trimQuotes(t.Title),
+        subtitle: t.Subtitle,
+        id: t.RowKey,
+        postcode: "" + t.Postcode,
+        location: window.map.makePosition(t.Latitude, t.Longitude),
+        zoom: t.Zoom == "1" ? 19 : 17,
+        pic1: "" + t.Pic1,
+        pic2: "" + t.Pic2,
+        text: t.Text,
+        year: "" + t.Year,
+        principal: t.Principal,
+        updated: new Date(t.Updated || "2010-01-01T00:00:00.000Z")
+    };
+    // For alphabetic sorting:
+    place.cf = comparable(place.title);
+    return place;
+}

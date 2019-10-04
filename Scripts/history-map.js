@@ -4,6 +4,7 @@
 if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
     window.location = window.location.href.replace("http:", "https:");
 }
+var rightClickAction = ["Add place here", "window.map.doAddPlace()"];
 
 
 window.pinColor = "#A00000";
@@ -22,6 +23,10 @@ $(function () {
 
 
 });
+
+function initMapCentre() {
+    return getCookie("mapCenter") || "52.068287,-4.747708";
+}
 
 function onMapLoaded() {
     var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
@@ -85,6 +90,8 @@ function gotTable(results) {
             var place = makePlace(t);
             // For lookup by id:
             window.items[place.id] = place;
+            window.orderedList.push(place);
+            if (place.text.length > 100) { window.interesting.push(place); }
             window.map.makePin(place);
         } catch (error) { console.log(error); }
     }
@@ -524,26 +531,6 @@ window.addEventListener("storage", function (event) {
         }
     }
 });
-
-function makePlace(t) {
-    var place = {
-        title: trimQuotes(t.Title),
-        subtitle: t.Subtitle,
-        id: t.RowKey,
-        postcode: "" + t.Postcode,
-        location: window.map.makePosition(t.Latitude, t.Longitude),
-        zoom: t.Zoom == "1" ? 19 : 17,
-        pic1: "" + t.Pic1,
-        pic2: "" + t.Pic2,
-        text: t.Text,
-        year: "" + t.Year,
-        principal: t.Principal,
-        updated: new Date(t.Updated || "2010-01-01T00:00:00.000Z")
-    };
-    // For alphabetic sorting:
-    place.cf = comparable(place.title);
-    return place;
-}
 
 // Big marker for towns that aren't currently displayed:
 var principalPinTemplate = ['<svg xmlns="http://www.w3.org/2000/svg" width="180" height="45">',

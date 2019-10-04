@@ -9,9 +9,9 @@ function insertScript(s) {
     head.appendChild(script);
 }
 
-function doLoadMap () {
+function doLoadMap() {
     var savedCartography = getCookie("cartography");
-    var queryCartography = window.location.queryParameters["cartography"] 
+    var queryCartography = window.location.queryParameters["cartography"]
         ? (window.location.queryParameters["cartography"] == "google" ? "google" : "bing")
         : null;
     if (!savedCartography && queryCartography) {
@@ -24,7 +24,7 @@ function doLoadMap () {
 
 
 function mapModuleLoaded() {
-    window.map.loaded(onMapLoaded || (() => {}));
+    window.map.loaded(onMapLoaded || (() => { }));
 }
 
 class GoogleMap {
@@ -32,20 +32,20 @@ class GoogleMap {
         this.markers = new Array();
         insertScript('https://maps.googleapis.com/maps/api/js?key=' + window.keys.Client_Google_Map_K + '&callback=mapModuleLoaded');
     }
+    mapCoords(latLongString) {
+        let ll = latLongString.split(",");
+        if (ll.length != 2) {
+            ll = [52, -4];
+        }
+        return new google.maps.LatLng(ll[0], ll[1]);
+    }
     loaded(onload) {
         $(() => {
-            var centerFromCookie = getCookie("mapCenter");
             $("#mapTypeSelectorDiv").hide();
-            var mapCenter = new google.maps.LatLng(52.068287, -4.747708);
-            if (centerFromCookie) {
-                let ll = centerFromCookie.split(",");
-                if (ll.length == 2) {
-                    mapCenter = new google.maps.LatLng(ll[0], ll[1]);
-                }
-            }
+            var mapCenter = initMapCentre();
             this.map = new google.maps.Map(document.getElementById('theMap'),
                 {
-                    center: mapCenter,
+                    center: this.mapCoords(initMapCentre()),
                     zoom: 16,
                     clickableIcons: false,
                     fullscreenControl: false,
@@ -65,10 +65,10 @@ class GoogleMap {
             onload();
         })
     }
-    
+
     setUpMapMenu() {
         this.menuBox = new google.maps.InfoWindow({
-            content: "<a href='#' onclick='window.map.doAddPlace()'>Add place here</a>"
+            content: "<a href='#' onclick='{1}'>{0}</a>".format(rightClickAction[0], rightClickAction[1])
         });
         this.map.addListener("rightclick", function (e) {
             // console.log("rightclick 1");
@@ -76,6 +76,7 @@ class GoogleMap {
             window.map.menuBox.open(window.map.map);
         });
     }
+    
     doAddPlace() {
         var loc = window.map.menuBox.getPosition();
         window.map.menuBox.close();
@@ -97,14 +98,12 @@ class GoogleMap {
     closePopup() {
         this.placePopup.close();
     }
-    makePosition(lat, lng) { 
-        return {latitude:lat, longitude: lng}; 
+    makePosition(lat, lng) {
+        return { latitude: lat, longitude: lng };
     }
     makePin(place) {
         if (place.cf.length > 0) {
             // console.log("makePin " + place.title);
-            window.orderedList.push(place);
-            if (place.text.length > 100) { window.interesting.push(place); }
             var options = this.pinOptions(place);
             var pushpin = new google.maps.Marker(options);
             this.markers.push(pushpin);
@@ -169,11 +168,16 @@ class GoogleMap {
     }
 
     clear() {
-        for (var i = 0; i<this.markers.length; i++) {
+        for (var i = 0; i < this.markers.length; i++) {
             this.markers[i].setMap(null);
         }
         this.markers = new Array();
     }
+
+    getPinCenter() {
+        return this.singlePin ? this.singlePin.getPosition() : null;
+    }
+
 }
 
 class BingMap {
@@ -272,8 +276,8 @@ class BingMap {
     closePopup() {
         this.placePopup.setOptions({ visible: false });
     }
-    makePosition(lat, lng) { 
-        return new Microsoft.Maps.Location(lat, lng); 
+    makePosition(lat, lng) {
+        return new Microsoft.Maps.Location(lat, lng);
     }
     makePin(place) {
         if (place.cf.length > 0) {
@@ -433,5 +437,12 @@ class BingMap {
         this.map.entities.clear();
     }
 
+    setPinTitle(pin, title) {
+        setOptions({ title: title })
+    }
 
+    
+    getPinCenter() {
+        return this.singlePin ? this.singlePin.getLocation() : null;
+    }
 }
