@@ -38,7 +38,7 @@ $(function() {
 // Remove punctuation, spacing, Welsh chars, so that Tŷ Wylan == Ty-wylan
 function comparable(title) {
     return title.toLocaleLowerCase().replace(/[- '",]+/g, "").replace(/^the/, ""
-        .replace(/[âêîôûŵŷ]/, function (c) { return { "â": "a", "ê": "e", "î": "i", "ô": "o", "û": "u", "ŵ": "w", "ŷ": "y" }[c]; }));
+        .replace(/[âêîôûŵŷ]/g, function (c) { return { "â": "a", "ê": "e", "î": "i", "ô": "o", "û": "u", "ŵ": "w", "ŷ": "y" }[c]; }));
 }
 
 /// Default 30 days
@@ -138,11 +138,11 @@ function makePlace(t) {
         title: trimQuotes(t.Title),
         subtitle: t.Subtitle,
         id: t.RowKey,
-        postcode: "" + t.Postcode,
+        postcode: t.Postcode || "",
         location: window.map.makePosition(t.Latitude, t.Longitude),
         zoom: t.Zoom == "1" ? 19 : 17,
-        pic1: "" + t.Pic1,
-        pic2: "" + t.Pic2,
+        pic1: t.Pic1 || "",
+        pic2: t.Pic2 || "",
         text: t.Text,
         year: "" + t.Year,
         principal: t.Principal,

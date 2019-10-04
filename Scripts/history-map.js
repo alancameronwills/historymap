@@ -4,7 +4,7 @@
 if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
     window.location = window.location.href.replace("http:", "https:");
 }
-var rightClickAction = ["Add place here", "window.map.doAddPlace()"];
+var rightClickActions = [{label:"Add place here", eventHandler:() => {window.map.doAddPlace();}}];
 
 
 window.pinColor = "#A00000";
@@ -522,51 +522,19 @@ window.addEventListener("storage", function (event) {
             }
             var pushpin = oldPlace.pin;
             window.map.setPin(pushpin, newPlace);
-            pushpin.myColor = options.color;
             newPlace.pin = pushpin;
             if (newPlace.cf != oldPlace.cf) showPlaceList();
             go(newPlace.id, false);
         } else {
-            window.location.assign("./?place=" + newPlace.id + (window.IsGoogleMap ? "&google=1" : ""));
+            window.location.assign("./?place=" + newPlace.id);
         }
     }
 });
 
-// Big marker for towns that aren't currently displayed:
-var principalPinTemplate = ['<svg xmlns="http://www.w3.org/2000/svg" width="180" height="45">',
-    '<rect x="0" y="0" width="180" height="45" rx="15" ry="15" fill="blue" />',
-    '<text x="15" y="30" fill="white" font-family="sans-serif" font-size="24px">{text}</text>',
-    '</svg>'].join("");
-
-// Default colour, shape, and label of a pin:
-function pinOptions(place) {
-    if (place.principal && place.principal > 0) {
-        // Represents a town whose places aren't currently in the displayed area
-        return {
-            title: "",
-            text: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
-            icon: principalPinTemplate
-        };
-    }
-
-    var postcodeLetter = !window.noHistory && place.year
-        ? ("" + place.year).substr(1, 2)
-        : place.postcode ? place.postcode.substr(-1, 1) : "";
-
-    // Principal < 0 is a town pin whose places are in the displayed area.
-    // Otherwise, pin colour indicates whether there's much to read.
-    var thisPinColor = place.principal ? "blue" : place.text.length > 100 ? "#FF0000" : "#A00000";
-    return {
-        title: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
-        text: postcodeLetter, subTitle: place.subtitle, color: thisPinColor, enableHoverStyle: true
-    };
-}
-
 
 function popupText(place) {
-    if (!place) return;
-    var striptext = place.text.replace(/<[^>]*>/g, " ").trim();
-    if (!striptext) return;
+    if (!place) return "";
+    var striptext = place.text.replace(/<[^>]*>/g, " ").trim() || place.subtitle || "";
     var shorttext = striptext.length > 200
         ? striptext.substr(0, 200) + "..."
         : striptext;

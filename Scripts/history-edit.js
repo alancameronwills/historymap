@@ -1,6 +1,6 @@
 // Code for editor page of History Map 
 
-var rightClickAction = ["Move place to here", "window.map.moveSinglePin()"];
+var rightClickActions = [{ label: "Move place to here", eventHandler: () => { window.place.location = window.map.moveSinglePin() } }];
 
 function onKeysArrived() {
     window.blobService = AzureStorage.createBlobService('moylgrovehistory',
@@ -20,88 +20,73 @@ function initMapCentre() {
 
 // On map load
 function onMapLoaded() {
+    window.place = {
+        id: -1, UpdateTrail: "", dirty: false,
+    };
+    // Hash is used for a quick check if anything's changed:
+    window.oldHash = 0;
+    window.dirty = false;
+
+    // Make an index of places in this zone to assist with 
+    // creating links to other places.
+    getAllPlaces();
+
+    // Was a place specified to edit?
+    if (location.queryParameters.id) { // location here is current URL
+        window.place = { id: -1, UpdateTrail: "" };
+        // REST get details of place to edit:
+        fetch("{0}/place?id={1}".format(apiUrl, location.queryParameters.id))
+            .then(function (response) { return response.json(); }) // Decode string to object
+            .then(function (tt) {
+                var t = tt[0];
+                window.place = makePlace(t);
+                var title = trimQuotes(t.Title).replace(/&#39;/, "'").replace(/&quot;/, "\"");
+                createSinglePin(window.place);
+                $("#title")[0].value = title;
+                $("#subtitle")[0].value = t.Subtitle;
+                $("#year")[0].value = t.Year;
+                $("#postcode")[0].value = t.Postcode;
+                $("#tags")[0].value = t.Tags || "";
+                $("#zoom")[0].checked = t.Zoom == "1";
+                $("#text").html(trimQuotes(t.Text));
+                ShowPhoto1(t.Pic1);
+                SetSlides(t.Pic2 ? t.Pic2.split(";") : []);
+                window.oldHash = hash();
+            })
+            .catch(function (err) {
+                window.alert("Sorry - problem getting the map data. Please tell alan@pantywylan.org\n" + err);
+            });
+    }
+    else {
+        // No existing place: create a new one with the given location
+        var lat = location.queryParameters.lat;
+        var long = location.queryParameters.long;
+        // Create id for new place. 
         window.place = {
-            RowKey: -1, UpdateTrail: "", dirty: false,
+            id: hashLocation({ longitude: long, latitude: lat }), 
+            title: "", cf: "@",
+            text: "",
+            location: window.map.makePosition(lat, long),
+            principal: false,
+            UpdateTrail: ""
         };
-        // Hash is used for a quick check if anything's changed:
-        window.oldHash = 0;
-        window.dirty = false;
-
-        // Make an index of places in this zone to assist with 
-        // creating links to other places.
-        getAllPlaces();
-
-        // Was a place specified to edit?
-        if (location.queryParameters.id) { // location here is current URL
-            window.place = { RowKey: -1, UpdateTrail: "" };
-            // REST get details of place to edit:
-            fetch("{0}/place?id={1}".format(apiUrl, location.queryParameters.id))
-                .then(function (response) { return response.json(); }) // Decode string to object
-                .then(function (tt) {
-                    var t = tt[0];
-                    window.place = makePlace(t);
-                    var title = trimQuotes(t.Title).replace(/&#39;/, "'").replace(/&quot;/, "\"");
-                    createSinglePin(window.place);
-                    $("#title")[0].value = title;
-                    $("#subtitle")[0].value = t.Subtitle;
-                    $("#year")[0].value = t.Year;
-                    $("#postcode")[0].value = t.Postcode;
-                    $("#tags")[0].value = t.Tags || "";
-                    $("#zoom")[0].checked = t.Zoom == "1";
-                    $("#text").html(trimQuotes(t.Text));
-                    ShowPhoto1(t.Pic1);
-                    SetSlides(t.Pic2 ? t.Pic2.split(";") : []);
-                    window.oldHash = hash();
-                })
-                .catch(function (err) {
-                    window.alert("Sorry - problem getting the map data. Please tell alan@pantywylan.org\n" + err);
-                });
-        }
-        else {
-            // No existing place: create a new one with the given location
-            var lat = location.queryParameters.lat;
-            var long = location.queryParameters.long;
-            // Create id for new place. 
-            window.place = { RowKey: hashLocation({ longitude: long, latitude: lat }), UpdateTrail: "" };
-            createSinglePin(window.place);
-            $("#text").html("");
-            if (zoomed(lat, long)) $("#zoom")[0].checked = true;
-            window.oldHash = hash();
-        }
+        createSinglePin(window.place);
+        $("#text").html("");
+        if (zoomed(lat, long)) $("#zoom")[0].checked = true;
+        window.oldHash = hash();
+    }
 };
+
+function clearMessageOrMapSelection() {
+
+}
 
 // Make a map with a single pushpin
 function createSinglePin(place) {
     // Attach the pin to the map:
-    window.map.singlePin = window.map.makePin(place);
-    window.map.showPlace(place);
-
-
-    /*
-    // Functions for changing the pin:
-    window.map.setTitle = function (title) { this.singlePushpin.setOptions({ title: title }); }
-    window.map.movePinTo = function (loc, moveMap) {
-        this.singlePushpin.setLocation(loc);
-        if (moveMap) {
-            this.setView({ center: loc });
-        }
-    }
-    
-    // Pan map to show pin at centre
-    map.recenter = function () {
-        this.setView({center: this.singlePushpin.getLocation()});
-    }
-    map.getPinCenter = function () {
-        return this.singlePushpin.getLocation();
-    }
-    */
+    window.map.singlePin = window.map.makePin(place, true);
+    window.map.showPlace(place, 19);
 }
-
-function moveSinglePin() {
-    singlePlace.location = window.map.menuBox.getPosition();
-    singlePin.setPlace(singlePlace);
-}
-
 
 
 // User clicked to put the map back on the place (maybe after panning it around and losing the place)
@@ -140,13 +125,14 @@ function onMapTypeSelect(v) {
 function onUpdatePlaceName() {
     var title = $("#title")[0].value.trim();
     window.dirty = true;
-    window.map.setTitle(title);
+    window.place.title = title;
+    window.map.setPin(window.map.singlePin, place);
     if (!title) {
         window.alert("Needs a title");
     } else {
         // Check if there's another place with the same name:
         var otherKey = placeFromTitle(title);
-        if (otherKey && window.place.RowKey && otherKey != window.place.RowKey) {
+        if (otherKey && window.place.id && otherKey != window.place.id) {
             window.alert("This place name is the same as one that's already on the map. Please edit the existing place, "
                 + "rather than creating a new one.\nI'll now open a new window where you can do that (or you can decide to come back to this window).");
             window.open("./editor.htm?id=" + otherKey);
@@ -235,7 +221,7 @@ function onUploadFile(f) {
     $("#photo1img").hide();
     $("#photo1google").hide();
     var suffix = f.name.replace(/^.*\./, ".").toLowerCase();
-    var fileName = window.place.RowKey + "-" + (new Date()).getTime().toString() + suffix;
+    var fileName = window.place.id + "-" + (new Date()).getTime().toString() + suffix;
     window.blobService.createBlockBlobFromBrowserFile('history-img', fileName, f, null,
         function (error, result, response) {
             if (!error) {
@@ -325,7 +311,7 @@ function onUploadFile2(ff) {
     $("#photo2prompt").text("Uploading " + count + "...").show();
     $("#photo2img").hide();
     // Compose the photo filename from the place key + datetime + index
-    var fn = window.place.RowKey + "-" + (new Date()).getTime().toString().substr(2, 10);
+    var fn = window.place.id + "-" + (new Date()).getTime().toString().substr(2, 10);
     $.each(ff, function (i, file) {
         // Get .jpg, .png, etc:
         var suffix = file.name.replace(/^.*\./, ".").toLowerCase();
@@ -489,7 +475,7 @@ var fixLinks = new RegExp(sourceUrl, "g");
 function gatherToSave() {
     var s = {};
     s.PartitionKey = "p1"; // TODO Make dependent on region.
-    s.RowKey = "" + window.place.RowKey; // ensure string
+    s.RowKey = "" + window.place.id; // ensure string
     s.Title = $("#title")[0].value.trim().replace(/'/, "&#39;").replace(/"/, "&quot;");
     s.Subtitle = $("#subtitle")[0].value.trim();
     s.Year = $("#year")[0].value.trim();
@@ -539,8 +525,8 @@ function onSavePlace() {
     appInsights.trackEvent("save", { title: s.Title, user: window.userName }, {});
 
     var jsn = JSON.stringify(s);
-    fetch(apiUrl + "updateplace?code=" + window.keys.Client_UpdatePlace_FK, 
-        { 
+    fetch(apiUrl + "updateplace?code=" + window.keys.Client_UpdatePlace_FK,
+        {
             body: jsn,
             headers: {
                 'content-type': 'application/json'

@@ -67,8 +67,13 @@ class GoogleMap {
     }
 
     setUpMapMenu() {
+        var menuString = "";
+        for (var i = 0; i < rightClickActions.length; i++) {
+            menuString += "<a href='#' onclick='rightClickActions[{1}].eventHandler()'>{0}</a>".format(rightClickActions[i].label, i);
+            menuString += "<br/>";
+        }
         this.menuBox = new google.maps.InfoWindow({
-            content: "<a href='#' onclick='{1}'>{0}</a>".format(rightClickAction[0], rightClickAction[1])
+            content: menuString
         });
         this.map.addListener("rightclick", function (e) {
             // console.log("rightclick 1");
@@ -76,7 +81,11 @@ class GoogleMap {
             window.map.menuBox.open(window.map.map);
         });
     }
-    
+
+    closeMapMenu() {
+        if (this.menuBox) this.menuBox.close();
+    }
+
     doAddPlace() {
         var loc = window.map.menuBox.getPosition();
         window.map.menuBox.close();
@@ -101,7 +110,7 @@ class GoogleMap {
     makePosition(lat, lng) {
         return { latitude: lat, longitude: lng };
     }
-    makePin(place) {
+    makePin(place, nopopup) {
         if (place.cf.length > 0) {
             // console.log("makePin " + place.title);
             var options = this.pinOptions(place);
@@ -112,13 +121,11 @@ class GoogleMap {
             pushpin.place = place;
             place.pin = pushpin;
 
-            pushpin.addListener("click", (e) => {
-                // console.log("pin click 1");
-                go(place.id, false);
-            });
-
-            if (!window.noHistory) {
-
+            if (!nopopup) {
+                pushpin.addListener("click", (e) => {
+                    // console.log("pin click 1");
+                    go(place.id, false);
+                });
                 pushpin.addListener('mouseover', function (e) {
                     // console.log("pin over 1");
                     window.map.openPlacePopup(pushpin.getPosition(), place.title, popupText(place), place);
@@ -129,21 +136,22 @@ class GoogleMap {
                 });
             }
             pushpin.setMap(this.map);
+            return pushpin;
         }
     }
     pinOptions(place) {
         var thisPinColor = place.principal ? "blue" : place.text.length > 100 ? "#FF0000" : "#A00000";
         return {
             map: this.map,
-            label: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
+            label: { color: "#00c0c0", fontWeight: "bold", text: place.title.replace(/&#39;/g, "'").replace(/&quot;/g, "\"") },
             position: new google.maps.LatLng(place.location.latitude, place.location.longitude),
-            icon: { path: google.maps.SymbolPath.CIRCLE, strokeColor: thisPinColor, fillColor: "white", scale: 6 }
+            icon: { path: google.maps.SymbolPath.CIRCLE, strokeColor: thisPinColor, fillColor: "white", scale: 6, labelOrigin: { x: 0, y: 2 } }
         };
     }
     setPin(pin, place) {
         var options = this.pinOptions(place);
         pin.setOptions(options);
-        pin.setPosition(new google.map.LatLng(place.location.latitude, place.location.longitude));
+        pin.setPosition(new google.maps.LatLng(place.location.latitude, place.location.longitude));
     }
     showPlace(place, zoom, shiftOffCentre) {
         if (zoom) {
@@ -175,9 +183,25 @@ class GoogleMap {
     }
 
     getPinCenter() {
-        return this.singlePin ? this.singlePin.getPosition() : null;
+        if (!this.singlePin) return null;
+        var position = this.singlePin.getPosition();
+        return new Pin(position.lat(), position.lng());
     }
 
+    moveSinglePin() {
+        if (!this.singlePin) return null;
+        var loc = this.menuBox.getPosition();
+        this.singlePin.setPosition(loc);
+        return loc;
+    }
+
+    recenter() {
+        this.map.setCenter(this.singlePin.position);
+    }
+}
+
+class Pin {
+    constructor(lat, lng) { this.latitude = lat; this.longitude = lng; }
 }
 
 class BingMap {
@@ -218,6 +242,8 @@ class BingMap {
         // console.log("BingMap.loaded 4");
         //});
     }
+
+
     setUpMapMenu() {
         this.menuBox = new Microsoft.Maps.Infobox(
             this.map.getCenter(),
@@ -225,16 +251,7 @@ class BingMap {
                 visible: false,
                 showPointer: true,
                 offset: new Microsoft.Maps.Point(0, 0),
-                actions: [
-                    {
-                        label: "Add place here  .",
-                        eventHandler: function () {
-                            var loc = window.map.menuBox.getLocation();
-                            window.map.menuBox.setOptions({ visible: false });
-                            window.open("editor.htm?cmd=add&lat={0}&long={1}".format(loc.latitude, loc.longitude), "_blank");
-                        }
-                    }
-                ]
+                actions: rightClickActions
             });
         this.menuBox.setMap(this.map);
         Microsoft.Maps.Events.addHandler(this.map, "rightclick",
@@ -244,6 +261,11 @@ class BingMap {
                     visible: true
                 });
             });
+    }
+    doAddPlace() {
+        var loc = window.map.menuBox.getLocation();
+        window.map.menuBox.setOptions({ visible: false });
+        window.open("editor.htm?cmd=add&lat={0}&long={1}".format(loc.latitude, loc.longitude), "_blank");
     }
     setUpPlacePopup() {
         //Create an infobox to show start of place text on hover
@@ -276,13 +298,14 @@ class BingMap {
     closePopup() {
         this.placePopup.setOptions({ visible: false });
     }
+    closeMapMenu() {
+        if (this.menuBox) this.menuBox.setOptions({ visible: false });
+    }
     makePosition(lat, lng) {
         return new Microsoft.Maps.Location(lat, lng);
     }
-    makePin(place) {
+    makePin(place, nopopup) {
         if (place.cf.length > 0) {
-            window.orderedList.push(place);
-            if (place.text.length > 100) { window.interesting.push(place); }
             var options = this.pinOptions(place);
             var pushpin = new Microsoft.Maps.Pushpin(
                 place.location,
@@ -293,41 +316,41 @@ class BingMap {
             pushpin.id = place.id;
             pushpin.place = place;
             place.pin = pushpin;
-            // If this is a big icon for a whole town:
-            if (place.principal && place.principal > 0) {
+            if (!nopopup) {
+                // If this is a big icon for a whole town:
+                if (place.principal && place.principal > 0) {
 
-                //Create an infobox to use as a tooltip when hovering.
-                pushpin.tooltip = new Microsoft.Maps.Infobox(this.map.getCenter(), {
-                    visible: false,
-                    showCloseButton: false,
-                    offset: new Microsoft.Maps.Point(-75, 30),
-                    description: "Click to see places here",
-                    maxWidth: 400,
-                    showPointer: true
-                });
-                pushpin.tooltip.setMap(this.map);
-
-                Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                    e.primitive.tooltip.setOptions({ visible: false });
-                    var place = e.primitive.place;
-                    delete window.location.queryParameters.place;
-                    setZoneChoice(zoneFromPrincipal(place));
-                    setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
-                    this.map.setView({ center: place.location });
-                });
-
-                Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
-                    e.primitive.tooltip.setOptions({
-                        location: e.target.getLocation(),
-                        visible: true
+                    //Create an infobox to use as a tooltip when hovering.
+                    pushpin.tooltip = new Microsoft.Maps.Infobox(this.map.getCenter(), {
+                        visible: false,
+                        showCloseButton: false,
+                        offset: new Microsoft.Maps.Point(-75, 30),
+                        description: "Click to see places here",
+                        maxWidth: 400,
+                        showPointer: true
                     });
-                });
-                Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
-                    e.primitive.tooltip.setOptions({ visible: false });
-                });
+                    pushpin.tooltip.setMap(this.map);
 
-            } else { // Ordinary place
-                if (!window.noHistory) {
+                    Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
+                        e.primitive.tooltip.setOptions({ visible: false });
+                        var place = e.primitive.place;
+                        delete window.location.queryParameters.place;
+                        setZoneChoice(zoneFromPrincipal(place));
+                        setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
+                        this.map.setView({ center: place.location });
+                    });
+
+                    Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
+                        e.primitive.tooltip.setOptions({
+                            location: e.target.getLocation(),
+                            visible: true
+                        });
+                    });
+                    Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
+                        e.primitive.tooltip.setOptions({ visible: false });
+                    });
+
+                } else { // Ordinary place
                     Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
                         if (e) {
                             go(e.primitive.place.id, false);
@@ -341,16 +364,25 @@ class BingMap {
                     });
                 }
             }
+            return pushpin;
         }
-
     }
+
+    // Big marker for towns that aren't currently displayed:
+    principalPinTemplate() {
+        return '<svg xmlns="http://www.w3.org/2000/svg" width="100" height="25">'
+            + '<rect x="0" y="0" width="100" height="25" rx="7" ry="7" fill="blue" />'
+            + '<text x="7" y="15" fill="white" font-family="sans-serif" font-size="12px">{text}</text>'
+            + '</svg>';
+    }
+
     pinOptions(place) {
         if (place.principal && place.principal > 0) {
             // Represents a town whose places aren't currently in the displayed area
             return {
                 title: "",
                 text: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
-                icon: principalPinTemplate
+                icon: this.principalPinTemplate()
             };
         }
 
@@ -372,6 +404,7 @@ class BingMap {
         pin.setOptions(options);
         pin.setLocation(newPlace.location);
     }
+
 
     showPlace(place, zoom, shiftOffCentre) {
         if (zoom) {
@@ -399,7 +432,7 @@ class BingMap {
                         uriConstructor: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{zoom}/{x}/{y}.png?key=' + window.keys.Client_OS_K
                     })
                 });
-                map.layers.insert(this.streetOSLayer);
+                this.map.layers.insert(this.streetOSLayer);
             }
             else this.streetOSLayer.setVisible(1);
         }
@@ -441,8 +474,20 @@ class BingMap {
         setOptions({ title: title })
     }
 
-    
+
     getPinCenter() {
         return this.singlePin ? this.singlePin.getLocation() : null;
     }
+
+    moveSinglePin() {
+        if (!this.singlePin) return null;
+        var loc = this.menuBox.getLocation();
+        this.singlePin.setLocation(loc);
+        return loc;
+    }
+
+    recenter() {
+        this.setView({ center: this.singlePushpin.getLocation() });
+    }
+
 }
