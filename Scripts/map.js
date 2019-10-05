@@ -149,6 +149,7 @@ class GoogleMap {
             return pushpin;
         }
     }
+    
     reDrawMarkers() {
         for (var i = 0; i<this.markers.length; i++) {
             var pin = this.markers[i];
