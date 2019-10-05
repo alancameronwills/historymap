@@ -10,7 +10,6 @@ function onKeysArrived() {
 // Initialize map and location
 //
 
-
 function initMapCentre() {
     var lat = location.queryParameters.lat;
     var long = location.queryParameters.long;
