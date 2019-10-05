@@ -118,7 +118,7 @@ function showPlaceList() {
         var isInteresting = !window.noHistory && $.inArray(item, window.interesting) >= 0;
         var isPrincipal = !!item.principal;
 
-        listContent += "<div id='h{0}' {2} onClick='go(\"{0}\",true)' title='\"{0}\"'>{1}</div>".
+        listContent += "<div id='h{0}' {2} onClick='go(\"{0}\",true)'>{1}</div>".
             format(item.id, item.title, (isPrincipal ? "class='principal'" : isInteresting ? "class='interesting'" : ""));
     }
     $("#houselist").html(listContent);

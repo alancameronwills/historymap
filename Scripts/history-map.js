@@ -129,6 +129,7 @@ var latKm = 0.000089; // Pembs.
 var longKm = 0.000144;
 
 function proximity(place) {
+    if (place.zoom && place.zoom > 2 && place.zoom < 20) return place.zoom;
     var min = 1000000;
     window.orderedList.forEach(function (otherPlace) {
         if (otherPlace === place) return false;
@@ -442,6 +443,7 @@ function go(id, fromList) {
     var place = window.items[id];
     if (!place) {
         // Not in current index probably because it's outside the currently selected zone.
+        delete window.location.queryParameters.place;
         retryZone(id, true);
         return;
     }

@@ -14,7 +14,7 @@ function doLoadMap() {
     var queryCartography = window.location.queryParameters["cartography"]
         ? (window.location.queryParameters["cartography"] == "google" ? "google" : "bing")
         : null;
-    if (!savedCartography && queryCartography) {
+    if (queryCartography) {
         setCookie("cartography", queryCartography);
     }
     var cartography = queryCartography || savedCartography || "bing";

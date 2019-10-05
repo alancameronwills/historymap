@@ -140,7 +140,7 @@ function makePlace(t) {
         id: t.RowKey,
         postcode: t.Postcode || "",
         location: window.map.makePosition(t.Latitude, t.Longitude),
-        zoom: t.Zoom == "1" ? 19 : 17,
+        zoom: t.Zoom ? (t.Zoom > 2 ? 1*t.Zoom : t.Zoom == "1" ? 19 : 17) : 17,
         pic1: t.Pic1 || "",
         pic2: t.Pic2 || "",
         text: t.Text,
