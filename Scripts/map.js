@@ -402,7 +402,7 @@ class BingMap {
     setPin(pin, place) {
         var options = this.pinOptions(place);
         pin.setOptions(options);
-        pin.setLocation(newPlace.location);
+        pin.setLocation(place.location);
     }
 
 
