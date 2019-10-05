@@ -58,12 +58,22 @@ class GoogleMap {
                 // console.log("click 1");
                 clearMessageOrMapSelection();
             });
+            this.getMapType();
+            this.map.addListener("maptypeid_changed", function () {
+                window.map.getMapType();
+                window.map.reDrawMarkers();
+            });
             if (!window.noHistory) {
                 this.setUpMapMenu();
                 this.setUpPlacePopup();
             }
             onload();
         })
+    }
+
+    getMapType () {
+        var t = this.map.getMapTypeId();
+        this.mapType = t == google.maps.MapTypeId.SATELLITE || t == google.maps.MapTypeId.HYBRID ? "satellite" : "roadmap";
     }
 
     setUpMapMenu() {
@@ -139,13 +149,20 @@ class GoogleMap {
             return pushpin;
         }
     }
+    reDrawMarkers() {
+        for (var i = 0; i<this.markers.length; i++) {
+            var pin = this.markers[i];
+            pin.setOptions(this.pinOptions(pin.place));
+        }
+    }
     pinOptions(place) {
         var thisPinColor = place.principal ? "blue" : place.text.length > 100 ? "#FF0000" : "#A00000";
+        var thisLabelColor = this.mapType == "satellite" ? "#FFE000" : "#806000";
         return {
             map: this.map,
-            label: { color: "#00c0c0", fontWeight: "bold", text: place.title.replace(/&#39;/g, "'").replace(/&quot;/g, "\"") },
+            label: { color: thisLabelColor, fontWeight: "bold", text: place.title.replace(/&#39;/g, "'").replace(/&quot;/g, "\"") },
             position: new google.maps.LatLng(place.location.latitude, place.location.longitude),
-            icon: { path: google.maps.SymbolPath.CIRCLE, strokeColor: thisPinColor, fillColor: "white", scale: 6, labelOrigin: { x: 0, y: 2 } }
+            icon: { path: google.maps.SymbolPath.CIRCLE, strokeColor: thisPinColor, fillColor: "white", scale: 6, labelOrigin: { x: 0, y: 2.2 } }
         };
     }
     setPin(pin, place) {
@@ -167,12 +184,19 @@ class GoogleMap {
         // Clear current highlight:
         if (this.selectedPin != null) {
             // myColor is an additional property we added to keep the default colour of each pin:
-            this.selectedPin.getIcon().strokeColor = this.selectedPin.myColor;
+            //this.selectedPin.getIcon().strokeColor = this.selectedPin.myColor;
+            this.setPinColor(this.selectedPin, this.selectedPin.myColor);
         }
         this.selectedPin = pin;
         if (pin) {
-            pin.getIcon().strokeColor = "#FF00F0";
+            pin.myColor = pin.getIcon().strokeColor;
+            //pin.getIcon().strokeColor = "#FF00F0";
+            this.setPinColor(this.selectedPin, "#FF00F0");
         }
+    }
+
+    setPinColor (pin, color) {
+        pin.setOptions({icon:{path: google.maps.SymbolPath.CIRCLE, strokeColor: color, scale:6, labelOrigin: { x: 0, y: 2 }}});
     }
 
     clear() {
