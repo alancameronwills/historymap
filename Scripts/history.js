@@ -146,6 +146,7 @@ function makePlace(t) {
         text: t.Text,
         year: "" + t.Year,
         principal: t.Principal,
+        deleted: !!t.Deleted,
         updated: new Date(t.Updated || "2010-01-01T00:00:00.000Z")
     };
     // For alphabetic sorting:

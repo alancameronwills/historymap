@@ -4,7 +4,7 @@
 if (window.location.protocol == "http:" && window.location.hostname != "localhost") {
     window.location = window.location.href.replace("http:", "https:");
 }
-var rightClickActions = [{label:"Add place here", eventHandler:() => {window.map.doAddPlace();}}];
+var rightClickActions = [{ label: "Add place here", eventHandler: () => { window.map.doAddPlace(); } }];
 
 
 window.pinColor = "#A00000";
@@ -513,22 +513,33 @@ window.addEventListener("storage", function (event) {
     if (event.key == "place") {
         var newPlace = makePlace(JSON.parse(event.newValue));
         var oldPlace = window.items[newPlace.id];
-        window.items[newPlace.id] = newPlace;
-        if (oldPlace) {
+        if (newPlace.deleted) {
+            delete window.items[newPlace.id];
             var i = window.orderedList.indexOf(oldPlace);
-            if (i >= 0) window.orderedList[i] = newPlace;
+            if (i>=0) window.orderedList.splice(i,1);
             var j = window.interesting.indexOf(oldPlace);
-            if (j >= 0) window.interesting[j] = newPlace;
-            else if (newPlace.text.length > 1000) {
-                window.interesting.push(newPlace);
-            }
-            var pushpin = oldPlace.pin;
-            window.map.setPin(pushpin, newPlace);
-            newPlace.pin = pushpin;
-            if (newPlace.cf != oldPlace.cf) showPlaceList();
-            go(newPlace.id, false);
+            if (j>=0) window.interesting.splice(j,1);
+            clearMapSelection();
+            window.map.closePopup();
+            window.map.removePin(oldPlace);
         } else {
-            window.location.assign("./?place=" + newPlace.id);
+            window.items[newPlace.id] = newPlace;
+            if (oldPlace) {
+                var i = window.orderedList.indexOf(oldPlace);
+                if (i >= 0) window.orderedList[i] = newPlace;
+                var j = window.interesting.indexOf(oldPlace);
+                if (j >= 0) window.interesting[j] = newPlace;
+                else if (newPlace.text.length > 1000) {
+                    window.interesting.push(newPlace);
+                }
+                var pushpin = oldPlace.pin;
+                window.map.setPin(pushpin, newPlace);
+                newPlace.pin = pushpin;
+                if (newPlace.cf != oldPlace.cf) showPlaceList();
+                go(newPlace.id, false);
+            } else {
+                window.location.assign("./?place=" + newPlace.id);
+            }
         }
     }
 });

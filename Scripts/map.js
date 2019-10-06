@@ -149,7 +149,14 @@ class GoogleMap {
             return pushpin;
         }
     }
-    
+    removePin(place) {
+        var i = this.markers.indexOf(place.pin);
+        this.markers.splice(i,1);
+        place.pin.setMap(null);
+        place.pin.place = null;
+        place.pin = null;
+    }
+
     reDrawMarkers() {
         for (var i = 0; i<this.markers.length; i++) {
             var pin = this.markers[i];
@@ -230,6 +237,7 @@ class Pin {
 }
 
 class BingMap {
+    // https://docs.microsoft.com/bingmaps/v8-web-control/
     constructor() {
         // console.log("BingMap 1");
         insertScript('https://www.bing.com/api/maps/mapcontrol?key=' + window.keys.Client_Map_K + '&callback=mapModuleLoaded');
@@ -391,6 +399,13 @@ class BingMap {
             }
             return pushpin;
         }
+    }
+
+    
+    removePin(place) {
+        this.map.entities.remove(place.pin);
+        place.pin.place = null;
+        place.pin = null;
     }
 
     // Big marker for towns that aren't currently displayed:

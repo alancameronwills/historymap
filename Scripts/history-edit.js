@@ -62,8 +62,8 @@ function onMapLoaded() {
         var long = location.queryParameters.long;
         // Create id for new place. 
         window.place = {
-            id: hashLocation({ longitude: long, latitude: lat }), 
-            title: "", cf: "@",
+            id: hashLocation({ longitude: long, latitude: lat }),
+            title: " ", cf: "@",
             text: "",
             location: window.map.makePosition(lat, long),
             principal: false,
@@ -84,7 +84,7 @@ function clearMessageOrMapSelection() {
 function createSinglePin(place) {
     // Attach the pin to the map:
     window.map.singlePin = window.map.makePin(place, true);
-    window.map.showPlace(place, 19);
+    window.map.showPlace(place, 17);
 }
 
 
@@ -216,24 +216,84 @@ function onDeletePhoto1() {
 
 // Called when user clicks Upload Photo 1 button
 function onUploadFile(f) {
+    if (!f.type || f.type.indexOf("image/") != 0) {
+        $("#photo1prompt").text("Image file expected").show();
+        return;
+    }
     $("#photo1prompt").text("Uploading...").show();
     $("#photo1img").hide();
     $("#photo1google").hide();
     var suffix = f.name.replace(/^.*\./, ".").toLowerCase();
-    var fileName = window.place.id + "-" + (new Date()).getTime().toString() + suffix;
-    window.blobService.createBlockBlobFromBrowserFile('history-img', fileName, f, null,
-        function (error, result, response) {
-            if (!error) {
-                $("#photo1prompt").text("Done.");
-                ShowPhoto1("images/" + fileName);
-            }
-            else {
-                $("#photo1prompt").text("Failed.");
-            }
-        });
+    var filename = window.place.id + "-" + (new Date()).getTime().toString() + suffix;
+    sendPic(filename, f, (error) => {
+        if (!error) {
+            $("#photo1prompt").text("Done.");
+            ShowPhoto1("images/" + filename);
+        }
+        else {
+            $("#photo1prompt").text("Failed.");
+        }
+    });
     window.dirty = true;
 }
 
+function sendPic(filename, file, onSent) {
+    if (file.size < 1e6) sendBlob(filename, file, onSent);
+    else getLocalImg(file, (img) => sendBlob(filename, reducePic(img), onSent));
+}
+
+function getLocalImg(file, onload) {
+    let reader = new FileReader();
+    reader.onload = () => {
+        let img = document.createElement("img");
+        img.onload = () => {
+            onload(img);
+        }
+        img.src = reader.result;
+    }
+    reader.readAsDataURL(file);
+}
+
+function sendBlob(filename, blob, onSent) {
+    blob.name = filename;
+    window.blobService.createBlockBlobFromBrowserFile('history-img', filename, blob, null,
+        function (error, result, response) {
+            onSent(error);
+        });
+}
+
+var reducer = null;
+
+// Reduce the size of an image by at least half in each dimension.
+function reducePic(img) {
+    if (!reducer) reducer = document.createElement("canvas");
+    var scale = Math.min(1000 / img.naturalHeight, 1400 / img.naturalWidth);
+    reducer.height = img.naturalHeight * scale;
+    reducer.width = img.naturalWidth * scale;
+    var ctx = reducer.getContext("2d", { alpha: false, antialias: true });
+    ctx.drawImage(img, 0, 0, reducer.width, reducer.height);
+    return b64toBlob(reducer.toDataURL("image/jpeg", 0.7), "image/jpeg");
+}
+
+// Convert Base64 (i.e. long char string) to binary image file
+// https://stackoverflow.com/questions/16245767/creating-a-blob-from-a-base64-string-in-javascript
+function b64toBlob(b64Data) {
+    const sliceSize = 512; // optimal size for processing chunks
+    const contentType = b64Data.match(/:(.*?);/)[1]; // e.g. image/jpeg
+    var startOfData = b64Data.indexOf(",") + 1;
+    const byteCharacters = atob(b64Data.substr(startOfData));
+    const byteArrays = [];
+    for (let offset = 0; offset < byteCharacters.length; offset += sliceSize) {
+        const slice = byteCharacters.slice(offset, offset + sliceSize);
+        const byteNumbers = new Array(slice.length);
+        for (let i = 0; i < slice.length; i++) {
+            byteNumbers[i] = slice.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        byteArrays.push(byteArray);
+    }
+    return new Blob(byteArrays, { type: contentType });
+}
 
 //
 // Photo2 - the slide show
@@ -315,26 +375,22 @@ function onUploadFile2(ff) {
         // Get .jpg, .png, etc:
         var suffix = file.name.replace(/^.*\./, ".").toLowerCase();
         var fileName = fn + "-" + i + suffix;
-        // Really useful utility that uploads user file to blob:
-        window.blobService.createBlockBlobFromBrowserFile('history-img',
-            fileName, file, null,
-            function (error, result, response) {
-                if (!error) {
-                    if (--count <= 0) {
-                        $("#photo2prompt").text("Done.");
-                    }
-                    else {
-                        $("#photo2prompt").text("Uploading " + count + "...")
-                    }
-                    // Append to visible gallery:
-                    AddPhoto2("images/" + fileName, count <= 0);
+        sendPic(fileName, file, (error) => {
+            if (!error) {
+                if (--count <= 0) {
+                    $("#photo2prompt").text("Done.");
                 }
                 else {
-                    $("#photo2prompt").text("Failed.");
+                    $("#photo2prompt").text("Uploading " + count + "...")
                 }
-            });
+                // Append to visible gallery:
+                AddPhoto2("images/" + fileName, count <= 0);
+            }
+            else {
+                $("#photo2prompt").text("Failed.");
+            }
+        });
         window.dirty = true;
-
     });
 }
 
@@ -679,3 +735,35 @@ function placeFromTitle(title) {
 }
 
 
+function deletePlace() {
+    var s = gatherToSave();
+    if ((s.Text.replace(/<[^>]*>/g, " ").trim() + s.Pic1 + s.Pic2).length > 10) {
+        alert("To delete the place, first delete the pictures and the description");
+        return;
+    }
+    showDeleteDialog(() => {
+        s.Deleted = true;
+        var jsn = JSON.stringify(s);
+        fetch(apiUrl + "remove?code=" + window.keys.Client_Remove_FK,
+            {
+                body: jsn,
+                headers: {
+                    'content-type': 'application/json'
+                },
+                method: 'PUT',
+                credentials: "same-origin"
+            })
+            .then((r) => {
+                if (r && r.ok) {
+                    $("#savedDialog").show();
+                    window.dirty = false;
+                    window.oldHash = hash();
+                    // Pass the updates to the main window:
+                    localStorage["place"] = jsn;
+
+                    window.close();
+                }
+                else { throw ("" + r.status + " " + r.statusText); }
+            })
+    }, " this place from the map");
+}
