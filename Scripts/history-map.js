@@ -522,6 +522,7 @@ window.addEventListener("storage", function (event) {
             clearMapSelection();
             window.map.closePopup();
             window.map.removePin(oldPlace);
+            if (window.queryParameters.place) window.location.assign(".");
         } else {
             window.items[newPlace.id] = newPlace;
             if (oldPlace) {
