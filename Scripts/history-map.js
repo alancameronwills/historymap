@@ -421,6 +421,7 @@ function retryZone(id, includePrevious) {
         return;
     }
     doingRetry = id;
+    delete window.location.queryParameters.place;
     // Retrieve place from server:
     $.get(apiUrl + "place?id=" + id, function (data, status) {
         if (data.length == 0) return;
@@ -443,7 +444,6 @@ function go(id, fromList) {
     var place = window.items[id];
     if (!place) {
         // Not in current index probably because it's outside the currently selected zone.
-        delete window.location.queryParameters.place;
         retryZone(id, true);
         return;
     }
