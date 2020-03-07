@@ -542,6 +542,7 @@ function gatherToSave() {
     s.Longitude = loc.longitude.toFixed(6);
     s.Latitude = loc.latitude.toFixed(6);
     s.Pic1 = window.place.Pic1 || ""; // ensure not undefined
+    s.Principal = window.place.principal;
 
     s.Pic2 = "";
     $("#photo2Gallery img").each(function (ix, img) {
