@@ -58,8 +58,9 @@ function displayZone(zoneChoice) {
 
     // Download from server:
     var fetchApi = apiUrl + "places?z=" + zoneChoice.replace(/ /g, '+');
+    var fetchApi2 = apiUrl + "places02";
 
-    if (typeof fetch === 'undefined') {
+    if (typeof fetch != 'undefined') {
         appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "true" }, {});
         fetch(fetchApi)
             .then(function (response) { return response.json(); })
@@ -67,6 +68,10 @@ function displayZone(zoneChoice) {
             .catch(function (err) {
                 window.alert("Sorry - problem getting the map data. Please tell alan@pantywylan.org");
             });
+        fetch (fetchApi2)
+            .then (response => response.json())
+            .then (gotTable2)
+            .catch(err => {});
     } else {
         appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "false" }, {});
         $.get(fetchApi, function (data, status) {
@@ -76,6 +81,13 @@ function displayZone(zoneChoice) {
     window.loadedTime = new Date().getTime();
 }
 
+function gotTable2(results) {
+    if (!results) return;
+    window.places2 = {};
+    for (var i = 0, t; t = results[i]; i++) {
+        window.places2[t.RowKey] = t;
+    }
+}
 
 // List of places in the selected zones has arrived.
 function gotTable(results) {
