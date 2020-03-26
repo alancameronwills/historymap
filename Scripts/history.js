@@ -153,3 +153,49 @@ function makePlace(t) {
     place.cf = comparable(place.title);
     return place;
 }
+
+// Sign-in dialog. Separate window, but Chrome disallows nearly all communication.
+var sub = null;
+var timer = null;
+function signin() {
+    sub = window.open('sign-in.htm' + window.location.search, '', "width=400,height=500,left=200,top=100,toolbar=0,status=0");
+    timer = setInterval(checkChild, 1000);
+}
+function checkChild() {
+    if (!sub || sub.closed) {
+        clearInterval(timer);
+        window.signinDone();
+    }
+}
+window.signinDone = function () {
+    checkSignin();
+}
+
+function checkSignin() {
+    $.ajax({
+        url: apiUrl + "test", xhrFields: { withCredentials: true }, complete: function (data, status) {
+            var headers = data && data.responseJSON ? data.responseJSON.headers : {};
+            var n = headers["x-ms-client-principal-name"] || null;
+            setUserName(n);
+            setCookie("username", n, 1000);
+            var idp = headers["x-ms-client-principal-idp"] || "";
+            if (idp) {
+                setCookie("useridp", idp, 1000);
+            }
+        }
+    });
+}
+
+function signOut() {
+    setCookie("username", "", -1);
+    setCookie("useridp", "", -1);
+    setUserName("", true);
+    appInsights.trackEvent("sign out");
+}
+
+function getUserName() {
+    var name = getCookie("username");
+    setUserName(name, true);
+    if (!name) { $("#signinDialog").show(); }
+}
+

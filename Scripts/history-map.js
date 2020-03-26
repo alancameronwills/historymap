@@ -14,15 +14,19 @@ window.noHistory = window.location.queryParameters.history == "0";
 
 // Initialization on document loaded:
 $(function () {
-
     if (window.noHistory) {
         // Map is just for identifying places. No text or photos.
         $("#helpButton").hide();
         $("#historyTitle").text("Places");
     }
-
-
+    if (window.location.queryParameters.private) {
+        signin();
+    }
 });
+
+function setUserName(name, fromCookie) {
+
+}
 
 function initMapCentre() {
     return getCookie("mapCenter") || "52.068287,-4.747708";
