@@ -370,7 +370,7 @@ class BingMap {
                         delete window.location.queryParameters.place;
                         setZoneChoice(zoneFromPrincipal(place));
                         setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
-                        this.map.setView({ center: place.location });
+                        window.map.map.setView({ center: place.location });
                     });
 
                     Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
@@ -433,9 +433,16 @@ class BingMap {
         // Principal < 0 is a town pin whose places are in the displayed area.
         // Otherwise, pin colour indicates whether there's much to read.
         var thisPinColor = place.principal ? "blue" : place.text.length > 100 ? "#FF0000" : "#A00000";
+        if (place.place2) {
+            let health = place.place2.health;
+            thisPinColor = pinColor2(health);
+        }
         return {
             title: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
-            text: postcodeLetter, subTitle: place.subtitle, color: thisPinColor, enableHoverStyle: true
+            text: postcodeLetter, 
+            subTitle: place.subtitle, 
+            color: thisPinColor, 
+            enableHoverStyle: true
         };
     }
 
@@ -529,5 +536,4 @@ class BingMap {
     recenter() {
         this.setView({ center: this.singlePushpin.getLocation() });
     }
-
 }

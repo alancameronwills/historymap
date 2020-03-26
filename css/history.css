@@ -199,3 +199,24 @@
             background-color: black;
         }
     
+        .popup2 {
+            background-color: blue;
+            color: white;
+        }
+        .popup2 button {
+            float: right;
+            width: 16px; height: 16px;
+            border: 1px solid black;
+        }
+        .healthMenuItem {
+            width: 16px;
+            height: 16px;
+            border: 1px solid black;
+        }
+        .healthMenu {
+            display: none;
+            position: absolute;
+        }
+        .popup2 button:hover .healthMenu {
+            display: block;
+        }

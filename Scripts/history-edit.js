@@ -66,7 +66,7 @@ function onMapLoaded() {
             title: " ", cf: "@",
             text: "",
             location: window.map.makePosition(lat, long),
-            principal: false,
+            principal: "",
             UpdateTrail: ""
         };
         createSinglePin(window.place);

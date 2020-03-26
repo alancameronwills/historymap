@@ -62,16 +62,19 @@ function displayZone(zoneChoice) {
 
     if (typeof fetch != 'undefined') {
         appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "true" }, {});
+        placeListsGot = 0;
         fetch(fetchApi)
             .then(function (response) { return response.json(); })
             .then(gotTable) // Async
             .catch(function (err) {
                 window.alert("Sorry - problem getting the map data. Please tell alan@pantywylan.org");
             });
-        fetch (fetchApi2)
-            .then (response => response.json())
-            .then (gotTable2)
-            .catch(err => {});
+        if (place2AuthCheck()) {
+            fetch(fetchApi2)
+                .then(response => response.json())
+                .then(gotTable2)
+                .catch(err => { });
+        }
     } else {
         appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "false" }, {});
         $.get(fetchApi, function (data, status) {
@@ -81,11 +84,39 @@ function displayZone(zoneChoice) {
     window.loadedTime = new Date().getTime();
 }
 
+function place2AuthCheck() {
+    if (location.host == "localhost") return true;
+    if (getCookie("place2auth")) return true;
+    return false;
+}
+
 function gotTable2(results) {
     if (!results) return;
     window.places2 = {};
     for (var i = 0, t; t = results[i]; i++) {
         window.places2[t.RowKey] = t;
+    }
+    mergeTables();
+}
+
+var placeListsGot = 0;
+
+/**
+ * Merge public and private info.
+ */
+function mergeTables() {
+    if (++placeListsGot >= 2) {
+        for (var id in window.places2) {
+            if (window.items[id]) {
+                window.items[id].place2 = window.places2[id];
+                let pin = window.items[id].pin;
+                if (pin) {
+                    let options = window.map.pinOptions(window.items[id]);
+                    pin.myColor = options.color;
+                    pin.setOptions(options);
+                }
+            }
+        }
     }
 }
 
@@ -107,6 +138,7 @@ function gotTable(results) {
             window.map.makePin(place);
         } catch (error) { console.log(error); }
     }
+    mergeTables();
     showPlaceList();
 
     // NoHistory is a queryparameter set if we're just showing a map of house names.
@@ -459,7 +491,7 @@ function go(id, fromList) {
         retryZone(id, true);
         return;
     }
-    if (place.principal && place.principal > 0) {
+    if (place.principal) {
         window.map.showPlace(place);
         retryZone(id, false);
         return;
@@ -528,9 +560,9 @@ window.addEventListener("storage", function (event) {
         if (newPlace.deleted) {
             delete window.items[newPlace.id];
             var i = window.orderedList.indexOf(oldPlace);
-            if (i>=0) window.orderedList.splice(i,1);
+            if (i >= 0) window.orderedList.splice(i, 1);
             var j = window.interesting.indexOf(oldPlace);
-            if (j>=0) window.interesting.splice(j,1);
+            if (j >= 0) window.interesting.splice(j, 1);
             clearMapSelection();
             window.map.closePopup();
             window.map.removePin(oldPlace);
@@ -557,13 +589,79 @@ window.addEventListener("storage", function (event) {
     }
 });
 
+var healthMenuCodes = ["UO", "VOL", "OK", "SI", "V"];
+var healthMenuLabels = ["unoccupied", "volunteer", "ok", "self-isolating", "vulnerable"];
+var healthMenuColors = ["black", "cyan", "lightgreen", "yellow", "orange"];
+var healthMenuStack = "<div class='healthMenu'>";
+for (var i = 0; i < healthMenuCodes.length; i++) {
+    healthMenuStack += "<div class='healthMenuItem' "
+        + `style='background-color:${healthMenuColors[i]}' `
+        + `title='${healthMenuLabels[i]}'`
+        + `onclick='setHealthCode("${healthMenuCodes[i]}")'`
+        + "></div>";
+}
+healthMenuStack += "</div>";
+
+
+function pinColor2(health) {
+    return health ? (health == "V" ? "orange" : health == "UO" ? "black" :
+        health == "SI" ? "yellow" : health == "VOL" ? "cyan" : "lightgreen") : "red";
+}
+
+function setHealthCode(code) {
+    if (!window.poppedUpPlace) return;
+    if (!window.poppedUpPlace.place2) {
+        createPlace2(window.poppedUpPlace, code);
+    } else {
+        window.poppedUpPlace.place2.health = code;
+        updatePlace2(window.poppedUpPlace);
+    }
+}
+
+function createPlace2(place, code) {
+    place.place2 = { PartitionKey: "p1", RowKey: place.id, Name: place.title, health: code };
+    updatePlace2(place);
+}
+
+function updatePlace2(place) {
+    if (!place.place2) return;
+    let pin = place.pin;
+    if (pin) pin.setOptions(window.map.pinOptions(place));
+    g("popHealthButton").style.backgroundColor = pinColor2(place.place2.health);
+    fetch(apiUrl + "updateplace2?code=" + "tLFYDagKuavQXFaPDrPlhfS9QfgtHaf1RFJk4RWEJ6WeWnTarmbOfA==",
+        {
+            body: JSON.stringify(place.place2),
+            headers: {
+                'content-type': 'application/json'
+            },
+            method: 'PUT',
+            credentials: "same-origin"
+        })
+}
+
+/**
+ * Get text from private db.
+ * @param {} place 
+ */
+function popupText2(place) {
+    if (!window.places2) return "";
+    var p2 = place.place2;
+    var bits2 = !p2 ? [] : [p2.Owner || "", (p2.Phone || "") + " " + (p2.email || ""), p2.Description || ""];
+    var text2 = bits2.join("<br/>");
+    var buttonColor = pinColor2(p2 && p2.health);
+    var ctext2 = "<div class='popup2'><button"
+        + " id='popHealthButton' style='background-color:" + buttonColor + "'>" + healthMenuStack + "</button>"
+        + text2 + "</div>";
+    return ctext2;
+}
 
 function popupText(place) {
+    window.poppedUpPlace = place;
     if (!place) return "";
     var striptext = place.text.replace(/<[^>]*>/g, " ").trim() || place.subtitle || "";
-    var shorttext = striptext.length > 200
+    var shorttext = popupText2(place) + (striptext.length > 200
         ? striptext.substr(0, 200) + "..."
-        : striptext;
+        : striptext);
     var picUrl = "";
     if (place.pic1 && place.pic1[0] != "!") {
         picUrl = place.pic1;
