@@ -20,13 +20,20 @@ $(function () {
         $("#historyTitle").text("Places");
     }
     if (window.location.queryParameters.private) {
-        signin();
+        signinLaunch();
     }
 });
 
 function setUserName(name, fromCookie) {
 
 }
+
+
+function signinLaunch() {
+    $("#message").html("<button onclick='$(\"#message\").hide();signin();'>Sign in</button>");
+    $("#message").show();
+}
+
 
 function initMapCentre() {
     return getCookie("mapCenter") || "52.068287,-4.747708";
