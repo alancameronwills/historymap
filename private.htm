@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Map Private DB</title>
+        
+    <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
+    <!-- The icon that appears in the browser tab. Different browsers use different sizes. -->
+    <link rel="icon" type="image/png" href="favicon96.png" sizes="96x96" />
+    <link rel="icon" type="image/png" href="favicon32.png" sizes="32x32" />
+    <link rel="icon" type="image/png" href="favicon16.png" sizes="16x16" />
+    <!-- JQuery - popular utilities. Defines "$" -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- Default script and styles. Loads map module. -->
+    <script src="Scripts/history.js?v=2"></script>
+    <script>
+        function setUserName(n) {
+            fetch (apiUrl + "private")
+            .then(r=>r.json())
+            .then (r => {
+                if (r.ok) {
+                    setCookie("privatedb", "1", 1);
+                    window.location = "/index.htm" +window.location.search;
+                }
+                else {
+                    $("#who").html = r.body;
+                }
+            });
+        }
+    </script>
+    </head>
+    <body onload='setUserName()'>
+        <button onclick="signin()">Sign in</button>
+        <p>Signed in as: <span id="who" style="background-color: oldlace;"></span> </p>
+    </body>
+</html>

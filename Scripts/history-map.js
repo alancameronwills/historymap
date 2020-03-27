@@ -21,15 +21,7 @@ $(function () {
     }
 });
 
-function setUserName(name, fromCookie) {
 
-}
-
-
-function signinLaunch() {
-    $("#message").html("<button onclick='$(\"#message\").hide();signin();'>Sign in</button>");
-    $("#message").show();
-}
 
 
 function initMapCentre() {
@@ -48,9 +40,6 @@ function onMapLoaded() {
     );
     displayZone(zoneChoice);
     
-    if (window.location.queryParameters.private) {
-        signinLaunch();
-    }
 }
 
 
