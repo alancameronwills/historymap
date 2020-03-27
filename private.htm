@@ -14,14 +14,13 @@
     <script>
         function setUserName(n) {
             fetch (apiUrl + "private")
-            .then(r=>r.json())
             .then (r => {
                 if (r.ok) {
                     setCookie("privatedb", "1", 1);
                     window.location = "/index.htm" +window.location.search;
                 }
                 else {
-                    $("#who").html = r.body;
+                    r.json().then(rr => $("#who").html = rr);
                 }
             });
         }
