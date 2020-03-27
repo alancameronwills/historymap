@@ -17,7 +17,7 @@
             .then (r => {
                 if (r.ok) {
                     setCookie("privatedb", "1", 1);
-                    window.location = "/index.htm" +window.location.search;
+                    window.location = "index.htm" +window.location.search;
                 }
                 else {
                     r.json().then(rr => $("#who").html(rr)); 
