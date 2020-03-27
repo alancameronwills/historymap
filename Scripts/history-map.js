@@ -87,7 +87,7 @@ function displayZone(zoneChoice) {
 
 function place2AuthCheck() {
     if (location.host == "localhost") return true;
-    if (getCookie("place2auth")) return true;
+    if (getCookie("privatedb")) return true;
     return false;
 }
 
