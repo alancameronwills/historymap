@@ -19,9 +19,6 @@ $(function () {
         $("#helpButton").hide();
         $("#historyTitle").text("Places");
     }
-    if (window.location.queryParameters.private) {
-        signinLaunch();
-    }
 });
 
 function setUserName(name, fromCookie) {
@@ -50,6 +47,10 @@ function onMapLoaded() {
         function () { $(this).children(".dropDownMenu").css("display", "none")[0].action(); }
     );
     displayZone(zoneChoice);
+    
+    if (window.location.queryParameters.private) {
+        signinLaunch();
+    }
 }
 
 
