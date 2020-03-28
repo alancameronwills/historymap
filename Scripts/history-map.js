@@ -603,10 +603,11 @@ for (var i = 0; i < healthMenuCodes.length; i++) {
 }
 healthMenuStack += "</div>";
 
-
 function pinColor2(health) {
-    return health ? (health == "V" ? "orange" : health == "UO" ? "black" :
-        health == "SI" ? "yellow" : health == "VOL" ? "cyan" : "lightgreen") : "red";
+    for (var i = 0; i < healthMenuCodes.length; i++) {
+        if (health == healthMenuCodes[i]) return healthMenuColors[i];
+    }
+    return "red";
 }
 
 function setHealthCode(code) {
