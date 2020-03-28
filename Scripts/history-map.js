@@ -646,16 +646,17 @@ function updatePlace2(place) {
  */
 function popupText2(place) {
     if (!window.places2) return "";
-    var p2 = place.place2;
-    var bits2 = [];
+    let p2 = place.place2;
+    let bits2 = [];
     if (bits2) { 
-        for (var x in [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description]) {
-            if (x) bits2.push(x);
+        let b2 = [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description];
+        for (var i in b2) {
+            if (b2[i]) bits2.push(b2[i]);
         }
     }
-    var text2 = bits2.join("<br/>");
-    var buttonColor = pinColor2(p2 && p2.health);
-    var ctext2 = "<div class='popup2'><button"
+    let text2 = bits2.join("<br/>");
+    let buttonColor = pinColor2(p2 && p2.health);
+    let ctext2 = "<div class='popup2'><button"
         + " id='popHealthButton' style='background-color:" + buttonColor + "'>" + healthMenuStack + "</button>"
         + text2 + "</div>";
     return ctext2;
