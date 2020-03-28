@@ -590,9 +590,9 @@ window.addEventListener("storage", function (event) {
     }
 });
 
-var healthMenuCodes = ["UO", "VOL", "OK", "SI", "V"];
-var healthMenuLabels = ["unoccupied", "volunteer", "ok", "self-isolating", "vulnerable"];
-var healthMenuColors = ["black", "cyan", "lightgreen", "yellow", "orange"];
+var healthMenuCodes = ["UO", "VOL", "OK", "SI", "V", "?"];
+var healthMenuLabels = ["unoccupied", "volunteer", "ok", "self-isolating", "vulnerable", "unknown"];
+var healthMenuColors = ["black", "cyan", "lightgreen", "yellow", "orange", "red"];
 var healthMenuStack = "<div class='healthMenu'>";
 for (var i = 0; i < healthMenuCodes.length; i++) {
     healthMenuStack += "<div class='healthMenuItem' "
