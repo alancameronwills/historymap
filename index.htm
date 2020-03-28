@@ -143,8 +143,8 @@
         <div style="position:absolute;top:0px;right:0px;padding:4px;margin:2px;background-color:red;color:white;">X
         </div>
     </div>
-    <div id="edit2ui" onclick="$(this).hide();closeEdit2()">
-        <div onclick="event.stopPropagation()" onkeydown="event.stopPropagation()">
+    <div id="edit2ui" onclick="$(this).hide();closeEdit2()" onkeyup="event.stopPropagation()">
+        <div onclick="event.stopPropagation()" >
             <h4>Update <span id="edit2uiTitle"></span></h4>
             <table>
                 <tr>
