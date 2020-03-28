@@ -637,7 +637,7 @@ function updatePlace2(place) {
             },
             method: 'PUT',
             credentials: "same-origin"
-        })
+        });
 }
 
 /**
@@ -646,7 +646,7 @@ function updatePlace2(place) {
  */
 function popupText2(place) {
     if (!window.places2) return "";
-    let p2 = place.place2;
+    let p2 = place.place2 || {};
     let bits2 = [];
     if (bits2) { 
         let b2 = [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description];
@@ -656,7 +656,7 @@ function popupText2(place) {
     }
     let text2 = bits2.join("<br/>");
     let buttonColor = pinColor2(p2 && p2.health);
-    let ctext2 = "<div class='popup2'><button"
+    let ctext2 = `<div class='popup2' onclick='edit2(${place.id})'><button`
         + " id='popHealthButton' style='background-color:" + buttonColor + "'>" + healthMenuStack + "</button>"
         + text2 + "</div>";
     return ctext2;
@@ -683,6 +683,38 @@ function popupText(place) {
     }
 
     return shorttext;
+}
+
+function edit2(id) {
+    let p1 = window.items[id];
+    let p2 = window.places2[id];
+    if (!p2) {
+        p2 = {PartitionKey:"p1",
+            RowKey:id, 
+            Name:p1.title}; 
+        p1.place2 = p2;
+        window.places2[id] = p2;
+    }
+    g("edit2uiTitle").innerHTML = p2.Name || "";
+    g("edit2uiResident").value = p2.Owner || "";
+    g("edit2uiPhone").value = p2.Phone || "";
+    g("edit2uiEmail").value = p2.Email || "";
+    g("edit2uiC3").value = p2.c3 || "";
+    g("edit2uiC4").value = p2.c4 || "";
+    g("edit2uiDescription").value = p2.Description || "";
+    g("edit2ui").placeId = id;
+    $("#edit2ui").show();
+}
+function closeEdit2() {
+    var id = g("edit2ui").placeId;
+    var p2 = window.places2[id];
+    p2.Owner = g("edit2uiResident").value;
+    p2.Phone = g("edit2uiPhone").value;
+    p2.Email = g("edit2uiEmail").value;
+    p2.c3 = g("edit2uiC3").value;
+    p2.c4 = g("edit2uiC4").value;
+    p2.Description = g("edit2uiDescription").value;
+    updatePlace2(window.items[id]);
 }
 
 function strip(s) {

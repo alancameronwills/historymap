@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <!-- History Map main page -->
 <html>
+
 <head>
     <title>History Map</title>
     <meta http-equiv='Content-Type' content='text/html; charset=utf-8' />
@@ -19,7 +20,7 @@
     <script src="Scripts/history-map-places.js?v=2"></script>
     <script src="Scripts/history-map.js?v=2"></script>
 
-    
+
     <link rel="stylesheet" type="text/css" href="./css/history.css" />
 
     <!-- Application Insights monitors usage -->
@@ -142,7 +143,31 @@
         <div style="position:absolute;top:0px;right:0px;padding:4px;margin:2px;background-color:red;color:white;">X
         </div>
     </div>
-    
+    <div id="edit2ui" onclick="$(this).hide();closeEdit2()">
+        <div onclick="event.stopPropagation()">
+            <h4>Update <span id="edit2uiTitle"></span></h4>
+            <table>
+                <tr>
+                    <td>Resident</td>
+                    <td colspan='3'><input type='text' id='edit2uiResident' size="50" /></td>
+                </tr>
+                <tr>
+                    <td>Phone</td>
+                    <td><input type='text' id='edit2uiPhone' size='10' /></td>
+                    <td>Email</td>
+                    <td><input type='text' id='edit2uiEmail' /></td>
+                </tr>
+                <tr>
+                    <td>contact 3</td>
+                    <td><input type='text' id='edit2uiC3' /></td>
+                    <td>contact 4</td>
+                    <td><input type='text' id='edit2uiC4' /></td>
+                </tr>
+                <tr>
+                    <td>Notes</td><td colspan='3'><textarea id='edit2uiDescription' cols='50'></textarea></td></tr>
+        </table>
+        </div>
+    </div>
 </body>
 
 </html>
