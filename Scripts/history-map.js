@@ -598,7 +598,7 @@ for (var i = 0; i < healthMenuCodes.length; i++) {
     healthMenuStack += "<div class='healthMenuItem' "
         + `style='background-color:${healthMenuColors[i]}' `
         + `title='${healthMenuLabels[i]}'`
-        + `onclick='setHealthCode("${healthMenuCodes[i]}")'`
+        + `onclick='setHealthCode("${healthMenuCodes[i]}");event.stopPropagation()'`
         + "></div>";
 }
 healthMenuStack += "</div>";
