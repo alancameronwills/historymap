@@ -648,9 +648,9 @@ function popupText2(place) {
     if (!window.places2) return "";
     var p2 = place.place2;
     var bits2 = [];
-    if (p2) {
+    if (bits2) {
         for (var x in [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description]) {
-            if (x) p2.push(x);
+            if (x) bits2.push(x);
         }
     }
     var text2 = bits2.join("<br/>");
