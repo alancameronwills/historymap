@@ -440,7 +440,7 @@ class BingMap {
         return {
             title: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
             text: postcodeLetter, 
-            subTitle: place.subtitle, 
+            subTitle: (place.place2? place.place2.Owner : place.subtitle), 
             color: thisPinColor, 
             enableHoverStyle: true
         };
