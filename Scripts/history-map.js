@@ -657,7 +657,7 @@ function popupText2(place) {
     }
     let text2 = bits2.join("<br/>");
     let buttonColor = pinColor2(p2 && p2.health);
-    let ctext2 = `<div class='popup2' onclick='edit2(${place.id})'><button`
+    let ctext2 = `<div class='popup2' onclick='edit2("${place.id}")'><button`
         + " id='popHealthButton' style='background-color:" + buttonColor + "'>" + healthMenuStack + "</button>"
         + text2 + "</div>";
     return ctext2;
