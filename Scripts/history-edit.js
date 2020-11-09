@@ -563,7 +563,7 @@ function gatherToSave() {
 }
 
 function clean(t) {
-    return t.replace(/<\s*script/g, "").trim();
+    return t.replace(/<\/?\s*script.*?>/g, "").trim();
 }
 
 // User clicked Save
