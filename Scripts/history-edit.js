@@ -537,7 +537,7 @@ function gatherToSave() {
     s.Postcode = clean($("#postcode")[0].value);
     s.Tags = clean($("#tags")[0].value);
     s.Zoom = ($("#zoom")[0].checked ? "1" : "0");
-    s.Text = clean($("#text").html().replace(fixLinks, "./")); // Links to other places in Map.
+    s.Text = $("#text").html().replace(fixLinks, "./"); // Links to other places in Map.
     var loc = window.map.getPinCenter();
     s.Longitude = loc.longitude.toFixed(6);
     s.Latitude = loc.latitude.toFixed(6);
@@ -563,7 +563,7 @@ function gatherToSave() {
 }
 
 function clean(t) {
-    return t.replace(/<[/\s]*script.*?>/g, "").trim();
+    return t.replace(/<.*?>/gs, "").trim();
 }
 
 // User clicked Save
