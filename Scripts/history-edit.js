@@ -182,7 +182,7 @@ function ShowPhoto1(url) {
         category = "pic";
     }
     // Google iframe embed, freshly pasted by user from Google page
-    if (url.match(/^<iframe.*<\/iframe>$/)) {
+    if (url.match(/^<iframe.*<\/iframe>$/) && !url.match(/<\s*script/)) {
         var urlx = url.replace(/width=".*?"/, "width='300'").replace(/height=".*?"/, "height='225'");
         $("#photo1prompt").hide();
         $("#photo1img").hide()[0].src = "";
@@ -191,7 +191,7 @@ function ShowPhoto1(url) {
         category = "google";
     }
     // Google iframe embed, abbreviated when previously stored by us
-    if (url.match(/^!/)) {
+    if (url.match(/^!/ && !url.match(/</))) {
         var ww = 300;
         var hh = 225;
         content = "<iframe src='https://www.google.com/maps/embed?pb={0}' id='streetview' width='{1}px' height='{2}px' frameborder='0' style='border:0' allowfullscreen></iframe>".format(url, ww, hh);
@@ -461,7 +461,7 @@ function CompleteCreateLink() {
     jLinkDialog.hide();
     // Select again the text that was selected before the dialog:
     restoreSelection(jLinkDialog[0].savedSelection);
-    var href = $("#linkRef")[0].value;
+    var href = clean($("#linkRef")[0].value.replace("'", "").replace('"', ""));
     var selection = window.getSelection();
     if (href.length > 5 && !selection.isCollapsed && isInNode(selection.anchorNode, "text")) {
         document.execCommand("CreateLink", false, href);
