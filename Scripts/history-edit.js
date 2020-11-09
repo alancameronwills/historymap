@@ -191,7 +191,7 @@ function ShowPhoto1(url) {
         category = "google";
     }
     // Google iframe embed, abbreviated when previously stored by us
-    if (url.match(/^!/ && !url.match(/</))) {
+    if (url.match(/^!/) && !url.match(/</)) {
         var ww = 300;
         var hh = 225;
         content = "<iframe src='https://www.google.com/maps/embed?pb={0}' id='streetview' width='{1}px' height='{2}px' frameborder='0' style='border:0' allowfullscreen></iframe>".format(url, ww, hh);
