@@ -531,13 +531,13 @@ function gatherToSave() {
     var s = {};
     s.PartitionKey = "p1"; // TODO Make dependent on region.
     s.RowKey = "" + window.place.id; // ensure string
-    s.Title = $("#title")[0].value.trim().replace(/'/, "&#39;").replace(/"/, "&quot;");
-    s.Subtitle = $("#subtitle")[0].value.trim();
-    s.Year = $("#year")[0].value.trim();
-    s.Postcode = $("#postcode")[0].value.trim();
-    s.Tags = $("#tags")[0].value.trim();
+    s.Title = clean($("#title")[0].value).replace(/'/, "&#39;").replace(/"/, "&quot;");
+    s.Subtitle = clean($("#subtitle")[0].value);
+    s.Year = clean($("#year")[0].value);
+    s.Postcode = clean($("#postcode")[0].value);
+    s.Tags = clean($("#tags")[0].value);
     s.Zoom = ($("#zoom")[0].checked ? "1" : "0");
-    s.Text = $("#text").html().replace(fixLinks, "./"); // Links to other places in Map.
+    s.Text = clean($("#text").html().replace(fixLinks, "./")); // Links to other places in Map.
     var loc = window.map.getPinCenter();
     s.Longitude = loc.longitude.toFixed(6);
     s.Latitude = loc.latitude.toFixed(6);
@@ -560,6 +560,10 @@ function gatherToSave() {
     // OK to delete if this is completely new:
     if (!location.queryParameters.id) { s.DeleteOK = true; }
     return s;
+}
+
+function clean(t) {
+    return t.replace(/<\s*script/, "").trim();
 }
 
 // User clicked Save
