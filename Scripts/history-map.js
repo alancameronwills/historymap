@@ -282,7 +282,7 @@ function showMainText(id, place) {
             + "<td><a href='#' onclick='editPlace(\"{0}\",\"{1}\")'>{4}</a></td>"
             + "<td align='center'><a href='#' onclick='showLink(\"{0}\")'>Share</a></td>"
             + "<td align='right'><a href='mailto:?subject=Directions&body=Click this link for directions:%0A https://www.google.co.uk/maps/dir//{2},{3}/@{2},{3},11z '>Send directions</a></td></tr></table>")
-            .format(id, place.title.replace("'", ""), place.location.latitude, place.location.longitude, "Edit"));
+            .format(id, place.title.replace("'", "").replace(/"/g,""), place.location.latitude, place.location.longitude, "Edit"));
     description = description.replace(/{{/, "<article src='").replace(/}}/, "'/>");
     $("#textbox").html(description);
     $("#textbox").fadeIn("slow");
