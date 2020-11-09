@@ -531,7 +531,7 @@ function gatherToSave() {
     var s = {};
     s.PartitionKey = "p1"; // TODO Make dependent on region.
     s.RowKey = "" + window.place.id; // ensure string
-    s.Title = clean($("#title")[0].value).replace(/'/, "&#39;").replace(/"/, "&quot;");
+    s.Title = clean($("#title")[0].value).replace(/'/g, "&#39;").replace(/"/g, "&quot;");
     s.Subtitle = clean($("#subtitle")[0].value);
     s.Year = clean($("#year")[0].value);
     s.Postcode = clean($("#postcode")[0].value);
