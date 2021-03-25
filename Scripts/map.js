@@ -1,4 +1,8 @@
 
+/*
+Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
+*/
+
 function insertScript(s) {
     var head = document.getElementsByTagName('head')[0];
     var script = document.createElement('script');
