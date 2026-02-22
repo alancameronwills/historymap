@@ -280,15 +280,8 @@ class BingMap {
                 }
             });
 
-        //Wait until the map resources are ready.
         this.map.events.add('ready', () => {
-            //Add zoom and map style controls to top right of map.
-            this.map.controls.add([
-                new atlas.control.StyleControl(),
-                new atlas.control.ZoomControl()
-            ], {
-                position: 'top-right'
-            });
+            this.map.controls.add(new atlas.control.ZoomControl(), { position: 'top-right' });
         });
 
         this.map.events.add("click", function (e) {
@@ -311,7 +304,7 @@ class BingMap {
             menuString += "<a href='#' onclick='rightClickActions[{1}].eventHandler()'>{0}</a>".format(rightClickActions[i].label, i);
             menuString += "<br/>";
         }
-        this.menuBox = new atlas.Popup({ closeButton: false, fillColor: 'white', content: menuString });
+        this.menuBox = new atlas.Popup({ closeButton: false, fillColor: 'white', content: menuString, position: [0, 0] });
         this.map.events.add("contextmenu", (e) => {
             this.menuBoxLocation = { latitude: e.position[1], longitude: e.position[0] };
             this.menuBox.setOptions({ position: e.position });
@@ -326,7 +319,7 @@ class BingMap {
     }
 
     setUpPlacePopup() {
-        this.placePopup = new atlas.Popup({ closeButton: false });
+        this.placePopup = new atlas.Popup({ closeButton: false, position: [0, 0] });
     }
 
     openPlacePopup(position, title, shorttext, place) {
@@ -383,7 +376,8 @@ class BingMap {
                 if (place.principal && place.principal > 0) {
                     marker.tooltip = new atlas.Popup({
                         closeButton: false,
-                        content: "<div>Click to see places here</div>"
+                        content: "<div>Click to see places here</div>",
+                        position: [place.location.longitude, place.location.latitude]
                     });
 
                     this.map.events.add('click', marker, (function (m) {
