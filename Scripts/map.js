@@ -1,5 +1,5 @@
 
-// map.js version 11
+// map.js version 12
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -397,19 +397,21 @@ class BingMap {
                         };
                     })(marker));
 
-                    this.map.events.add('mouseover', marker, (function (m) {
-                        return function () {
+                    (function (m) {
+                        var el = m.getElement();
+                        el.addEventListener('mouseenter', function () {
+                            if (window.map._hoverTimer) { clearTimeout(window.map._hoverTimer); window.map._hoverTimer = null; }
                             var pos = m.getOptions().position;
                             m.tooltip.setOptions({ position: pos });
                             m.tooltip.open(window.map.map);
-                        };
-                    })(marker));
-
-                    this.map.events.add('mouseout', marker, (function (m) {
-                        return function () {
-                            m.tooltip.close();
-                        };
-                    })(marker));
+                        });
+                        el.addEventListener('mouseleave', function () {
+                            window.map._hoverTimer = setTimeout(function () {
+                                m.tooltip.close();
+                                window.map._hoverTimer = null;
+                            }, 400);
+                        });
+                    })(marker);
 
                 } else { // Ordinary place
                     this.map.events.add('click', marker, (function (m) {
@@ -419,17 +421,21 @@ class BingMap {
                         };
                     })(marker));
 
-                    this.map.events.add('mouseover', marker, (function (m) {
-                        return function () {
+                    (function (m) {
+                        var el = m.getElement();
+                        el.addEventListener('mouseenter', function () {
+                            if (window.map._hoverTimer) { clearTimeout(window.map._hoverTimer); window.map._hoverTimer = null; }
                             var pos = m.getOptions().position;
                             var position = { latitude: pos[1], longitude: pos[0] };
                             window.map.openPlacePopup(position, m.place.title, popupText(m.place), m.place);
-                        };
-                    })(marker));
-
-                    this.map.events.add('mouseout', marker, function () {
-                        window.map.closePopup();
-                    });
+                        });
+                        el.addEventListener('mouseleave', function () {
+                            window.map._hoverTimer = setTimeout(function () {
+                                window.map.closePopup();
+                                window.map._hoverTimer = null;
+                            }, 400);
+                        });
+                    })(marker);
                 }
             }
             return marker;
