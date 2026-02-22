@@ -260,7 +260,11 @@ class BingMap {
         if (centerFromCookie) {
             // Cookie is Lat,Long ; Azure Map is Long, Lat:
             let cookieLatLong = centerFromCookie.split(",");
-            mapCenter = [1 * cookieLatLong[1], 1 * cookieLatLong[0]];
+            let lng = parseFloat(cookieLatLong[1]);
+            let lat = parseFloat(cookieLatLong[0]);
+            if (isFinite(lng) && isFinite(lat)) {
+                mapCenter = [lng, lat];
+            }
         }
 
         this.map = new atlas.Map('theMap',
@@ -343,7 +347,12 @@ class BingMap {
     }
 
     makePosition(lat, lng) {
-        return { latitude: lat, longitude: lng };
+        var latitude = parseFloat(lat);
+        var longitude = parseFloat(lng);
+        return {
+            latitude: isFinite(latitude) ? latitude : null,
+            longitude: isFinite(longitude) ? longitude : null
+        };
     }
 
     makePin(place, nopopup) {

@@ -162,7 +162,9 @@ function selectOnMap(place, fromList) {
     // console.log("selectOnMap 1");
     window.map.highlightPin(place ? place.pin : null);
     if (place != null) {
-        setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
+        if (place.location.latitude != null && place.location.longitude != null) {
+            setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
+        }
         if (fromList) {
             window.map.showPlace(place, proximity(place), true);
         }
