@@ -348,6 +348,7 @@ class BingMap {
 
     makePin(place, nopopup) {
         if (place.cf.length > 0) {
+            if (place.location.longitude == null || place.location.latitude == null) return;
             var options = this.pinOptions(place);
             var marker;
             if (place.principal && place.principal > 0) {
@@ -477,12 +478,13 @@ class BingMap {
 
 
     showPlace(place, zoom, shiftOffCentre) {
+        if (place.location.longitude == null || place.location.latitude == null) return;
+        var cameraOpts = { center: [place.location.longitude, place.location.latitude] };
         if (zoom) {
             // Don't change the zoom level if it would change the map type:
-            var newzoom = this.isOsMode && zoom > 17 ? 17 : zoom;
-            this.map.setCamera({ zoom: newzoom });
+            cameraOpts.zoom = this.isOsMode && zoom > 17 ? 17 : zoom;
         }
-        this.map.setCamera({ center: [place.location.longitude, place.location.latitude] });
+        this.map.setCamera(cameraOpts);
     }
 
     // OS Landranger Map only goes up to zoom 17. Above that, display OS Standard.
