@@ -1,5 +1,5 @@
 
-// map.js version 8
+// map.js version 9
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -287,6 +287,7 @@ class BingMap {
         });
 
         this.map.events.add("click", function (e) {
+            if (window.map._pinClicked) { window.map._pinClicked = false; return; }
             clearMessageOrMapSelection();
         });
 
@@ -327,7 +328,7 @@ class BingMap {
     openPlacePopup(position, title, shorttext, place) {
         this.placePopup._place = place;
         this.placePopup.setOptions({
-            content: "<div onclick='go(window.map.placePopup._place.id, false)'><h3>" + title + "</h3>" + shorttext + "</div>",
+            content: "<div style='max-width:300px' onclick='window.map._pinClicked=true;go(window.map.placePopup._place.id,false)'><h3>" + title + "</h3>" + shorttext + "</div>",
             position: [position.longitude, position.latitude]
         });
         this.placePopup.open(this.map);
@@ -413,6 +414,7 @@ class BingMap {
                 } else { // Ordinary place
                     this.map.events.add('click', marker, (function (m) {
                         return function () {
+                            window.map._pinClicked = true;
                             go(m.place.id, false);
                         };
                     })(marker));
