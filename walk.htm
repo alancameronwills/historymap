@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="img/favicon96.png" sizes="96x96" />
     <link rel="icon" type="image/png" href="img/favicon32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="img/favicon16.png" sizes="16x16" />
+    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.css" type="text/css" />
 
     <script src="Scripts/azure-storage.common.js"></script>
     <script src="Scripts/azure-storage.blob.js"></script>
@@ -262,11 +263,10 @@
                         window.lastMoveTime = t;
 
                         // Shift map to current location:
-                        window.here = new Microsoft.Maps.Location(pos.coords.latitude, pos.coords.longitude);
+                        window.here = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
                         if (window.map) {
-                            window.map.setView({ zoom: window.zoom });
-                            window.map.setView({ center: window.here });
-                            window.herePin.setLocation(window.here);
+                            window.map.setCamera({ zoom: window.zoom, center: [window.here.longitude, window.here.latitude] });
+                            window.herePin.setOptions({ position: [window.here.longitude, window.here.latitude] });
                         }
                         $("#lamp").show();
                         setTimeout(function () { $("#lamp").hide(); }, 500);
@@ -301,84 +301,81 @@
             $("#preload").html(piclist);
         }
 
+        function doLoadMap() {
+            $.ajax({
+                url: 'https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.js',
+                dataType: "script",
+                success: mapModuleLoaded,
+                async: false
+            });
+        }
+
         function showPins() {
             for (var i = 0, place; place = window.placeData[i]; i++) {
                 if (!place.Title) continue;
                 window.placeIndex[place.RowKey] = place;
-                place.location = new Microsoft.Maps.Location(place.Latitude, place.Longitude);
-                var pushpin = new Microsoft.Maps.Pushpin(
-                    place.location,
-                    {
-                        title: place.Title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
-                        color: "#a00000", enableHoverStyle: true
-                    }
-                );
-                pushpin.place = place;
-                place.pin = pushpin;
-                window.map.entities.push(pushpin);
-                Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                    if (e) {
-                        var place = e.primitive.place;
-                        showPlace(place, getDistance(place));
-                    }
+                place.location = { latitude: place.Latitude, longitude: place.Longitude };
+                var marker = new atlas.HtmlMarker({
+                    position: [place.Longitude, place.Latitude],
+                    text: place.Title.substr(0, 2),
+                    color: '#a00000'
                 });
+                marker.place = place;
+                place.pin = marker;
+                window.map.markers.add(marker);
+                (function (m) {
+                    window.map.events.add('click', m, function () {
+                        showPlace(m.place, getDistance(m.place));
+                    });
+                })(marker);
             }
         }
 
 
-        // Called when the script for Bing maps has loaded and is ready to draw a map:
+        // Called when the Atlas map script has loaded and is ready to draw a map:
         function mapModuleLoaded() {
             // Wait until all scripts have loaded:
             $(document).ready(function () {
                 // Arbitrary place to centre the map before GPS location is acquired:
-                window.here = new Microsoft.Maps.Location(52.068287, -4.747708);
+                window.here = { latitude: 52.068287, longitude: -4.747708 };
                 // But hope to improve on it:
                 navigator.geolocation.getCurrentPosition(function (pos) {
-                    if (pos) window.here = pos;
+                    if (pos) window.here = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
                 });
 
-                // Load map:
-
-                window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
-                    {
-                        mapTypeId: Microsoft.Maps.MapTypeId.aerial,
-                        center: window.here,
-                        showLocateMeButton: false,
-                        disableBirdseye: true,
-                        disableKeyboardInput: true,
-                        disableStreetside: true,
-                        enableClickableLogo: false,
-                        navigationBarMode: Microsoft.Maps.NavigationBarMode.compact,
-                        zoom: 19
-                    });
-
-                var svg = '<svg width="22" height="22" xmlns="http://www.w3.org/2000/svg">' +
-                    '<circle r="10" cx="11" cy="11" stroke="#00a0ff" stroke-width="2" fill="none"/>' +
-                    '<circle r="8" cx="11" cy="11" stroke="#ffff00" stroke-width="2" fill="none"/></svg>';
-
-                window.herePin = new Microsoft.Maps.Pushpin(
-                    window.here,
-                    { color: "#0000ff", icon: svg, anchor: { x: 10, y: 10 } }
-                );
-                window.map.entities.push(window.herePin);
-
-                $("#placeDisplay").hide();
-                $("#noPlaceDisplay").hide();
-                $.get(apiUrl + "places", function (data, status) {
-                    window.placeData = data;
-
-                    preloadPics();
-                    showPins();
-
-                    initRefresher();
-                });
-
-                // Minor convenience: If user selects OS map, zoom out so that actual OS shows:
-                Microsoft.Maps.Events.addHandler(window.map, 'maptypechanged', function () {
-                    var mapTypeId = window.map.getMapTypeId();
-                    if (mapTypeId == Microsoft.Maps.MapTypeId.ordnanceSurvey && window.map.getZoom() > 17) {
-                        setTimeout(function () { window.map.setView({ zoom: 17 }) }, 300);
+                window.map = new atlas.Map('theMap', {
+                    style: 'satellite_with_roads',
+                    center: [window.here.longitude, window.here.latitude],
+                    showLocateMeButton: false,
+                    disableKeyboardInput: true,
+                    zoom: 19,
+                    authOptions: {
+                        authType: 'subscriptionKey',
+                        subscriptionKey: window.keys.Client_Azure_Map_K
                     }
+                });
+
+                window.map.events.add('ready', function () {
+                    var svg = '<svg width="22" height="22" xmlns="http://www.w3.org/2000/svg">' +
+                        '<circle r="10" cx="11" cy="11" stroke="#00a0ff" stroke-width="2" fill="none"/>' +
+                        '<circle r="8" cx="11" cy="11" stroke="#ffff00" stroke-width="2" fill="none"/></svg>';
+
+                    window.herePin = new atlas.HtmlMarker({
+                        position: [window.here.longitude, window.here.latitude],
+                        htmlContent: svg
+                    });
+                    window.map.markers.add(window.herePin);
+
+                    $("#placeDisplay").hide();
+                    $("#noPlaceDisplay").hide();
+                    $.get(apiUrl + "places", function (data, status) {
+                        window.placeData = data;
+
+                        preloadPics();
+                        showPins();
+
+                        initRefresher();
+                    });
                 });
 
             });

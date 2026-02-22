@@ -3,7 +3,7 @@
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
 */
 
-function insertScript(s) {
+function x_insertScript(s) {
     var head = document.getElementsByTagName('head')[0];
     var script = document.createElement('script');
     script.async = true;
@@ -11,6 +11,15 @@ function insertScript(s) {
     script.type = 'text/javascript';
     script.src = s;
     head.appendChild(script);
+}
+
+function insertScript(s, success) {
+    $.ajax({
+        url: s,
+        dataType: "script",
+        success: success,
+        async: false
+    });
 }
 
 function doLoadMap() {
@@ -75,7 +84,7 @@ class GoogleMap {
         })
     }
 
-    getMapType () {
+    getMapType() {
         var t = this.map.getMapTypeId();
         this.mapType = t == google.maps.MapTypeId.SATELLITE || t == google.maps.MapTypeId.HYBRID ? "satellite" : "roadmap";
     }
@@ -155,14 +164,14 @@ class GoogleMap {
     }
     removePin(place) {
         var i = this.markers.indexOf(place.pin);
-        this.markers.splice(i,1);
+        this.markers.splice(i, 1);
         place.pin.setMap(null);
         place.pin.place = null;
         place.pin = null;
     }
 
     reDrawMarkers() {
-        for (var i = 0; i<this.markers.length; i++) {
+        for (var i = 0; i < this.markers.length; i++) {
             var pin = this.markers[i];
             pin.setOptions(this.pinOptions(pin.place));
         }
@@ -207,8 +216,8 @@ class GoogleMap {
         }
     }
 
-    setPinColor (pin, color) {
-        pin.setOptions({icon:{path: google.maps.SymbolPath.CIRCLE, strokeColor: color, scale:6, labelOrigin: { x: 0, y: 2 }}});
+    setPinColor(pin, color) {
+        pin.setOptions({ icon: { path: google.maps.SymbolPath.CIRCLE, strokeColor: color, scale: 6, labelOrigin: { x: 0, y: 2 } } });
     }
 
     clear() {
@@ -241,173 +250,184 @@ class Pin {
 }
 
 class BingMap {
-    // https://docs.microsoft.com/bingmaps/v8-web-control/
+    // https://learn.microsoft.com/en-us/azure/azure-maps/
     constructor() {
-        // console.log("BingMap 1");
-        insertScript('https://www.bing.com/api/maps/mapcontrol?key=' + window.keys.Client_Map_K + '&callback=mapModuleLoaded');
+        insertScript('https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.js', mapModuleLoaded);
     }
     loaded(onload) {
-        //$(() => {
-        // console.log("BingMap.loaded 1");
-        var mapCenter = new Microsoft.Maps.Location(52.068287, -4.747708);
+        var mapCenter = [-4.747708, 52.068287];
         var centerFromCookie = getCookie("mapCenter");
         if (centerFromCookie) {
-            mapCenter = Microsoft.Maps.Location.parseLatLong(centerFromCookie) || mapCenter;
+            // Cookie is Lat,Long ; Azure Map is Long, Lat:
+            let cookieLatLong = centerFromCookie.split(",");
+            mapCenter = [1 * cookieLatLong[1], 1 * cookieLatLong[0]];
         }
-        this.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
+
+        this.map = new atlas.Map('theMap',
             {
-                mapTypeId: Microsoft.Maps.MapTypeId.aerial,
+                style: 'satellite_with_roads',
                 center: mapCenter,
                 showLocateMeButton: false,
                 disableKeyboardInput: true,
-                zoom: 16
+                zoom: 15,
+                authOptions: {
+                    authType: 'subscriptionKey',
+                    subscriptionKey: window.keys.Client_Azure_Map_K
+                }
             });
 
-        // console.log("BingMap.loaded 2");
-        Microsoft.Maps.Events.addHandler(this.map, "click", function (e) {
+        //Wait until the map resources are ready.
+        this.map.events.add('ready', () => {
+            //Add zoom and map style controls to top right of map.
+            this.map.controls.add([
+                new atlas.control.StyleControl(),
+                new atlas.control.ZoomControl()
+            ], {
+                position: 'top-right'
+            });
+        });
+
+        this.map.events.add("click", function (e) {
             clearMessageOrMapSelection();
         });
-        // Microsoft.Maps.Events.addHandler(this.map, 'viewchangeend', this.setStreetOsLayer);
+
         if (!window.noHistory) {
             this.setUpMapMenu();
             this.setUpPlacePopup();
         }
 
-        Microsoft.Maps.Events.addHandler(this.map, 'viewchangeend', () => window.map.setStreetOsLayer());
-        // console.log("BingMap.loaded 3");
+        this.map.events.add('viewchangeend', () => window.map.setStreetOsLayer());
         onload();
-        // console.log("BingMap.loaded 4");
-        //});
     }
 
 
     setUpMapMenu() {
-        this.menuBox = new Microsoft.Maps.Infobox(
-            this.map.getCenter(),
-            {
-                visible: false,
-                showPointer: true,
-                offset: new Microsoft.Maps.Point(0, 0),
-                actions: rightClickActions
-            });
-        this.menuBox.setMap(this.map);
-        Microsoft.Maps.Events.addHandler(this.map, "rightclick",
-            function (e) {
-                window.map.menuBox.setOptions({
-                    location: e.location,
-                    visible: true
-                });
-            });
+        var menuString = "";
+        for (var i = 0; i < rightClickActions.length; i++) {
+            menuString += "<a href='#' onclick='rightClickActions[{1}].eventHandler()'>{0}</a>".format(rightClickActions[i].label, i);
+            menuString += "<br/>";
+        }
+        this.menuBox = new atlas.Popup({ closeButton: false, fillColor: 'white', content: menuString });
+        this.map.events.add("contextmenu", (e) => {
+            this.menuBoxLocation = { latitude: e.position[1], longitude: e.position[0] };
+            this.menuBox.setOptions({ position: e.position });
+            this.menuBox.open(this.map);
+        });
     }
+
     doAddPlace() {
-        var loc = window.map.menuBox.getLocation();
-        window.map.menuBox.setOptions({ visible: false });
+        var loc = this.menuBoxLocation;
+        this.menuBox.close();
         window.open("editor.htm?cmd=add&lat={0}&long={1}".format(loc.latitude, loc.longitude), "_blank");
     }
-    setUpPlacePopup() {
-        //Create an infobox to show start of place text on hover
-        this.placePopup = new Microsoft.Maps.Infobox(this.map.getCenter(), {
-            visible: false,
-            showCloseButton: false,
-            offset: new Microsoft.Maps.Point(0, 10),
-            description: "",
-            maxWidth: 400,
-            maxHeight: 200,
-            showPointer: true
-        });
-        this.placePopup.setMap(this.map);
 
-        Microsoft.Maps.Events.addHandler(this.placePopup, 'click', function (e) {
-            var place = e.target.place;
-            if (place) {
-                go(place.id, false);
-            }
-        });
+    setUpPlacePopup() {
+        this.placePopup = new atlas.Popup({ closeButton: false });
     }
+
     openPlacePopup(position, title, shorttext, place) {
+        this.placePopup._place = place;
         this.placePopup.setOptions({
-            location: position,
-            description: shorttext,
-            title: title,
-            visible: true
+            content: "<div onclick='go(window.map.placePopup._place.id, false)'><h3>" + title + "</h3>" + shorttext + "</div>",
+            position: [position.longitude, position.latitude]
         });
+        this.placePopup.open(this.map);
     }
+
     closePopup() {
-        this.placePopup.setOptions({ visible: false });
+        this.placePopup.close();
     }
+
     closeMapMenu() {
-        if (this.menuBox) this.menuBox.setOptions({ visible: false });
+        if (this.menuBox) this.menuBox.close();
     }
+
     makePosition(lat, lng) {
-        return new Microsoft.Maps.Location(lat, lng);
+        return { latitude: lat, longitude: lng };
     }
+
     makePin(place, nopopup) {
         if (place.cf.length > 0) {
             var options = this.pinOptions(place);
-            var pushpin = new Microsoft.Maps.Pushpin(
-                place.location,
-                options
-            );
-            this.map.entities.push(pushpin);
-            pushpin.myColor = options.color;
-            pushpin.id = place.id;
-            pushpin.place = place;
-            place.pin = pushpin;
+            var marker;
+            if (place.principal && place.principal > 0) {
+                var svg = this.principalPinTemplate().replace('{text}', options.text);
+                marker = new atlas.HtmlMarker({
+                    position: [place.location.longitude, place.location.latitude],
+                    htmlContent: svg
+                });
+            } else {
+                marker = new atlas.HtmlMarker({
+                    position: [place.location.longitude, place.location.latitude],
+                    color: options.color,
+                    text: options.text
+                });
+            }
+            this.map.markers.add(marker);
+            marker.myColor = options.color;
+            marker.id = place.id;
+            marker.place = place;
+            place.pin = marker;
             if (!nopopup) {
                 // If this is a big icon for a whole town:
                 if (place.principal && place.principal > 0) {
-
-                    //Create an infobox to use as a tooltip when hovering.
-                    pushpin.tooltip = new Microsoft.Maps.Infobox(this.map.getCenter(), {
-                        visible: false,
-                        showCloseButton: false,
-                        offset: new Microsoft.Maps.Point(-75, 30),
-                        description: "Click to see places here",
-                        maxWidth: 400,
-                        showPointer: true
-                    });
-                    pushpin.tooltip.setMap(this.map);
-
-                    Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                        e.primitive.tooltip.setOptions({ visible: false });
-                        var place = e.primitive.place;
-                        delete window.location.queryParameters.place;
-                        setZoneChoice(zoneFromPrincipal(place));
-                        setCookie("mapCenter", "" + place.location.latitude + "," + place.location.longitude);
-                        window.map.map.setView({ center: place.location });
+                    marker.tooltip = new atlas.Popup({
+                        closeButton: false,
+                        content: "<div>Click to see places here</div>"
                     });
 
-                    Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
-                        e.primitive.tooltip.setOptions({
-                            location: e.target.getLocation(),
-                            visible: true
-                        });
-                    });
-                    Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
-                        e.primitive.tooltip.setOptions({ visible: false });
-                    });
+                    this.map.events.add('click', marker, (function (m) {
+                        return function () {
+                            m.tooltip.close();
+                            var p = m.place;
+                            delete window.location.queryParameters.place;
+                            setZoneChoice(zoneFromPrincipal(p));
+                            setCookie("mapCenter", "" + p.location.latitude + "," + p.location.longitude);
+                            window.map.map.setCamera({ center: [p.location.longitude, p.location.latitude] });
+                        };
+                    })(marker));
+
+                    this.map.events.add('mouseover', marker, (function (m) {
+                        return function () {
+                            var pos = m.getOptions().position;
+                            m.tooltip.setOptions({ position: pos });
+                            m.tooltip.open(window.map.map);
+                        };
+                    })(marker));
+
+                    this.map.events.add('mouseout', marker, (function (m) {
+                        return function () {
+                            m.tooltip.close();
+                        };
+                    })(marker));
 
                 } else { // Ordinary place
-                    Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                        if (e) {
-                            go(e.primitive.place.id, false);
-                        }
-                    });
-                    Microsoft.Maps.Events.addHandler(pushpin, 'mouseover', function (e) {
-                        window.map.openPlacePopup(e.target.getLocation(), place.title, popupText(e.primitive.place), place);
-                    });
-                    Microsoft.Maps.Events.addHandler(pushpin, 'mouseout', function (e) {
-                        window.map.placePopup.setOptions({ visible: false });
+                    this.map.events.add('click', marker, (function (m) {
+                        return function () {
+                            go(m.place.id, false);
+                        };
+                    })(marker));
+
+                    this.map.events.add('mouseover', marker, (function (m) {
+                        return function () {
+                            var pos = m.getOptions().position;
+                            var position = { latitude: pos[1], longitude: pos[0] };
+                            window.map.openPlacePopup(position, m.place.title, popupText(m.place), m.place);
+                        };
+                    })(marker));
+
+                    this.map.events.add('mouseout', marker, function () {
+                        window.map.closePopup();
                     });
                 }
             }
-            return pushpin;
+            return marker;
         }
     }
 
-    
+
     removePin(place) {
-        this.map.entities.remove(place.pin);
+        this.map.markers.remove(place.pin);
         place.pin.place = null;
         place.pin = null;
     }
@@ -443,51 +463,41 @@ class BingMap {
         }
         return {
             title: place.title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
-            text: postcodeLetter, 
-            subTitle: (place.place2? place.place2.Owner : place.subtitle), 
-            color: thisPinColor, 
+            text: postcodeLetter,
+            subTitle: (place.place2 ? place.place2.Owner : place.subtitle),
+            color: thisPinColor,
             enableHoverStyle: true
         };
     }
 
     setPin(pin, place) {
         var options = this.pinOptions(place);
-        pin.setOptions(options);
-        pin.setLocation(place.location);
+        pin.setOptions({ color: options.color, text: options.text, position: [place.location.longitude, place.location.latitude] });
     }
 
 
     showPlace(place, zoom, shiftOffCentre) {
         if (zoom) {
             // Don't change the zoom level if it would change the map type:
-            var isOS = this.map.getMapTypeId() == "os";
-            var newzoom = isOS && zoom > 17 ? 17 : zoom;
-
-            this.map.setView({ zoom: newzoom });
+            var newzoom = this.isOsMode && zoom > 17 ? 17 : zoom;
+            this.map.setCamera({ zoom: newzoom });
         }
-        // Move place into view:    
-        var yOffset = window.noHistory ? 0 : 0 - window.innerHeight / 4;
-
-        this.map.setView({
-            center: place.location,
-            centerOffset: shiftOffCentre ? { x: 20 /*window.innerWidth/4*/, y: yOffset } : null
-        });
+        this.map.setCamera({ center: [place.location.longitude, place.location.latitude] });
     }
 
     // OS Landranger Map only goes up to zoom 17. Above that, display OS Standard.
     setStreetOsLayer() {
-        if (this.map.getZoom() > 17 && this.map.getMapTypeId() == "os") {
+        if (this.map.getCamera().zoom > 17 && this.isOsMode) {
             if (!this.streetOSLayer) {
-                this.streetOSLayer = new Microsoft.Maps.TileLayer({
-                    mercator: new Microsoft.Maps.TileSource({
-                        uriConstructor: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{zoom}/{x}/{y}.png?key=' + window.keys.Client_OS_K
-                    })
+                this.streetOSLayer = new atlas.layer.TileLayer({
+                    tileUrl: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{z}/{x}/{y}.png?key=' + window.keys.Client_OS_K,
+                    tileSize: 256
                 });
-                this.map.layers.insert(this.streetOSLayer);
+                this.map.layers.add(this.streetOSLayer);
             }
-            else this.streetOSLayer.setVisible(1);
+            else this.streetOSLayer.setOptions({ visible: true });
         }
-        else { if (this.streetOSLayer) this.streetOSLayer.setVisible(0); }
+        else { if (this.streetOSLayer) this.streetOSLayer.setOptions({ visible: false }); }
     }
 
 
@@ -495,10 +505,12 @@ class BingMap {
     mapChange(v) {
         if (!this.map) return;
         if (v == "os") {
-            this.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.ordnanceSurvey });
+            this.isOsMode = true;
+            this.map.setStyle({ style: 'road' });
         }
         else {
-            this.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.aerial });
+            this.isOsMode = false;
+            this.map.setStyle({ style: 'satellite' });
         }
         this.setStreetOsLayer();
     }
@@ -514,30 +526,32 @@ class BingMap {
             this.selectedPin.setOptions({ color: this.selectedPin.myColor, enableClickedStyle: false });
         }
         this.selectedPin = pin;
-        if (pin) pin.setOptions({ color: Microsoft.Maps.Color.fromHex('#FF00F0') });
+        if (pin) pin.setOptions({ color: '#FF00F0' });
     }
 
     clear() {
-        this.map.entities.clear();
+        this.map.markers.clear();
     }
 
     setPinTitle(pin, title) {
-        setOptions({ title: title })
+        pin.setOptions({ title: title });
     }
 
 
     getPinCenter() {
-        return this.singlePin ? this.singlePin.getLocation() : null;
+        if (!this.singlePin) return null;
+        var pos = this.singlePin.getOptions().position;
+        return { latitude: pos[1], longitude: pos[0] };
     }
 
     moveSinglePin() {
         if (!this.singlePin) return null;
-        var loc = this.menuBox.getLocation();
-        this.singlePin.setLocation(loc);
+        var loc = this.menuBoxLocation;
+        this.singlePin.setOptions({ position: [loc.longitude, loc.latitude] });
         return loc;
     }
 
     recenter() {
-        this.setView({ center: this.singlePushpin.getLocation() });
+        this.map.setCamera({ center: this.singlePin.getOptions().position });
     }
 }

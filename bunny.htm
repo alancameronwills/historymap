@@ -8,6 +8,7 @@
     <link rel="icon" type="image/png" href="img/favicon96.png" sizes="96x96" />
     <link rel="icon" type="image/png" href="img/favicon32.png" sizes="32x32" />
     <link rel="icon" type="image/png" href="img/favicon16.png" sizes="16x16" />
+    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.css" type="text/css" />
     <script> camwidth = "480"; camheight = "240";
     </script>
 
@@ -219,6 +220,15 @@
             return confirmationMessage;              // Gecko, WebKit, Chrome <34
         });
 
+        function doLoadMap() {
+            $.ajax({
+                url: 'https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.js',
+                dataType: "script",
+                success: mapModuleLoaded,
+                async: false
+            });
+        }
+
         // This code will run every time the GPS gets a new position:
         function updatePosition(pos) {
             // User has clicked pause button?
@@ -230,63 +240,58 @@
             window.lastMoveTime = t;
 
             // Shift map to current location:
-            window.here = new Microsoft.Maps.Location(pos.coords.latitude, pos.coords.longitude);
-            window.map.setView({ center: window.here });
+            window.here = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+            window.map.setCamera({ center: [window.here.longitude, window.here.latitude] });
 
             setCookie("mapCenter", "" + pos.coords.latitude + "," + pos.coords.longitude);
         }
 
 
-        // Called when the script for Bing maps has loaded and is ready to draw a map:
+        // Called when the Atlas map script has loaded and is ready to draw a map:
         function mapModuleLoaded() {
             // Wait until all scripts have loaded:
             $(document).ready(function () {
 
                 // Arbitrary place to centre the map before GPS location is acquired:
-                window.here = new Microsoft.Maps.Location(52.068287, -4.747708);
+                window.here = { latitude: 52.068287, longitude: -4.747708 };
 
                 var centerFromCookie = getCookie("mapCenter");
                 if (centerFromCookie) {
-                    window.here = Microsoft.Maps.Location.parseLatLong(centerFromCookie) || window.here;
+                    var parts = centerFromCookie.split(",");
+                    if (parts.length == 2) {
+                        window.here = { latitude: parseFloat(parts[0]), longitude: parseFloat(parts[1]) };
+                    }
                 }
 
-                // Load map:
-                window.map = new Microsoft.Maps.Map(document.getElementById('theMap'),
-                    {
-                        mapTypeId: Microsoft.Maps.MapTypeId.aerial,
-                        center: window.here,
-                        showLocateMeButton: true,
-                        disableBirdseye: true,
-                        disableKeyboardInput: true,
-                        disableStreetside: true,
-                        enableClickableLogo: false,
-                        navigationBarMode: Microsoft.Maps.NavigationBarMode.compact,
-                        zoom: 17
-                    });
-
-                // Load places from the database (and look for new places every minute):
-                periodicallyGetPlaces();
-
-                // Move map as user walks:
-                window.navigatorWatch = navigator.geolocation.watchPosition(
-                    updatePosition,
-                    // Not much we can do if GPS returns an error, other than try again later:
-                    function (err) { },
-
-                    // Various options:
-                    {
-                        enableHighAccuracy: true,
-                        timeout: 9000,  // Stop trying after 9 seconds (e.g. if in a tunnel)
-                        maximumAge: 3000 // We accept location calculated anything up to 3 seconds ago
+                window.map = new atlas.Map('theMap', {
+                    style: 'satellite',
+                    center: [window.here.longitude, window.here.latitude],
+                    showLocateMeButton: true,
+                    disableKeyboardInput: true,
+                    zoom: 17,
+                    authOptions: {
+                        authType: 'subscriptionKey',
+                        subscriptionKey: window.keys.Client_Azure_Map_K
                     }
-                );
+                });
 
-                // Minor convenience: If user selects OS map, zoom out so that actual OS shows:
-                Microsoft.Maps.Events.addHandler(window.map, 'maptypechanged', function () {
-                    var mapTypeId = window.map.getMapTypeId();
-                    if (mapTypeId == Microsoft.Maps.MapTypeId.ordnanceSurvey && window.map.getZoom() > 17) {
-                        setTimeout(function () { window.map.setView({ zoom: 17 }) }, 300);
-                    }
+                window.map.events.add('ready', function () {
+                    // Load places from the database (and look for new places every minute):
+                    periodicallyGetPlaces();
+
+                    // Move map as user walks:
+                    window.navigatorWatch = navigator.geolocation.watchPosition(
+                        updatePosition,
+                        // Not much we can do if GPS returns an error, other than try again later:
+                        function (err) { },
+
+                        // Various options:
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 9000,  // Stop trying after 9 seconds (e.g. if in a tunnel)
+                            maximumAge: 3000 // We accept location calculated anything up to 3 seconds ago
+                        }
+                    );
                 });
 
             });
@@ -331,28 +336,27 @@
                     // Update its title and description:
                     pushpin.description = t.Text;
                     pushpin.stripped = null;
-                    pushpin.setOptions({ Title: t.Title });
+                    pushpin.setOptions({ text: t.Title });
                 } else {
                     // No, this is a new place. Create a pin on the map for it:
-                    var pushpin = new Microsoft.Maps.Pushpin(
-                        new Microsoft.Maps.Location(t.Latitude, t.Longitude),
-                        {
-                            title: t.Title.replace(/&#39;/, "'").replace(/&quot;/, "\""),
-                            text: t.User? t.User[0] : "",
-                            enableHoverStyle: true
-                        }
-                    );
-                    // Attach some extra data to the pin:
-                    pushpin.author = t.User || "_anon";      // Author of the place
-                    pushpin.description = t.Text; // Description with photos etc
-                    pushpin.RowKey = t.RowKey;    // Unique ID of the place
-                    window.placeIndex[pushpin.RowKey] = pushpin;
-                    // Stick it on the map:
-                    window.map.entities.push(pushpin);
-                    // If user taps it, show the content:
-                    Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                        if (e) { showPin(e.primitive); }
+                    var marker = new atlas.HtmlMarker({
+                        position: [t.Longitude, t.Latitude],
+                        text: t.User ? t.User[0] : '',
+                        color: 'blue'
                     });
+                    // Attach some extra data to the pin:
+                    marker.author = t.User || "_anon";      // Author of the place
+                    marker.description = t.Text; // Description with photos etc
+                    marker.RowKey = t.RowKey;    // Unique ID of the place
+                    window.placeIndex[marker.RowKey] = marker;
+                    // Stick it on the map:
+                    window.map.markers.add(marker);
+                    // If user taps it, show the content:
+                    (function (m) {
+                        window.map.events.add('click', m, function () {
+                            showPin(m);
+                        });
+                    })(marker);
                 }
             }
         }
@@ -365,7 +369,8 @@
             // Keep the centre of the map at the time the Add button is clicked -
             // because the map may shift while the form is being filled.
             // Also, not window.here (which is the current actual location).
-            g("pointForm").location = window.map.tryPixelToLocation(new Microsoft.Maps.Point(0, 0));
+            var center = window.map.getCamera().center;
+            g("pointForm").location = { latitude: center[1], longitude: center[0] };
             $("#pointForm").show();
             $("#label").focus();
             window.inlineImages = [];
@@ -375,7 +380,7 @@
         // Show the form for an existing pin.
         function showPin(pin) {
             setFormUserName(pin.author, false);
-            $("#label").text(pin.getTitle());
+            $("#label").text(pin.getOptions().text);
             $("#words").html(pin.description.replace(/\/image\//g, picUrl));
             g("pointForm").pin = pin;
             g("pointForm").location = null;
@@ -387,7 +392,7 @@
         // Attach bits from form to pin and then queue it for sending.
         function sendPin(pushpin, label, words, stripped) {
             g("pointForm").pin = null; // Form will be re-used later. Avoid confusion.
-            pushpin.setOptions({ title: label });
+            pushpin.setOptions({ text: label });
             pushpin.description = words;
             pushpin.stripped = stripped;
             laundry(pushpin); // queue for saving to server
@@ -407,7 +412,7 @@
                 // Was this an existing pin? If so, we attached it to the form:
                 if (pushpin) {
                     confirmDialog("Delete this place?", function () {
-                        window.map.entities.remove(pushpin);
+                        window.map.markers.remove(pushpin);
                         delete window.placeIndex[pushpin.RowKey];
                         sendPin(pushpin, "", "", "");
                     }, "Delete", "Cancel");
@@ -416,7 +421,7 @@
             }
             // Was this an existing pin?
             if (pushpin) {
-                if (pushpin.getTitle() != label || pushpin.description != stripped) {
+                if (pushpin.getOptions().text != label || pushpin.description != stripped) {
                     // Was an existing place and the text has changed. Send updates to server.
                     sendPin(pushpin, label, words, stripped);
                     startImageUpload(window.inlineImages);
@@ -426,28 +431,30 @@
             else {
                 // This was a new place. Create the pin.
                 // Map centre when '+' was clicked:
-                var centerLocation = g("pointForm").location
-                    || window.map.tryPixelToLocation(new Microsoft.Maps.Point(0, 0));
-                pushpin = new Microsoft.Maps.Pushpin(
-                    centerLocation,
-                    {
-                        title: label,
-                        enableHoverStyle: true,
-                        text: getUserName()[0] // first char of user's name
-                    }
-                );
+                var centerLocation = g("pointForm").location;
+                if (!centerLocation) {
+                    var center = window.map.getCamera().center;
+                    centerLocation = { latitude: center[1], longitude: center[0] };
+                }
+                var marker = new atlas.HtmlMarker({
+                    position: [centerLocation.longitude, centerLocation.latitude],
+                    text: getUserName()[0], // first char of user's name
+                    color: 'blue'
+                });
                 g("pointForm").location = null; // Form will re-used for another point later
 
-                pushpin.description = words;
-                pushpin.stripped = stripped;
-                pushpin.author = getUserName();
-                window.map.entities.push(pushpin);
-                Microsoft.Maps.Events.addHandler(pushpin, 'click', function (e) {
-                    if (e) { showPin(e.primitive); }
-                });
-                pushpin.RowKey = hashLocation(centerLocation);
-                window.placeIndex[pushpin.RowKey] = pushpin;
-                laundry(pushpin); // queue for saving to server
+                marker.description = words;
+                marker.stripped = stripped;
+                marker.author = getUserName();
+                window.map.markers.add(marker);
+                (function (m) {
+                    window.map.events.add('click', m, function () {
+                        showPin(m);
+                    });
+                })(marker);
+                marker.RowKey = hashLocation(centerLocation);
+                window.placeIndex[marker.RowKey] = marker;
+                laundry(marker); // queue for saving to server
                 startImageUpload(window.inlineImages);
             }
         }
@@ -483,9 +490,9 @@
                 // First two properties are a unique identifier for the pin. Names are set by Azure table service.
                 // Currently, we only use the RowKey:
                 PartitionKey: "p1", RowKey: pin.RowKey,
-                Title: pin.getTitle(), // label
-                Latitude: pin.getLocation().latitude,
-                Longitude: pin.getLocation().longitude,
+                Title: pin.getOptions().text, // label
+                Latitude: pin.getOptions().position[1],
+                Longitude: pin.getOptions().position[0],
                 Text: pin.stripped || pin.description, // stripped exists if it was edited
                 Updated: new Date().toISOString(), // actually the server overwrites this
                 User: pin.author // keep original author even if current user has edited

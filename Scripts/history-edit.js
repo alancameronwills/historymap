@@ -105,18 +105,7 @@ function setPinLocation(lat, long) {
 
 // Called when map type selector changes (aerial photo | OS map).
 function onMapTypeSelect(v) {
-    if (v == "os") {
-        if (window.map.getZoom() > 17) {
-            // Zoom out to where real OS map is available
-            window.map.setView({ zoom: 17, mapTypeId: Microsoft.Maps.MapTypeId.ordnanceSurvey });
-        }
-        else {
-            window.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.ordnanceSurvey });
-        }
-    }
-    else {
-        window.map.setView({ mapTypeId: Microsoft.Maps.MapTypeId.aerial });
-    }
+    window.map.mapChange(v);
 }
 
 
