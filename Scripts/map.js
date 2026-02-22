@@ -357,13 +357,15 @@ class BingMap {
                 var svg = this.principalPinTemplate().replace('{text}', options.text);
                 marker = new atlas.HtmlMarker({
                     position: [place.location.longitude, place.location.latitude],
-                    htmlContent: svg
+                    htmlContent: svg,
+                    pixelOffset: [0, 0]
                 });
             } else {
                 marker = new atlas.HtmlMarker({
                     position: [place.location.longitude, place.location.latitude],
                     color: options.color,
-                    text: options.text
+                    text: options.text,
+                    pixelOffset: [0, 0]
                 });
             }
             this.map.markers.add(marker);
