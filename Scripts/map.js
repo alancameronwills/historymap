@@ -1,5 +1,5 @@
 
-// map.js version 10
+// map.js version 11
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -328,7 +328,7 @@ class BingMap {
     openPlacePopup(position, title, shorttext, place) {
         this.placePopup._place = place;
         this.placePopup.setOptions({
-            content: "<div style='width:300px;white-space:normal;word-wrap:break-word' onclick='window.map._pinClicked=true;go(window.map.placePopup._place.id,false)'><h3>" + title + "</h3>" + shorttext + "</div>",
+            content: "<div style='width:300px;white-space:normal;word-wrap:break-word;padding:4px' onclick='window.map._pinClicked=true;go(window.map.placePopup._place.id,false)'><h3>" + title + "</h3>" + shorttext + "</div>",
             position: [position.longitude, position.latitude]
         });
         this.placePopup.open(this.map);
