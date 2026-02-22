@@ -358,6 +358,7 @@ class BingMap {
                 marker = new atlas.HtmlMarker({
                     position: [place.location.longitude, place.location.latitude],
                     htmlContent: svg,
+                    anchor: 'center',
                     pixelOffset: [0, 0]
                 });
             } else {
