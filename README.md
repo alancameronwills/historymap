@@ -12,7 +12,7 @@ Main map page:
 * css/history.css
 
 Place editor page:
-* ediitor.htm
+* editor.htm
 * Scripts/history-edit.js
 * css/history-edit.css
 
