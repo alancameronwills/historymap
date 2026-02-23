@@ -20,7 +20,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
      <!-- Scripts for this page. Loads the map -->
     <script src="Scripts/history.js?v=2"></script>
-    <script src="Scripts/map.js?v=4"></script>
+    <script src="Scripts/map.js?v=18"></script>
     <script src="Scripts/history-edit.js?v=2"></script>
     <!-- Monitor user behaviour -->
     <script type="text/javascript">  var appInsights = window.appInsights || function (a) { function b(a) { c[a] = function () { var b = arguments; c.queue.push(function () { c[a].apply(c, b) }) } } var c = { config: a }, d = document, e = window; setTimeout(function () { var b = d.createElement("script"); b.src = a.url || "https://az416426.vo.msecnd.net/scripts/a/ai.0.js", d.getElementsByTagName("script")[0].parentNode.appendChild(b) }); try { c.cookie = d.cookie } catch (a) { } c.queue = []; for (var f = ["Event", "Exception", "Metric", "PageView", "Trace", "Dependency"]; f.length;)b("track" + f.pop()); if (b("setAuthenticatedUserContext"), b("clearAuthenticatedUserContext"), b("startTrackEvent"), b("stopTrackEvent"), b("startTrackPage"), b("stopTrackPage"), b("flush"), !a.disableExceptionTracking) { f = "onerror", b("_" + f); var g = e[f]; e[f] = function (a, b, d, e, h) { var i = g && g(a, b, d, e, h); return !0 !== i && c["_" + f](a, b, d, e, h), i } } return c }({ instrumentationKey: "1eff7d7b-45c5-4162-9d8c-5019829546ab" }); window.appInsights = appInsights, appInsights.queue && 0 === appInsights.queue.length && appInsights.trackPageView();</script>
@@ -100,11 +100,13 @@
                         <div id="theMap" style="position:relative;height:400px;width:600px;">
                             <h2 style="position:absolute;top:100px;left:40px;">Getting the map...</h2>
                         </div>
-                        <div  id="mapTypeSelectorDiv" style='position:absolute;top:0px;left:0;width:150px;height:50px;background-color:rgb(40,40,40);border-radius:4px;color:white'>
+                        <div  id="mapTypeSelectorDiv" style='position:absolute;top:0px;left:0;width:150px;height:115px;background-color:rgb(40,40,40);border-radius:4px;color:white'>
                             <div style="vertical-align:middle;">
-                                <input type="radio" name="mapSelector" value="os" onchange="onMapTypeSelect('os')" />Ordnance Survey
-                                <br/>
-                                <input type="radio" name="mapSelector" value="aerial" onchange="onMapTypeSelect('aerial')" checked="checked" />Aerial photos
+                                <input type="radio" name="mapSelector" value="leisure" onchange="onMapTypeSelect('leisure')" checked="checked" />Leisure<br/>
+                                <input type="radio" name="mapSelector" value="outdoor" onchange="onMapTypeSelect('outdoor')" />Outdoor<br/>
+                                <input type="radio" name="mapSelector" value="osroad" onchange="onMapTypeSelect('osroad')" />Road<br/>
+                                <input type="radio" name="mapSelector" value="light" onchange="onMapTypeSelect('light')" />Light<br/>
+                                <input type="radio" name="mapSelector" value="aerial" onchange="onMapTypeSelect('aerial')" />Aerial
                             </div>
                         </div>
                         <div style='position:absolute;top:120px;right:34px;height:35px;width:35px;'>

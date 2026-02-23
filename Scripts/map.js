@@ -1,5 +1,5 @@
 
-// map.js version 17
+// map.js version 18
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -269,7 +269,6 @@ class BingMap {
             }
         }
 
-        this.isOsMode = true;
         this.map = new atlas.Map('theMap',
             {
                 style: 'road',
@@ -297,7 +296,6 @@ class BingMap {
             this.setUpPlacePopup();
         }
 
-        this.map.events.add('viewchangeend', () => window.map.setStreetOsLayer());
         onload();
     }
 
@@ -525,40 +523,29 @@ class BingMap {
         if (place.location.longitude == null || place.location.latitude == null) return;
         var cameraOpts = { center: [place.location.longitude, place.location.latitude] };
         if (zoom) {
-            // Don't change the zoom level if it would change the map type:
-            cameraOpts.zoom = this.isOsMode && zoom > 17 ? 17 : zoom;
+            cameraOpts.zoom = zoom;
         }
         this.map.setCamera(cameraOpts);
     }
 
-    // OS Landranger Map only goes up to zoom 17. Above that, display OS Standard.
-    setStreetOsLayer() {
-        if (this.map.getCamera().zoom > 17 && this.isOsMode) {
-            if (!this.streetOSLayer) {
-                this.streetOSLayer = new atlas.layer.TileLayer({
-                    tileUrl: 'https://api.maptiler.com/maps/uk-openzoomstack-outdoor/256/{z}/{x}/{y}.png?key=' + window.keys.Client_OS_K,
-                    tileSize: 256
-                });
-                this.map.layers.add(this.streetOSLayer);
-            }
-            else this.streetOSLayer.setOptions({ visible: true });
-        }
-        else { if (this.streetOSLayer) this.streetOSLayer.setOptions({ visible: false }); }
-    }
-
-
-    // User selected a map type - OS or aerial photo.
+    // User selected a map type.
     mapChange(v) {
         if (!this.map) return;
-        if (v == "os") {
-            this.isOsMode = true;
-            this.map.setStyle({ style: 'road' });
+        if (this.osLayer) {
+            this.map.layers.remove(this.osLayer);
+            this.osLayer = null;
         }
-        else {
-            this.isOsMode = false;
+        if (v === 'aerial') {
             this.map.setStyle({ style: 'satellite' });
+        } else {
+            this.map.setStyle({ style: 'road' });
+            var osStyles = { leisure: 'Leisure', outdoor: 'Outdoor', osroad: 'Road', light: 'Light', os: 'Leisure' };
+            var styleName = osStyles[v] || 'Leisure';
+            var tileUrl = 'https://api.os.uk/maps/raster/v1/zxy/' + styleName
+                + '_3857/{z}/{x}/{y}.png?key=' + window.keys.Client_OS_DataHub_K;
+            this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
+            this.map.layers.add(this.osLayer);
         }
-        this.setStreetOsLayer();
     }
 
 
