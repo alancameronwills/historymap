@@ -1,5 +1,5 @@
 
-// map.js version 18
+// map.js version 19
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -284,6 +284,7 @@ class BingMap {
 
         this.map.events.add('ready', () => {
             this.map.controls.add(new atlas.control.ZoomControl(), { position: 'top-right' });
+            this.mapChange('leisure');
         });
 
         this.map.events.add("click", function (e) {
@@ -531,6 +532,10 @@ class BingMap {
     // User selected a map type.
     mapChange(v) {
         if (!this.map) return;
+        this.currentStyle = v;
+        var styleLabels = { leisure: 'Leisure', outdoor: 'Outdoor', osroad: 'Road', light: 'Light', aerial: 'Aerial' };
+        var btn = document.getElementById('mapStyleButton');
+        if (btn) btn.textContent = styleLabels[v] || v;
         if (this.osLayer) {
             this.map.layers.remove(this.osLayer);
             this.osLayer = null;
@@ -546,6 +551,12 @@ class BingMap {
             this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
             this.map.layers.add(this.osLayer);
         }
+    }
+
+    cycleMapStyle() {
+        var styles = ['leisure', 'outdoor', 'osroad', 'light', 'aerial'];
+        var idx = styles.indexOf(this.currentStyle || 'leisure');
+        this.mapChange(styles[(idx + 1) % styles.length]);
     }
 
 
