@@ -1,3 +1,6 @@
+:root{
+    --headergray: #404040;
+}
 body {
     margin: 0;
     padding: 0;
@@ -22,7 +25,7 @@ body {
 }
 
 .maphead {
-    background-color: #404040;
+    background-color: var(--headergray);
     color: white;
     border-radius: 6px;
     display: flex;
@@ -46,7 +49,7 @@ body {
     display: inline-block;
     position: absolute;
     top: 0;
-    left: 12em;
+    left: 10rem;
     right: 0px;
     bottom: 0px;
 }
@@ -60,15 +63,19 @@ body {
     position: fixed;
     top: 0;
     bottom: 0;
-    width: 12em;
+    width: 10rem;
     margin: 4px;
+}
+
+#placebar>div {
+    width: 10rem;
 }
 
 #houselist {
     background: aliceblue;
     overflow-y: scroll;
     position: absolute;
-    width: 12em;
+    width: 10rem;
 }
 
 #houselist div:hover {
@@ -188,7 +195,7 @@ body {
     right: 0px;
     bottom: 0px;
     max-height: 30vh;
-    background-color: #404040;
+    background-color: var(--headergray);
     color: white;
     padding: 10px;
     overflow-y: auto;
@@ -221,10 +228,12 @@ th {
 
 .dropdown {
     padding: 0.1em 0.5em 0.2em 0.5em;
+    color: var(--headergray);
     border: solid 1px gray;
     display: flex;
     align-items: center;
     cursor: pointer;
+    color: white;
 }
 
 .dropdown::after {
