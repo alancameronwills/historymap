@@ -1,5 +1,5 @@
 
-// map.js version 16
+// map.js version 17
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -269,9 +269,10 @@ class BingMap {
             }
         }
 
+        this.isOsMode = true;
         this.map = new atlas.Map('theMap',
             {
-                style: 'satellite_with_roads',
+                style: 'road',
                 center: mapCenter,
                 showLocateMeButton: false,
                 disableKeyboardInput: true,
