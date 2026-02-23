@@ -246,7 +246,8 @@ th {
     color: white;
     border: solid 1px gray;
     cursor: pointer;
-    max-width: 80%
+    max-width: 80%;
+    min-width: 100px;
 }
 
 .dropdown::after {
@@ -261,14 +262,13 @@ th {
     border: solid 1px white;
     box-shadow: black 5px -5px 5px;
     position: fixed;
-    top: 30px;
     padding: 0.2em;
     z-index: 100;
     width: 120px;
 }
 
 #mapStyleSelect {
-    transform: translate(-120px, 10px);
+    transform: translate(-150px, 10px);
 }
 
 .popup2 {
