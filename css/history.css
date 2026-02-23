@@ -56,19 +56,19 @@ body {
     right: 10px;
 }
 
-#houselist .dropdown {
-    position:sticky;
+#placebar {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 12em;
+    margin: 4px;
 }
 
 #houselist {
-    margin: 4px;
     background: aliceblue;
     overflow-y: scroll;
     position: absolute;
     width: 12em;
-    top: 0;
-    left: 0;
-    bottom: 0;
 }
 
 #houselist div:hover {
