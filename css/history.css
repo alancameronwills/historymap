@@ -19,11 +19,11 @@ body {
     top: 0;
     right: 0;
     height: 50px;
-    z-index: 200;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 10px;
+    padding: 10px;
 }
 
 #historyTitle {
@@ -218,15 +218,17 @@ th {
 }
 
 .dropdown::after {
-    content: "▼";
+    content: "v";
     margin: 0 0 0 0.5em;
 }
 
 .dropdown div {
     display: none;
     background-color: black;
-    position: absolute;
+    position: fixed;
+    top: 10px;
     padding: 0.2em;
+    z-index: 100;
 }
 
 .popup2 {
