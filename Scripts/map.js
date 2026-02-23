@@ -1,5 +1,5 @@
 
-// map.js version 15
+// map.js version 16
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -344,6 +344,7 @@ class BingMap {
                     var el = inner.parentElement?.parentElement?.parentElement;
                     if (el) {
                         this._placePopupEl = el;
+                        el.style.cursor = 'default';
                         el.addEventListener('mouseenter', () => {
                             if (window.map._hoverTimer) { clearTimeout(window.map._hoverTimer); window.map._hoverTimer = null; }
                         });
@@ -398,6 +399,7 @@ class BingMap {
                 });
             }
             this.map.markers.add(marker);
+            marker.getElement().style.cursor = 'default';
             marker.myColor = options.color;
             marker.id = place.id;
             marker.place = place;
