@@ -232,9 +232,13 @@ th {
     display: none;
     background-color: black;
     position: fixed;
-    top: 10px;
+    top: 30px;
     padding: 0.2em;
     z-index: 100;
+}
+
+#mapStyleSelect {
+    transform: translate(-40px, 0);
 }
 
 .popup2 {
