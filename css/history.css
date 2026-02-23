@@ -56,6 +56,10 @@ body {
     right: 10px;
 }
 
+#houselist .dropdown {
+    position:sticky;
+}
+
 #houselist {
     margin: 4px;
     background: aliceblue;

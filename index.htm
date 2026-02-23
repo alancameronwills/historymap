@@ -36,6 +36,19 @@
 <body>
     <!-- Left-side index of places -->
     <div id='houselist'>
+        <div class="dropdown"><span id="zone"></span>
+            <div id="zoneSelect" class="dropDownMenu">
+                <input type="checkbox" id="selectCardigan" name="sCardigan" value="cardigan" /><label
+                    for="selectCardigan">Cardigan</label><br />
+                <input type="checkbox" id="selectMoylgrove" name="sMoylgrove" value="moylgrove" /><label
+                    for="selectMoylgrove"></label>Moylgrove</label><br />
+                <input type="checkbox" id="selectStDogmaels" name="sStDogmaels" value="stdogmaels" /><label
+                    for="selectStDogmaels"></label>St Dogmaels</label><br />
+                <input type="checkbox" id="selectDinas" name="sdinas" value="dinas" /><label
+                    for="selectDinas"></label>Dinas</label><br />
+            </div>
+        </div>
+
         <span style='background-color:yellow;'>
             <b>Getting the list of places...</b>
         </span>
@@ -51,20 +64,8 @@
         <div class="maphead">
             <div id="historyTitle">The History Map
             </div>
-            <div class="dropdown"><span id="zone"><span style="background-color:red">Choose...</span></span>
-                <div id="zoneSelect" class="dropDownMenu">
-                    <input type="checkbox" id="selectCardigan" name="sCardigan" value="cardigan" /><label
-                        for="selectCardigan">Cardigan</label><br />
-                    <input type="checkbox" id="selectMoylgrove" name="sMoylgrove" value="moylgrove" /><label
-                        for="selectMoylgrove"></label>Moylgrove</label><br />
-                    <input type="checkbox" id="selectStDogmaels" name="sStDogmaels" value="stdogmaels" /><label
-                        for="selectStDogmaels"></label>St Dogmaels</label><br />
-                    <input type="checkbox" id="selectDinas" name="sdinas" value="dinas" /><label
-                        for="selectDinas"></label>Dinas</label><br />
-                </div>
-            </div>
             <div id="mapTypeSelectorDiv" class="dropdown">
-                <span id="mapStyle">Outdoor</span>
+                <span id="mapStyleButton">Outdoor</span>
                 <div id="mapStyleSelect" class="dropDownMenu">
                     <input type="radio" id="selectLeisure" name="mapStyle" value="Leisure" /><label
                         for="selectLeisure"></label>Leisure</label><br />
@@ -82,8 +83,7 @@
                     src="favicon96.png" title="Moylgrove" /></a>
         </div>
         <!-- Search UI for the census and gravestone data -->
-        <div id="searchPanel" class="maphead"
-            style="visibility:hidden;"
+        <div id="searchPanel" class="maphead" style="visibility:hidden;"
             onkeyup="if (event.cancelBubble) {event.cancelBubble=true;} if (event.stopPropagation) {event.stopPropagation();} if (event.keyCode==13) searchPerson();"
             title="Search for a historical person.">
             Name:
