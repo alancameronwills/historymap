@@ -11,14 +11,20 @@ body {
     user-select: none;
 }
 
+.headAndSearch {
+    position: fixed;
+    top: 4px;
+    right: 4px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    gap: 4px;
+}
+
 .maphead {
     background-color: #404040;
     color: white;
     border-radius: 6px;
-    position: absolute;
-    top: 0;
-    right: 0;
-    height: 50px;
     display: flex;
     align-items: center;
     justify-content: space-between;
