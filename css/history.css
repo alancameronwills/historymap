@@ -30,7 +30,8 @@
         }
 
         #theMap .top-right.subcontrol-container {
-            top: 60px;
+            top: 70px;
+            right: 10px;
         }
 
         #houselist {
