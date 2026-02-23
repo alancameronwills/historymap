@@ -1,5 +1,5 @@
 
-// map.js version 13
+// map.js version 14
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -322,7 +322,7 @@ class BingMap {
     }
 
     setUpPlacePopup() {
-        this.placePopup = new atlas.Popup({ closeButton: false, position: [0, 0] });
+        this.placePopup = new atlas.Popup({ closeButton: false, position: [0, 0], pixelOffset: [0, -25] });
     }
 
     openPlacePopup(position, title, shorttext, place) {
