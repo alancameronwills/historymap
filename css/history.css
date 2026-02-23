@@ -29,6 +29,10 @@
             bottom: 0px;
         }
 
+        #theMap .top-right.subcontrol-container {
+            top: 60px;
+        }
+
         #houselist {
             margin: 4px;
             background: aliceblue;
