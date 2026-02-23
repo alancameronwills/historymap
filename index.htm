@@ -50,23 +50,21 @@
         </div>
         <div class="dropdown"><span id="zone"><span style="background-color:red">Choose...</span></span>
             <div id="zoneSelect" class="dropDownMenu" >
-                <input type="checkbox" id="selectCardigan" name="sCardigan" value="cardigan" />Cardigan<br />
-                <input type="checkbox" id="selectMoylgrove" name="sMoylgrove" value="moylgrove" />Moylgrove<br />
-                <input type="checkbox" id="selectStDogmaels" name="sStDogmaels" value="stdogmaels" />St Dogmaels<br />
-                <input type="checkbox" id="selectDinas" name="sdinas" value="dinas" />Dinas<br />
+                <input type="checkbox" id="selectCardigan" name="sCardigan" value="cardigan" /><label for="selectCardigan">Cardigan</label><br />
+                <input type="checkbox" id="selectMoylgrove" name="sMoylgrove" value="moylgrove" /><label for="selectMoylgrove"></label>Moylgrove</label><br />
+                <input type="checkbox" id="selectStDogmaels" name="sStDogmaels" value="stdogmaels" /><label for="selectStDogmaels"></label>St Dogmaels</label><br />
+                <input type="checkbox" id="selectDinas" name="sdinas" value="dinas" /><label for="selectDinas"></label>Dinas</label><br />
             </div>
         </div>
         <div id="mapTypeSelectorDiv" class="dropdown">
             <span id="mapStyle">Outdoor</span>
             <div id="mapStyleSelect" class="dropDownMenu">
-                <input type="checkbox" id="selectLeisure" name="mapStyle" value="Leisure"/>Leisure<br/>
-                <input type="checkbox" id="selectOutdoor" name="mapStyle" value="Outdoor"/>Outdoor<br/>
-                <input type="checkbox" id="selectAerial" name="mapStyle" value="Aerial"/>Aerial<br/>
-                <input type="checkbox" id="selectOSRoad" name="mapStyle" value="OSRoad"/>Road<br/>
-                <input type="checkbox" id="selectLight" name="mapStyle" value="Light"/>Light<br/>
+                <input type="radio" id="selectLeisure" name="mapStyle" value="Leisure"/><label for="selectLeisure"></label>Leisure</label><br/>
+                <input type="radio" id="selectOutdoor" name="mapStyle" value="Outdoor"/><label for="selectOutdoor"></label>Outdoor</label><br/>
+                <input type="radio" id="selectAerial" name="mapStyle" value="Aerial"/><label for="selectAerial"></label>Aerial</label><br/>
+                <input type="radio" id="selectOSRoad" name="mapStyle" value="OSRoad"/><label for="selectOSRoad"></label>Road</label><br/>
+                <input type="radio" id="selectLight" name="mapStyle" value="Light"/><label for="selectLight"></label>Light</label><br/>
             </div>
-            <button id="mapStyleButton" onclick="window.map.cycleMapStyle()"
-                style="cursor:pointer;padding:2px 10px;border-radius:4px;border:1px solid #999;background:rgba(255,255,255,0.9);font-size:small;">Leisure</button>
         </div>
         <a href="https://moylgrove.wales" target="_blank"><img style="position: fixed;top:0px;right:500px;"
                 src="favicon96.png" title="Moylgrove" /></a>
