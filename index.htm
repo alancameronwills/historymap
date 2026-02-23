@@ -65,23 +65,7 @@
         <div class="maphead">
             <div id="historyTitle">The History Map
             </div>
-            <div id="mapTypeSelectorDiv" class="dropdown">
-                <span id="mapStyleButton">Outdoor</span>
-                <div id="mapStyleSelect" class="dropDownMenu">
-                    <input type="radio" id="selectLeisure" name="mapStyle" value="Leisure" /><label
-                        for="selectLeisure"></label>Leisure</label><br />
-                    <input type="radio" id="selectOutdoor" name="mapStyle" value="Outdoor" /><label
-                        for="selectOutdoor"></label>Outdoor</label><br />
-                    <input type="radio" id="selectAerial" name="mapStyle" value="Aerial" /><label
-                        for="selectAerial"></label>Aerial</label><br />
-                    <input type="radio" id="selectOSRoad" name="mapStyle" value="OSRoad" /><label
-                        for="selectOSRoad"></label>Road</label><br />
-                    <input type="radio" id="selectLight" name="mapStyle" value="Light" /><label
-                        for="selectLight"></label>Light</label><br />
-                </div>
-            </div>
-            <a href="https://moylgrove.wales" target="_blank"><img style="position: fixed;top:0px;right:500px;"
-                    src="favicon96.png" title="Moylgrove" /></a>
+            <a href="https://moylgrove.wales" target="_blank"><img src="favicon96.png" title="Moylgrove" /></a>
         </div>
         <!-- Search UI for the census and gravestone data -->
         <div id="searchPanel" class="maphead" style="visibility:hidden;"
@@ -102,8 +86,24 @@
             <div id="searchResult">
             </div>
         </div>
+        <!-- Map style selector -->
+        <div id="mapTypeSelectorDiv" class="dropdown">
+            <span id="mapStyleButton">Outdoor</span>
+            <div id="mapStyleSelect" class="dropDownMenu">
+                <input type="radio" id="selectLeisure" name="mapStyle" value="Leisure" /><label
+                    for="selectLeisure"></label>Leisure</label><br />
+                <input type="radio" id="selectOutdoor" name="mapStyle" value="Outdoor" /><label
+                    for="selectOutdoor"></label>Outdoor</label><br />
+                <input type="radio" id="selectAerial" name="mapStyle" value="Aerial" /><label
+                    for="selectAerial"></label>Aerial</label><br />
+                <input type="radio" id="selectOSRoad" name="mapStyle" value="OSRoad" /><label
+                    for="selectOSRoad"></label>Road</label><br />
+                <input type="radio" id="selectLight" name="mapStyle" value="Light" /><label
+                    for="selectLight"></label>Light</label><br />
+            </div>
+        </div>
     </div>
-    <div id="helpButton" style="position:fixed;right:15px;top:160px;">
+    <div id="helpButton">
         <img src="img/help.png" onclick="$('#help').toggle('slide')" ).fade />
     </div>
     <!-- Place info panel: Text and main picture or Google Streetview. Some places also have an audio file. -->

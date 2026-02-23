@@ -43,6 +43,16 @@ body {
     font-style: italic;
 }
 
+.maphead img {
+    height: 60px;
+}
+
+#helpButton {
+     position:fixed;
+     right:15px;
+     top:180px;
+}
+
 #theMap {
     background: lightgreen;
     overflow-y: hidden;
@@ -55,7 +65,7 @@ body {
 }
 
 #theMap .top-right.subcontrol-container {
-    top: 70px;
+    top: 160px;
     right: 10px;
 }
 
@@ -65,16 +75,13 @@ body {
     bottom: 0;
     width: 10rem;
     margin: 4px;
-}
-
-#placebar>div {
-    width: 10rem;
+    display: flex;
+    flex-direction:column;
 }
 
 #houselist {
     background: aliceblue;
-    overflow-y: scroll;
-    position: absolute;
+    overflow-y: auto;
     width: 10rem;
 }
 
@@ -228,17 +235,17 @@ th {
 
 .dropdown {
     padding: 0.1em 0.5em 0.2em 0.5em;
-    color: var(--headergray);
-    border: solid 1px gray;
-    display: flex;
-    align-items: center;
-    cursor: pointer;
+    background-color: var(--headergray);
     color: white;
+    border: solid 1px gray;
+    cursor: pointer;
+    max-width: 80%
 }
 
 .dropdown::after {
     content: "v";
-    margin: 0 0 0 0.5em;
+    margin: 0 0.5rem;
+    float: right;
 }
 
 .dropdown div {
