@@ -1,240 +1,277 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif;
+    overflow-y: hidden;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
 
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif;
-            overflow-y: hidden;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
+.maphead {
+    background-color: #404040;
+    color: white;
+    border-radius: 6px;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 500px;
+    height: 50px;
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
 
-        .maphead {
-            background-color: #404040;
-            color: white;
-            border-radius: 6px;
-        }
+#historyTitle {
+    margin-left: 10px;
+    border-radius: 4px;
+    font-size: 24pt;
+    font-family: 'Times New Roman', Times, serif;
+    font-style: italic;
+}
 
-        #theMap {
-            background: lightgreen;
-            overflow-y: hidden;
-            display: inline-block;
-            position: absolute;
-            top: 0;
-            left: 12em;
-            right: 0px;
-            bottom: 0px;
-        }
+#theMap {
+    background: lightgreen;
+    overflow-y: hidden;
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    left: 12em;
+    right: 0px;
+    bottom: 0px;
+}
 
-        #theMap .top-right.subcontrol-container {
-            top: 70px;
-            right: 10px;
-        }
+#theMap .top-right.subcontrol-container {
+    top: 70px;
+    right: 10px;
+}
 
-        #houselist {
-            margin: 4px;
-            background: aliceblue;
-            overflow-y: scroll;
-            position: absolute;
-            width: 12em;
-            top: 0;
-            left: 0;
-            bottom: 0;
-        }
+#houselist {
+    margin: 4px;
+    background: aliceblue;
+    overflow-y: scroll;
+    position: absolute;
+    width: 12em;
+    top: 0;
+    left: 0;
+    bottom: 0;
+}
 
-        #houselist div:hover {
-            background-color: #a7c3ff;
-        }
+#houselist div:hover {
+    background-color: #a7c3ff;
+}
 
-        #houselist div {
-            padding-left: 2em;
-            text-indent: -2em;
-        }
+#houselist div {
+    padding-left: 2em;
+    text-indent: -2em;
+}
 
-        .interesting {
-            background-color: rgb(223, 223, 179);
-        }
+.interesting {
+    background-color: rgb(223, 223, 179);
+}
 
-        .principal {
-            background-color: rgb(7, 110, 245);
-            color: white;
-        }
+.principal {
+    background-color: rgb(7, 110, 245);
+    color: white;
+}
 
-        .selectedItem {
-            background-color: #404040;
-            color: white;
-        }
+.selectedItem {
+    background-color: #404040;
+    color: white;
+}
 
-        .keySelectedItem {
-            background-color: #a7c300;
-        }
+.keySelectedItem {
+    background-color: #a7c300;
+}
 
-        .buttons {
-            font-size: small;
-            font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif
-        }
+.buttons {
+    font-size: small;
+    font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif
+}
 
-        .getpointer {
-            pointer-events:all;
-        }
+.getpointer {
+    pointer-events: all;
+}
 
-        .descriptionbox {
-            padding: 2px;
-            display: none;
-            max-height: 40vh;
-            background-color: rgba(255, 250, 250, 0.9);
-            border-radius: 4px;
-            overflow-y: auto;
-            resize: both;
-            pointer-events: all;
-        }
+.descriptionbox {
+    padding: 2px;
+    display: none;
+    max-height: 40vh;
+    background-color: rgba(255, 250, 250, 0.9);
+    border-radius: 4px;
+    overflow-y: auto;
+    resize: both;
+    pointer-events: all;
+}
 
-        .description {
-            font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif;
-            -webkit-touch-callout: text;
-            -webkit-user-select: text;
-            -khtml-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
-        }
+.description {
+    font-family: 'Segoe UI', Helvetica, Arial, Sans-Serif;
+    -webkit-touch-callout: text;
+    -webkit-user-select: text;
+    -khtml-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+    user-select: text;
+}
 
 
-        .avbox {
-            padding: 2px;
-            display: none;
-            background-color: rgba(255, 250, 250, 0.9);
-            border-radius: 4px;
-            overflow-y: auto;
-            pointer-events: all;
-        }
+.avbox {
+    padding: 2px;
+    display: none;
+    background-color: rgba(255, 250, 250, 0.9);
+    border-radius: 4px;
+    overflow-y: auto;
+    pointer-events: all;
+}
 
-        .texthead {
-            color: royalblue;
-            font-size: large;
-            font-weight: bold;
-        }
+.texthead {
+    color: royalblue;
+    font-size: large;
+    font-weight: bold;
+}
 
-        .slideimg { 
-            max-width: 40vw;
-            height: auto;
-            max-height: 70vh;
-            border-radius: 6px;
-        }
+.slideimg {
+    max-width: 40vw;
+    height: auto;
+    max-height: 70vh;
+    border-radius: 6px;
+}
 
-        .slide {
-            display: none;
-            position: absolute;
-            bottom: 0px;
-            right: 0px;
-        }
+.slide {
+    display: none;
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+}
 
-        .dialog {
-            display: none;
-            position: fixed;
-            left: 0;
-            top: 0;
-            right: 0;
-            bottom: 0;
-            background-color: rgba(0, 0, 0, 0.5);
-            z-index: 1;
-        }
+.dialog {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1;
+}
 
-        .dialog div {
-            display: inline-block;
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            transform: translate(-50%, -50%);
-            border-color: red;
-            border-style: solid;
-            border-width: 1px;
-            background-color: white;
-        }
+.dialog div {
+    display: inline-block;
+    position: fixed;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    border-color: red;
+    border-style: solid;
+    border-width: 1px;
+    background-color: white;
+}
 
-        .help {
-            display: none;
-            position: fixed;
-            left: 12em;
-            right: 0px;
-            bottom: 0px;
-            max-height: 30vh;
-            background-color: #404040;
-            color: white;
-            padding: 10px;
-            overflow-y: auto;
-        }
+.help {
+    display: none;
+    position: fixed;
+    left: 12em;
+    right: 0px;
+    bottom: 0px;
+    max-height: 30vh;
+    background-color: #404040;
+    color: white;
+    padding: 10px;
+    overflow-y: auto;
+}
 
-        .darklink {
-            color: rgb(157, 209, 255);
-            cursor: pointer;
-        }
+.darklink {
+    color: rgb(157, 209, 255);
+    cursor: pointer;
+}
 
-        .darklink:hover {
-            color: rgb(132, 119, 250);
-        }
+.darklink:hover {
+    color: rgb(132, 119, 250);
+}
 
-        .link {
-            color: blue;
-            cursor: pointer;
-        }
+.link {
+    color: blue;
+    cursor: pointer;
+}
 
-        .link:hover {
-            color: purple;
-        }
+.link:hover {
+    color: purple;
+}
 
-        th {
-            font-size: small;
-            font-style: italic;
-            text-align: left;
-            font-weight: normal;
-        }
+th {
+    font-size: small;
+    font-style: italic;
+    text-align: left;
+    font-weight: normal;
+}
 
-        .dropdown {
-            position: relative;
-            display: inline-block;
-            min-width: 200px;
-        }
+.dropdown {
+    padding: 0.1em 0.5em 0.2em 0.5em;
+    border: solid 1px gray;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}
 
-        .dropdown div {
-            display: none;
-            background-color: black;
-        }
-    
-        .popup2 {
-            background-color: blue;
-            color: white;
-            min-height: 4px;
-        }
-        .popup2 button {
-            float: right;
-            width: 16px; height: 16px;
-            border: 1px solid black;
-        }
-        .healthMenuItem {
-            width: 16px;
-            height: 16px;
-            border: 1px solid black;
-        }
-        .healthMenu {
-            display: none;
-            position: absolute;
-        }
-        .popup2 button:hover .healthMenu {
-            display: block;
-        }
-        #edit2ui {
-            display: none;
-            position: absolute;
-            top:0px; left:0px;width: 100%;height: 100%;
-            background-color: rgba(0, 0, 0, 0.5);
-        }
-        #edit2ui div {
-            background-color: white;
-            border: 2 solid blue;
-            position: absolute;
-            top: 50%;left:50%;margin: -25%;
-        }
+.dropdown::after {
+    content: "▼";
+    margin: 0 0 0 0.5em;
+}
+
+.dropdown div {
+    display: none;
+    background-color: black;
+    position: absolute;
+    padding: 0.2em;
+}
+
+.popup2 {
+    background-color: blue;
+    color: white;
+    min-height: 4px;
+}
+
+.popup2 button {
+    float: right;
+    width: 16px;
+    height: 16px;
+    border: 1px solid black;
+}
+
+.healthMenuItem {
+    width: 16px;
+    height: 16px;
+    border: 1px solid black;
+}
+
+.healthMenu {
+    display: none;
+    position: absolute;
+}
+
+.popup2 button:hover .healthMenu {
+    display: block;
+}
+
+#edit2ui {
+    display: none;
+    position: absolute;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+#edit2ui div {
+    background-color: white;
+    border: 2 solid blue;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    margin: -25%;
+}

@@ -39,7 +39,7 @@ function onMapLoaded() {
         function () { $(this).children(".dropDownMenu").css("display", "none")[0].action(); }
     );
     displayZone(zoneChoice);
-    
+    $("#mapStyleSelect")[0].action = updateMapStyle;    
 }
 
 
@@ -730,16 +730,16 @@ function zoneFromPrincipal(place) {
 }
 
 // From the drop-down menu.
-function getZoneChoiceFromUI() {
+function getChoiceFromUI(selector) {
     var selection = "";
-    $("#zoneSelect").children("input").each(function (i, e) { if (e.checked) selection += " " + e.value; });
+    $(selector).children("input").each(function (i, e) { if (e.checked) selection += " " + e.value; });
     return selection.trim();
 }
 
 // Set the drowpdown menu to reflect the current zone selection, obtained from a cookie.
 function showZoneChoiceOnUI(zones) {
     if (zones) {
-        $("#zone").html("<p>" + zones.replace(/ .*/, "...") + "</p>");
+        $("#zone").html(zones.replace(/ .*/, "..."));
         $("#zoneSelect").children("input").each(function (i, e) {
             e.checked = (zones.indexOf(e.value) >= 0);
         });
@@ -755,10 +755,15 @@ function getZoneChoiceFromCookie() {
     return getCookie("zones");
 }
 
+function updateMapStyle () {
+    var mapStyleChoice = getChoiceFromUI("#mapStyleSelect").toLowerCase();
+    window.map.mapChange(mapStyleChoice);
+}
+
 
 // Zone dropdown: User may have changed the zone selection
 function updateZoneChoice() {
-    var zoneChoice = getZoneChoiceFromUI();
+    var zoneChoice = getChoiceFromUI("#zoneSelect");
     if (window.zoneSelection == zoneChoice) return;
     // Forget any previous navigation to a specific place:
     delete window.location.queryParameters.place;

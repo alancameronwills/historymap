@@ -45,20 +45,26 @@
             <br /> Just a moment please... </h2>
     </div>
     <!-- Title and map type switch -->
-    <div class="maphead" style='position:absolute;top:0;right:0;width:500px;height:50px;z-index:200'>
-        <div id="historyTitle" style="display:inline;position:relative;top:0px;left:0px;margin-left:10px;border-radius:4px;
-                     font-size:24pt;font-family:'Times New Roman', Times, serif;font-style:italic;">The
-            History Map
+    <div class="maphead">
+        <div id="historyTitle" >The History Map
         </div>
         <div class="dropdown"><span id="zone"><span style="background-color:red">Choose...</span></span>
-            <div id="zoneSelect" class="dropDownMenu" style="position:absolute;top:20px;z-index:1;padding:10px;">
+            <div id="zoneSelect" class="dropDownMenu" >
                 <input type="checkbox" id="selectCardigan" name="sCardigan" value="cardigan" />Cardigan<br />
                 <input type="checkbox" id="selectMoylgrove" name="sMoylgrove" value="moylgrove" />Moylgrove<br />
                 <input type="checkbox" id="selectStDogmaels" name="sStDogmaels" value="stdogmaels" />St Dogmaels<br />
                 <input type="checkbox" id="selectDinas" name="sdinas" value="dinas" />Dinas<br />
             </div>
         </div>
-        <div style="position:absolute;top:6px;right:4px;" id="mapTypeSelectorDiv">
+        <div id="mapTypeSelectorDiv" class="dropdown">
+            <span id="mapStyle">Outdoor</span>
+            <div id="mapStyleSelect" class="dropDownMenu">
+                <input type="checkbox" id="selectLeisure" name="mapStyle" value="Leisure"/>Leisure<br/>
+                <input type="checkbox" id="selectOutdoor" name="mapStyle" value="Outdoor"/>Outdoor<br/>
+                <input type="checkbox" id="selectAerial" name="mapStyle" value="Aerial"/>Aerial<br/>
+                <input type="checkbox" id="selectOSRoad" name="mapStyle" value="OSRoad"/>Road<br/>
+                <input type="checkbox" id="selectLight" name="mapStyle" value="Light"/>Light<br/>
+            </div>
             <button id="mapStyleButton" onclick="window.map.cycleMapStyle()"
                 style="cursor:pointer;padding:2px 10px;border-radius:4px;border:1px solid #999;background:rgba(255,255,255,0.9);font-size:small;">Leisure</button>
         </div>
