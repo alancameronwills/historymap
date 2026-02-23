@@ -12,7 +12,8 @@
     <link rel="manifest" href="manifest.json">
 
     <!-- Azure Maps controls -->
-    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.css" type="text/css" />
+    <link rel="stylesheet" href="https://atlas.microsoft.com/sdk/javascript/mapcontrol/3/atlas.min.css"
+        type="text/css" />
 
 
     <!-- JQuery - popular utilities. Defines "$" -->
@@ -42,54 +43,67 @@
     <div id='theMap'>
         <h2 style="color:darkgreen;font-family: 'Times New Roman', Times, serif">&nbsp;
             <br />
-            <br /> Just a moment please... </h2>
+            <br /> Just a moment please...
+        </h2>
     </div>
-    <!-- Title and map type switch -->
-    <div class="maphead">
-        <div id="historyTitle" >The History Map
+    <div id="headAndSearch">
+        <!-- Title and map type switch -->
+        <div class="maphead">
+            <div id="historyTitle">The History Map
+            </div>
+            <div class="dropdown"><span id="zone"><span style="background-color:red">Choose...</span></span>
+                <div id="zoneSelect" class="dropDownMenu">
+                    <input type="checkbox" id="selectCardigan" name="sCardigan" value="cardigan" /><label
+                        for="selectCardigan">Cardigan</label><br />
+                    <input type="checkbox" id="selectMoylgrove" name="sMoylgrove" value="moylgrove" /><label
+                        for="selectMoylgrove"></label>Moylgrove</label><br />
+                    <input type="checkbox" id="selectStDogmaels" name="sStDogmaels" value="stdogmaels" /><label
+                        for="selectStDogmaels"></label>St Dogmaels</label><br />
+                    <input type="checkbox" id="selectDinas" name="sdinas" value="dinas" /><label
+                        for="selectDinas"></label>Dinas</label><br />
+                </div>
+            </div>
+            <div id="mapTypeSelectorDiv" class="dropdown">
+                <span id="mapStyle">Outdoor</span>
+                <div id="mapStyleSelect" class="dropDownMenu">
+                    <input type="radio" id="selectLeisure" name="mapStyle" value="Leisure" /><label
+                        for="selectLeisure"></label>Leisure</label><br />
+                    <input type="radio" id="selectOutdoor" name="mapStyle" value="Outdoor" /><label
+                        for="selectOutdoor"></label>Outdoor</label><br />
+                    <input type="radio" id="selectAerial" name="mapStyle" value="Aerial" /><label
+                        for="selectAerial"></label>Aerial</label><br />
+                    <input type="radio" id="selectOSRoad" name="mapStyle" value="OSRoad" /><label
+                        for="selectOSRoad"></label>Road</label><br />
+                    <input type="radio" id="selectLight" name="mapStyle" value="Light" /><label
+                        for="selectLight"></label>Light</label><br />
+                </div>
+            </div>
+            <a href="https://moylgrove.wales" target="_blank"><img style="position: fixed;top:0px;right:500px;"
+                    src="favicon96.png" title="Moylgrove" /></a>
         </div>
-        <div class="dropdown"><span id="zone"><span style="background-color:red">Choose...</span></span>
-            <div id="zoneSelect" class="dropDownMenu" >
-                <input type="checkbox" id="selectCardigan" name="sCardigan" value="cardigan" /><label for="selectCardigan">Cardigan</label><br />
-                <input type="checkbox" id="selectMoylgrove" name="sMoylgrove" value="moylgrove" /><label for="selectMoylgrove"></label>Moylgrove</label><br />
-                <input type="checkbox" id="selectStDogmaels" name="sStDogmaels" value="stdogmaels" /><label for="selectStDogmaels"></label>St Dogmaels</label><br />
-                <input type="checkbox" id="selectDinas" name="sdinas" value="dinas" /><label for="selectDinas"></label>Dinas</label><br />
+        <!-- Search UI for the census and gravestone data -->
+        <div id="searchPanel" class="maphead"
+            style="position:absolute;top:54px;right:80px;width:420px;visibility:hidden;"
+            onkeyup="if (event.cancelBubble) {event.cancelBubble=true;} if (event.stopPropagation) {event.stopPropagation();} if (event.keyCode==13) searchPerson();"
+            title="Search for a historical person.">
+            Name:
+            <input type="text" size="8" id="searchName" placeholder="first name" title="First name (optional)" />
+            <input type="text" size="10" id="searchLastName" placeholder="last name" title="Last name (optional)" />
+            Born:
+            <input type="text" size="4" id="searchYob" placeholder="birth yr" title="Year of birth (optional)" />
+            <span onclick="searchPerson()">
+                <img src="img/search30.png" height="20" />
+            </span>
+            <span id="searchCloseButton">
+                <span onclick="$('#searchResult').hide(200); $('#searchCloseButton').css({backgroundColor:'inherit'});"
+                    style="font-size:large;padding:5px;cursor:pointer;">X</span>
+            </span>
+            <div id="searchResult">
             </div>
         </div>
-        <div id="mapTypeSelectorDiv" class="dropdown">
-            <span id="mapStyle">Outdoor</span>
-            <div id="mapStyleSelect" class="dropDownMenu">
-                <input type="radio" id="selectLeisure" name="mapStyle" value="Leisure"/><label for="selectLeisure"></label>Leisure</label><br/>
-                <input type="radio" id="selectOutdoor" name="mapStyle" value="Outdoor"/><label for="selectOutdoor"></label>Outdoor</label><br/>
-                <input type="radio" id="selectAerial" name="mapStyle" value="Aerial"/><label for="selectAerial"></label>Aerial</label><br/>
-                <input type="radio" id="selectOSRoad" name="mapStyle" value="OSRoad"/><label for="selectOSRoad"></label>Road</label><br/>
-                <input type="radio" id="selectLight" name="mapStyle" value="Light"/><label for="selectLight"></label>Light</label><br/>
-            </div>
-        </div>
-        <a href="https://moylgrove.wales" target="_blank"><img style="position: fixed;top:0px;right:500px;"
-                src="favicon96.png" title="Moylgrove" /></a>
     </div>
     <div id="helpButton" style="position:fixed;right:15px;top:160px;">
         <img src="img/help.png" onclick="$('#help').toggle('slide')" ).fade />
-    </div>
-    <!-- Search UI for the census and gravestone data -->
-    <div id="searchPanel" class="maphead" style="position:absolute;top:54px;right:80px;width:420px;visibility:hidden;"
-        onkeyup="if (event.cancelBubble) {event.cancelBubble=true;} if (event.stopPropagation) {event.stopPropagation();} if (event.keyCode==13) searchPerson();"
-        title="Search for a historical person.">
-        Name:
-        <input type="text" size="8" id="searchName" placeholder="first name" title="First name (optional)" />
-        <input type="text" size="10" id="searchLastName" placeholder="last name" title="Last name (optional)" />
-        Born:
-        <input type="text" size="4" id="searchYob" placeholder="birth yr" title="Year of birth (optional)" />
-        <span onclick="searchPerson()">
-            <img src="img/search30.png" height="20" />
-        </span>
-        <span id="searchCloseButton">
-            <span onclick="$('#searchResult').hide(200); $('#searchCloseButton').css({backgroundColor:'inherit'});"
-                style="font-size:large;padding:5px;cursor:pointer;">X</span>
-        </span>
-        <div id="searchResult">
-        </div>
     </div>
     <!-- Place info panel: Text and main picture or Google Streetview. Some places also have an audio file. -->
     <div style="width:40vw;position:absolute;top:0;left:12em;pointer-events: none;">
@@ -149,7 +163,7 @@
         </div>
     </div>
     <div id="edit2ui" onclick="$(this).hide();closeEdit2()" onkeyup="event.stopPropagation()">
-        <div onclick="event.stopPropagation()" >
+        <div onclick="event.stopPropagation()">
             <h4>Update <span id="edit2uiTitle"></span></h4>
             <table>
                 <tr>
@@ -169,8 +183,10 @@
                     <td><input type='text' id='edit2uiC4' /></td>
                 </tr>
                 <tr>
-                    <td>Notes</td><td colspan='3'><textarea id='edit2uiDescription' cols='50'></textarea></td></tr>
-        </table>
+                    <td>Notes</td>
+                    <td colspan='3'><textarea id='edit2uiDescription' cols='50'></textarea></td>
+                </tr>
+            </table>
         </div>
     </div>
 </body>
