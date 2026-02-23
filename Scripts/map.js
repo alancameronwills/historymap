@@ -1,5 +1,5 @@
 
-// map.js version 14
+// map.js version 15
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -328,14 +328,35 @@ class BingMap {
     openPlacePopup(position, title, shorttext, place) {
         this.placePopup._place = place;
         this.placePopup.setOptions({
-            content: "<div style='width:300px;white-space:normal;word-wrap:break-word;padding:4px'"
-                + " onmouseenter='if(window.map._hoverTimer){clearTimeout(window.map._hoverTimer);window.map._hoverTimer=null;}'"
-                + " onmouseleave='window.map._hoverTimer=setTimeout(function(){window.map.closePopup();window.map._hoverTimer=null;},400)'"
+            content: "<div data-hmpopup style='width:300px;white-space:normal;word-wrap:break-word;padding:4px'"
                 + " onclick='window.map._pinClicked=true;go(window.map.placePopup._place.id,false)'>"
                 + "<h3>" + title + "</h3>" + shorttext + "</div>",
             position: [position.longitude, position.latitude]
         });
         this.placePopup.open(this.map);
+        // Hook the Atlas popup container (which wraps both content and arrow tip)
+        // the first time the popup is opened, so hover events cover the whole popup.
+        if (!this._placePopupEl) {
+            setTimeout(() => {
+                var inner = document.querySelector('[data-hmpopup]');
+                if (inner) {
+                    // Atlas DOM: popup-container > content-container > content > [our div]
+                    var el = inner.parentElement?.parentElement?.parentElement;
+                    if (el) {
+                        this._placePopupEl = el;
+                        el.addEventListener('mouseenter', () => {
+                            if (window.map._hoverTimer) { clearTimeout(window.map._hoverTimer); window.map._hoverTimer = null; }
+                        });
+                        el.addEventListener('mouseleave', () => {
+                            window.map._hoverTimer = setTimeout(() => {
+                                window.map.closePopup();
+                                window.map._hoverTimer = null;
+                            }, 400);
+                        });
+                    }
+                }
+            }, 0);
+        }
     }
 
     closePopup() {
