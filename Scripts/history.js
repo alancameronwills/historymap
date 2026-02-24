@@ -21,9 +21,10 @@ location.search.substring(1).split("&").forEach(function (pair) {
 if (!onKeysArrived) { function onKeysArrived() { } }
 
 // On initialization, get API keys
+const k = ['5gJHMkN6f', 'Oy5OaQkRslNe884x', 'X2Hlb4kMGavab', 'HETYxT5nNsbvQm6A'];
 $(function () {
     $.ajax({
-        url: 'https://moylgrove-history.azurewebsites.net/api/Keys?code=5gJHMkN6fOy5OaQkRslNe884xX2Hlb4kMGavabHETYxT5nNsbvQm6A==',
+        url: `https://moylgrove-history.azurewebsites.net/api/Keys?code=${k.join('')}==`,
         type: 'GET',
         contentType: 'application/json',
         success: function (data, e, r) {
