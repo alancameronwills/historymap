@@ -5,10 +5,11 @@ An accompanying [phone app](http://bit.ly/moylgrovewalk) shows you the notes abo
 
 ## Interesting files
 
-Main map page: 
+Main map page:
 * index.htm
-* Scripts/history-map.js
-* Scripts/history.js  -- some shared functions
+* Scripts/history-map.js  -- four classes: `Place2Manager`, `PersonSearch`, `AudioPlayer`, plus module-level map/zone logic
+* Scripts/history-map-places.js  -- `PlaceList` class: left-side index rendering and keyboard navigation
+* Scripts/history.js  -- shared functions and startup: loads API keys, `comparable()`, `String.format()`
 * css/history.css
 
 Place editor page:
@@ -23,7 +24,8 @@ Other files:
 * dump.htm - a page that shows all the content in one long page. Useful for local historians to print the whole thing off on paper and pore over it.
 * Auth.htm, sign*.htm - to do with identifying users. I think one of them is no longer used.
 * favicon*.* - the icon that shows in the tabs. Different browsers use different conventions.
-* Scripts/azure* - APIs for storage access
+* Scripts/map.js  -- `GoogleMap`, `BingMap`, `Pin` classes wrapping the map provider SDKs
+* Scripts/azure* -- APIs for storage access
 
 [Server code](https://github.com/alancameronwills/historymap-server) runs in Azure Functions.
 
@@ -38,6 +40,8 @@ The page and data are served from an [Azure Functions service](https://docs.micr
 When the page loads, it requests the script from the Bing maps service. When that has loaded, the place index is requested, and the dots are put on the map. Both the initial page request and the place index are served by Azure Functions.
 
 At present, the notes for each house are text without embedded images, and all the text for all places is downloaded with the index on startup. Photos and census entries are displayed separately and are requested only when the user clicks a place.
+
+API keys for Azure Functions are not stored in source. On startup, `history.js` fetches them from the Keys API endpoint and stores them in `window.keys`. All subsequent Azure Function calls reference `window.keys.Client_*_FK`.
 
 ## To edit and test
 
