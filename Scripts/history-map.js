@@ -49,7 +49,8 @@ function onMapLoaded() {
         function () { $(this).children(".dropDownMenu").css("display", "none")[0].action(); }
     );
     displayZone(zoneChoice);
-    $("#mapStyleSelect")[0].action = updateMapStyle;    
+    $("#mapStyleSelect")[0].action = updateMapStyle;
+     setMapSelectors();
 }
 
 

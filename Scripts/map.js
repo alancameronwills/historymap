@@ -35,6 +35,23 @@ function doLoadMap() {
     var cartography = queryCartography || savedCartography || "bing";
 
     window.map = cartography == "google" ? new GoogleMap() : new BingMap();
+
+}
+
+
+function setMapSelectors() {
+    let s = window.map.mapStyles;
+    let selectorInputs = Object.keys(s).map(style => {
+        let name = s[style].name;
+        return `<div><input type='radio' id='select${name}' 
+            name='mapStyleGroup' value='${name}'><label
+            for='select${name}'>${name}</label></div>`;
+    });
+    let c = `<span id='mapStyle'>Aerial</span>
+        <div id='mapStyleSelect' class='dropDownMenu'>
+        ${selectorInputs}</div>`;
+    let target = document.getElementById(mapTypeSelectorDiv);
+    target.innerHTML = c;
 }
 
 
@@ -267,6 +284,15 @@ class BingMap {
                 mapCenter = [lng, lat];
             }
         }
+
+        this.mapStyles = {
+            leisure: { name: 'Leisure', provider: 'os' },
+            outdoor: { name: 'Outdoor', provider: 'os' },
+            osroad: { name: 'Road', provider: 'os' },
+            light: { name: 'Light', provider: 'os' },
+            aerial: { name: 'Aerial', provider: 'Azure' }
+        };
+
 
         this.map = new atlas.Map('theMap',
             {
@@ -532,27 +558,29 @@ class BingMap {
     mapChange(v) {
         if (!this.map) return;
         this.currentStyle = v;
-        var styleLabels = { leisure: 'Leisure', outdoor: 'Outdoor', osroad: 'Road', light: 'Light', aerial: 'Aerial' };
-        showChoiceOnUI('#mapStyle', styleLabels[v] || v);
+        showChoiceOnUI('#mapStyle', this.mapStyles[v]?.name || v);
         if (this.osLayer) {
             this.map.layers.remove(this.osLayer);
             this.osLayer = null;
         }
-        if (v === 'aerial') {
-            this.map.setStyle({ style: 'satellite' });
-        } else {
-            this.map.setStyle({ style: 'road' });
-            var osStyles = { leisure: 'Leisure', outdoor: 'Outdoor', osroad: 'Road', light: 'Light', os: 'Leisure' };
-            var styleName = osStyles[v] || 'Leisure';
-            var tileUrl = 'https://api.os.uk/maps/raster/v1/zxy/' + styleName
-                + '_3857/{z}/{x}/{y}.png?key=' + window.keys.Client_OS_DataHub_K;
-            this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
-            this.map.layers.add(this.osLayer);
+        switch (this.mapStyles[v]?.provider) {
+            case 'os': {
+                this.map.setStyle({ style: 'road' });
+                var styleName = this.mapStyles[v]?.name || 'Leisure';
+                var tileUrl = 'https://api.os.uk/maps/raster/v1/zxy/' + styleName
+                    + '_3857/{z}/{x}/{y}.png?key=' + window.keys.Client_OS_DataHub_K;
+                this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
+                this.map.layers.add(this.osLayer);
+            }
+                break;
+            default:
+                this.map.setStyle({ style: 'satellite' });
+                break;
         }
     }
 
     cycleMapStyle() {
-        var styles = ['leisure', 'outdoor', 'osroad', 'light', 'aerial'];
+        var styles = Object.keys(this.mapStyles);
         var idx = styles.indexOf(this.currentStyle || 'leisure');
         this.mapChange(styles[(idx + 1) % styles.length]);
     }
