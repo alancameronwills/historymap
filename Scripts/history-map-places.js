@@ -13,7 +13,7 @@ class PlaceList {
         this._kselected = -1;       // was kselected
         this._selectedItem = null;  // was window.selectedItem
 
-        $(function () {
+        $(() => {
             document.body.onkeyup = (e) => this._keyup(e);
         });
     }
