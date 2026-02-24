@@ -6,6 +6,16 @@ if (window.location.protocol == "http:" && window.location.hostname != "localhos
 }
 var rightClickActions = [{ label: "Add place here", eventHandler: () => { window.map.doAddPlace(); } }];
 
+// Escape a value for safe insertion into an HTML string.
+function esc(s) {
+    return String(s || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+}
+
 
 window.pinColor = "#A00000";
 
@@ -259,20 +269,49 @@ function editPlace(id, title) {
 }
 
 function showMainText(id, place) {
-    var description = (("<table width='100%'><tr><td class='texthead'>{1}</td><td align='right'>{2}</td></tr>"
-        + "<tr><td><small>{3}</small></td><td align='right'><small>{4}</small></td></tr></table>"
-        + "<span class='description'>{0}</span>")
-        .format(trimQuotes(place.text), place.title.replace("'", ""), place.postcode, place.subtitle, place.year)
-        +
-        (window.location.queryParameters.noedit != null ? "" :
-            "<table width='100%' class='buttons'><tr>"
-            + "<td><a href='#' onclick='editPlace(\"{0}\",\"{1}\")'>{4}</a></td>"
-            + "<td align='center'><a href='#' onclick='showLink(\"{0}\")'>Share</a></td>"
-            + "<td align='right'><a href='mailto:?subject=Directions&body=Click this link for directions:%0A https://www.google.co.uk/maps/dir//{2},{3}/@{2},{3},11z '>Send directions</a></td></tr></table>")
-            .format(id, place.title.replace("'", "").replace('"', '').replace("&quot;", ""), place.location.latitude, place.location.longitude, "Edit"));
-    description = description.replace(/{{/, "<article src='").replace(/}}/, "'/>");
-    $("#textbox").html(description);
-    $("#textbox").fadeIn("slow");
+    var $box = $("#textbox").empty();
+
+    // Title / meta header — use .text() so values are never interpreted as HTML
+    $box.append(
+        $("<table width='100%'>").append(
+            $("<tr>").append(
+                $("<td class='texthead'>").text(place.title),
+                $("<td align='right'>").text(place.postcode)
+            ),
+            $("<tr>").append(
+                $("<td>").append($("<small>").text(place.subtitle)),
+                $("<td align='right'>").append($("<small>").text(place.year))
+            )
+        )
+    );
+
+    // place.text is intentional rich HTML authored in the editor; keep as .html().
+    var descHtml = trimQuotes(place.text)
+        .replace(/{{/, "<article src='")
+        .replace(/}}/, "'/>");
+    $box.append($("<span class='description'>").html(descHtml));
+
+    if (window.location.queryParameters.noedit == null) {
+        $box.append(
+            $("<table width='100%' class='buttons'>").append(
+                $("<tr>").append(
+                    $("<td>").append(
+                        $("<a>").attr("href", "#").text("Edit").on("click", () => editPlace(id, place.title))
+                    ),
+                    $("<td align='center'>").append(
+                        $("<a>").attr("href", "#").text("Share").on("click", () => showLink(id))
+                    ),
+                    $("<td align='right'>").append(
+                        $("<a>").text("Send directions").attr("href",
+                            "mailto:?subject=Directions&body=Click this link for directions:%0A https://www.google.co.uk/maps/dir//{0},{1}/@{0},{1},11z "
+                            .format(place.location.latitude, place.location.longitude))
+                    )
+                )
+            )
+        );
+    }
+
+    $box.fadeIn("slow");
     $("article").each(function (i) { getBlog($(this).attr("src")); });
 }
 
@@ -289,28 +328,49 @@ class PersonSearch {
         if (!gn && !ln && !syob) return;
         $('#searchResult').show(200);
         $("#searchCloseButton").css("background-color", "darkred");
-        $('#searchResult').html("<table><tr><th>source</th><th>house</th><th>given</th><th>surname</th><th>b</th><th>origin</th></table>");
+        var $table = $("<table>").append(
+            $("<tr>").append(
+                $("<th>").text("source"), $("<th>").text("house"),
+                $("<th>").text("given"), $("<th>").text("surname"),
+                $("<th>").text("b"), $("<th>").text("origin")
+            )
+        );
+        $('#searchResult').empty().append($table);
         this._fetch("census", gn, ln, syob, "", function (results) {
             if (results.length > 0) {
-                var s = "";
-                for (var i = 0, t; t = results[i]; i++) {
-                    var origin = t.Origin; if (origin == "m") origin = "Moylg";
-                    s += "<tr><td>{0}cs</td><td><span {6} onclick='go({5},1)'>{1}</span></td><td>{2}</td><td>{3}</td><td>{4}</td><td>{7}</td></tr>"
-                        .format(t.PartitionKey, t.HouseName, t.GivenNames, t.Surname, t.YoB, t.PlaceId,
-                            t.PlaceId ? "class='darklink'" : "", origin);
+                for (const t of results) {
+                    var origin = t.Origin === "m" ? "Moylg" : (t.Origin || "");
+                    var $house = $("<span>").text(t.HouseName || "");
+                    if (t.PlaceId) $house.addClass("darklink").on("click", () => go(t.PlaceId, 1));
+                    $('#searchResult > table > tbody').append(
+                        $("<tr>").append(
+                            $("<td>").text((t.PartitionKey || "") + "cs"),
+                            $("<td>").append($house),
+                            $("<td>").text(t.GivenNames || ""),
+                            $("<td>").text(t.Surname || ""),
+                            $("<td>").text(t.YoB || ""),
+                            $("<td>").text(origin)
+                        )
+                    );
                 }
-                $('#searchResult > table > tbody').append(s);
             }
         });
         this._fetch("graves", gn, ln, syob, "", function (results) {
             if (results.length > 0) {
-                var s = "";
-                for (var i = 0, t; t = results[i]; i++) {
-                    s += "<tr><td>grave</td><td><span {6} onclick='go({5},1)'>{0}</span></td><td>{1}</td><td>{2}</td><td>{3}</td><td>- {4}</td></tr>"
-                        .format(t.home, t.firstNames, t.lastName, t.yob, t.yod, t.assigned,
-                            t.assigned ? "class='darklink'" : "");
+                for (const t of results) {
+                    var $home = $("<span>").text(t.home || "");
+                    if (t.assigned) $home.addClass("darklink").on("click", () => go(t.assigned, 1));
+                    $('#searchResult > table > tbody').append(
+                        $("<tr>").append(
+                            $("<td>").text("grave"),
+                            $("<td>").append($home),
+                            $("<td>").text(t.firstNames || ""),
+                            $("<td>").text(t.lastName || ""),
+                            $("<td>").text(t.yob || ""),
+                            $("<td>").text("- " + (t.yod || ""))
+                        )
+                    );
                 }
-                $('#searchResult > table > tbody').append(s);
             }
         });
     }
@@ -331,30 +391,44 @@ class PersonSearch {
             if (result.length > 0) {
                 var showHouseName = false;
                 var cf = comparable(houseName);
-                for (var i = 0, t; t = result[i]; i++) {
+                for (const t of result) {
                     if (t.HouseName && comparable(t.HouseName) != cf) { showHouseName = true; }
                     if (!censusYears[t.PartitionKey]) { censusYears[t.PartitionKey] = []; }
                     censusYears[t.PartitionKey].push(t);
                 }
-                $("#textbox").append("<h4><a href='#' onclick=\"$('#census').toggle('slide')\">Census entries</a></h4>");
+                $("#textbox").append(
+                    $("<h4>").append(
+                        $("<a>").attr("href", "#").text("Census entries")
+                            .on("click", function () { $('#census').toggle('slide'); })
+                    )
+                );
+                var $table = $("<table>");
                 var householdName = "";
-                var s = "<table>";
-                for (var cy in censusYears) {
+                for (const cy in censusYears) {
                     var yearEntries = censusYears[cy];
-                    s += "<tr><td colspan=5><b>{0}</b></td></tr>".format(cy);
-                    for (var i = 0, t; t = yearEntries[i]; i++) {
+                    $table.append($("<tr>").append($("<td>").attr("colspan", 5).append($("<b>").text(cy))));
+                    for (const t of yearEntries) {
                         if (showHouseName && t.HouseName != householdName) {
                             householdName = t.HouseName;
-                            s += "<tr><td colspan=5><i>{0}</i></td></tr>".format(householdName);
+                            $table.append($("<tr>").append($("<td>").attr("colspan", 5).append($("<i>").text(householdName))));
                         }
-                        s += "<tr><td><span class='link' onclick='startSearch(\"{0}\", \"{1}\", \"{2}\")'>{0} {1}</span></td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td></tr>".format(
-                            t.GivenNames, t.Surname, t.YoB.substr(0, 4), t.Age,
-                            this._decode({ h: "head", sole: "head", w: "wife", s: "son", d: "dgtr", b: "bro" }, t.Relationship || ""),
-                            this._decode({ s: "sgl", m: "mrd", u: "unm", w: "wdw", d: "div" }, t.Condition || ""), t.Occupation || "");
+                        const yob = (t.YoB || "").substr(0, 4);
+                        var $name = $("<span class='link'>")
+                            .text((t.GivenNames || "") + " " + (t.Surname || ""))
+                            .on("click", () => startSearch(t.GivenNames, t.Surname, yob));
+                        $table.append(
+                            $("<tr>").append(
+                                $("<td>").append($name),
+                                $("<td>").text(yob),
+                                $("<td>").text(t.Age || ""),
+                                $("<td>").text(this._decode({ h: "head", sole: "head", w: "wife", s: "son", d: "dgtr", b: "bro" }, t.Relationship || "")),
+                                $("<td>").text(this._decode({ s: "sgl", m: "mrd", u: "unm", w: "wdw", d: "div" }, t.Condition || "")),
+                                $("<td>").text(t.Occupation || "")
+                            )
+                        );
                     }
                 }
-                s += "</table>";
-                $("#textbox").append(s);
+                $("#textbox").append($table);
             }
         });
     }
@@ -364,15 +438,32 @@ class PersonSearch {
         this._fetch("graves", "", "", "", id, function (result) {
             if (result.length > 0) {
                 result.sort(function (a, b) { return a.yod - b.yod; });
-                var s = "<h4><a href='https://drive.google.com/file/d/1LjXR1C27fwazM0Ovib4oKRdfxY47TAcc/view' target='graves'>Gravestones</a></h4>"
-                    + "<table>";
-                for (var i = 0, t; t = result[i]; i++) {
-                    s += ("<tr><td>{0}</td><td>-{1}</td><td><span class='link' onclick='startSearch(\"{2}\", \"{3}\", \"{0}\")'>{2}</span></td>"
-                        + "<td><span class='link' onclick='startSearch(\"{2}\", \"{3}\", \"{0}\")'>{3}</span></td><td>{4}</td><td>{5}</td><td>{6}</td></tr>").format(
-                            t.yob, t.yod, t.firstNames, t.lastName, t.age, t.home, t.graveId);
+                var $table = $("<table>");
+                for (const t of result) {
+                    var $first = $("<span class='link'>").text(t.firstNames || "")
+                        .on("click", () => startSearch(t.firstNames, t.lastName, t.yob));
+                    var $last = $("<span class='link'>").text(t.lastName || "")
+                        .on("click", () => startSearch(t.firstNames, t.lastName, t.yob));
+                    $table.append(
+                        $("<tr>").append(
+                            $("<td>").text(t.yob || ""),
+                            $("<td>").text("-" + (t.yod || "")),
+                            $("<td>").append($first),
+                            $("<td>").append($last),
+                            $("<td>").text(t.age || ""),
+                            $("<td>").text(t.home || ""),
+                            $("<td>").text(t.graveId || "")
+                        )
+                    );
                 }
-                s += "</table>";
-                $("#textbox").append(s);
+                $("#textbox").append(
+                    $("<h4>").append(
+                        $("<a>").text("Gravestones")
+                            .attr("href", "https://drive.google.com/file/d/1LjXR1C27fwazM0Ovib4oKRdfxY47TAcc/view")
+                            .attr("target", "graves")
+                    ),
+                    $table
+                );
             }
         });
     }
@@ -647,11 +738,11 @@ class Place2Manager {
         let bits2 = [];
         let b2 = [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description];
         for (var i in b2) {
-            if (b2[i]) bits2.push(b2[i]);
+            if (b2[i]) bits2.push(esc(b2[i]));
         }
         let text2 = bits2.join("<br/>");
         let buttonColor = this.pinColor(p2 && p2.health);
-        let ctext2 = `<div class='popup2' onclick='edit2("${place.id}")'><button`
+        let ctext2 = `<div class='popup2' onclick='edit2("${esc(place.id)}")'><button`
             + " id='popHealthButton' style='background-color:" + buttonColor + "'>" + this._menuHtml + "</button>"
             + text2 + "</div>";
         return ctext2;
@@ -665,7 +756,7 @@ class Place2Manager {
             p1.place2 = p2;
             window.places2[id] = p2;
         }
-        g("edit2uiTitle").innerHTML = p2.Name || "";
+        g("edit2uiTitle").textContent = p2.Name || "";
         g("edit2uiResident").value = p2.Owner || "";
         g("edit2uiPhone").value = p2.Phone || "";
         g("edit2uiEmail").value = p2.Email || "";

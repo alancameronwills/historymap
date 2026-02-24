@@ -110,16 +110,16 @@ class PlaceList {
             return b.updated - a.updated;
         }).slice(0, 5);
 
-        var listContent = "";
-        for (var i in window.orderedList) {
-            var item = window.orderedList[i];
+        var $list = $("#houselist").empty();
+        for (const item of window.orderedList) {
             var isInteresting = !window.noHistory && $.inArray(item, window.interesting) >= 0;
             var isPrincipal = !!item.principal;
-
-            listContent += "<div id='h{0}' {2} onClick='go(\"{0}\",true)'>{1}</div>".
-                format(item.id, item.title, (isPrincipal ? "class='principal'" : isInteresting ? "class='interesting'" : ""));
+            var $div = $("<div>").attr("id", "h" + item.id).text(item.title)
+                .on("click", () => go(item.id, true));
+            if (isPrincipal) $div.addClass("principal");
+            else if (isInteresting) $div.addClass("interesting");
+            $list.append($div);
         }
-        $("#houselist").html(listContent);
     }
 }
 
