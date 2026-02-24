@@ -809,7 +809,7 @@ class Place2Manager {
         let pin = place.pin;
         if (pin) pin.setOptions(window.map.pinOptions(place));
         g("popHealthButton").style.backgroundColor = this.pinColor(place.place2.health);
-        fetch(apiUrl + "updateplace2?code=" + "tLFYDagKuavQXFaPDrPlhfS9QfgtHaf1RFJk4RWEJ6WeWnTarmbOfA==",
+        fetch(apiUrl + "updateplace2?code=" + window.keys.Client_UpdatePlace2_FK,
             {
                 body: JSON.stringify(place.place2),
                 headers: {
