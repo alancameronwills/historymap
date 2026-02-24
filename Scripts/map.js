@@ -50,7 +50,7 @@ function setMapSelectors() {
     let c = `<span id='mapStyle'>Aerial</span>
         <div id='mapStyleSelect' class='dropDownMenu'>
         ${selectorInputs}</div>`;
-    let target = document.getElementById(mapTypeSelectorDiv);
+    let target = document.getElementById("mapTypeSelectorDiv");
     target.innerHTML = c;
 }
 
