@@ -22,12 +22,16 @@ body {
     flex-direction: column;
     align-items: flex-end;
     gap: 4px;
+    user-select: none;
+    pointer-events: none;
 }
 
 #headAndSearch>div {
     background-color: var(--headergray);
     border-radius: 6px;
     color: white;
+    user-select: auto;
+    pointer-events: all;
 }
 
 .maphead {
