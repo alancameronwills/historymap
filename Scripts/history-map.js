@@ -70,10 +70,10 @@ function displayZone(zoneChoice) {
             .catch(function (err) {
                 window.alert("Sorry - problem getting the map data. Please tell alan@pantywylan.org");
             });
-        if (place2AuthCheck()) {
+        if (window.place2.authCheck()) {
             fetch(fetchApi2)
                 .then(response => response.json())
-                .then(gotTable2)
+                .then(r => window.place2.gotTable(r))
                 .catch(err => { });
         }
     } else {
@@ -83,21 +83,6 @@ function displayZone(zoneChoice) {
         });
     }
     window.loadedTime = new Date().getTime();
-}
-
-function place2AuthCheck() {
-    if (location.host == "localhost") return true;
-    if (getCookie("privatedb")) return true;
-    return false;
-}
-
-function gotTable2(results) {
-    if (!results) return;
-    window.places2 = {};
-    for (var i = 0, t; t = results[i]; i++) {
-        window.places2[t.RowKey] = t;
-    }
-    mergeTables();
 }
 
 var placeListsGot = 0;
@@ -140,7 +125,7 @@ function gotTable(results) {
         } catch (error) { console.log(error); }
     }
     mergeTables();
-    showPlaceList();
+    window.placeList.show();
 
     // NoHistory is a queryparameter set if we're just showing a map of house names.
     if (!window.noHistory) {
@@ -296,139 +281,152 @@ function getBlog(url) {
     $("#blog").fadeIn().children("iframe").attr("src", geturl);
 }
 
-function search(table, first, last, year, place, process) {
-    if (typeof fetch !== 'undefined') {
-        fetch(apiUrl + "{0}?first={1}&last={2}&year={3}&place={4}"
-            .format(table, first || "", last || "", year || "", place || ""))
-            .then(function (response) { return response.json(); })
-            .then(function (results) { process(results); });
-    }
-    else {
-        $.get(apiUrl + "{0}?first={1}&last={2}&year={3}&place={4}"
-            .format(table, first || "", last || "", year || "", place || ""),
-            function (data, status) {
-                process(data);
-            });
-    }
-    appInsights.trackEvent("search");
-}
-
-function searchPerson() {
-    var gn = $('#searchName')[0].value.trim();
-    var ln = $('#searchLastName')[0].value.trim();
-    var syob = $('#searchYob')[0].value.trim();
-    if (!gn && !ln && !syob) return;
-    $('#searchResult').show(200);
-    $("#searchCloseButton").css("background-color", "darkred");
-    $('#searchResult').html("<table><tr><th>source</th><th>house</th><th>given</th><th>surname</th><th>b</th><th>origin</th></table>");
-    search("census", gn, ln, syob, "", function (results) {
-        if (results.length > 0) {
-            var s = "";
-            for (var i = 0, t; t = results[i]; i++) {
-                var origin = t.Origin; if (origin == "m") origin = "Moylg";
-                s += "<tr><td>{0}cs</td><td><span {6} onclick='go({5},1)'>{1}</span></td><td>{2}</td><td>{3}</td><td>{4}</td><td>{7}</td></tr>"
-                    .format(t.PartitionKey, t.HouseName, t.GivenNames, t.Surname, t.YoB, t.PlaceId,
-                        t.PlaceId ? "class='darklink'" : "", origin);
-            }
-            $('#searchResult > table > tbody').append(s);
-        }
-    });
-    search("graves", gn, ln, syob, "", function (results) {
-        if (results.length > 0) {
-            var s = "";
-            for (var i = 0, t; t = results[i]; i++) {
-                s += "<tr><td>grave</td><td><span {6} onclick='go({5},1)'>{0}</span></td><td>{1}</td><td>{2}</td><td>{3}</td><td>- {4}</td></tr>"
-                    .format(t.home, t.firstNames, t.lastName, t.yob, t.yod, t.assigned,
-                        t.assigned ? "class='darklink'" : "");
-            }
-            $('#searchResult > table > tbody').append(s);
-        }
-    });
-}
-
-function startSearch(firsts, last, yob) {
-    appInsights.trackEvent("clickPerson");
-    var first = firsts.split(" ")[0];
-    $('#searchName')[0].value = first;
-    $('#searchLastName')[0].value = last;
-    $('#searchYob')[0].value = yob;
-    searchPerson();
-}
-
-
-function getPeopleData(id, houseName) {
-    if (!id) return;
-    var censusYears = {};
-    search("census", "", "", "", id, function (result) {
-        if (result.length > 0) {
-            var showHouseName = false;
-            var cf = comparable(houseName);
-            for (var i = 0, t; t = result[i]; i++) {
-                if (t.HouseName && comparable(t.HouseName) != cf) { showHouseName = true; }
-                if (!censusYears[t.PartitionKey]) { censusYears[t.PartitionKey] = []; }
-                censusYears[t.PartitionKey].push(t);
-            }
-            $("#textbox").append("<h4><a href='#' onclick=\"$('#census').toggle('slide')\">Census entries</a></h4>");
-            var householdName = "";
-            var s = "<table>";
-            for (var cy in censusYears) {
-                var yearEntries = censusYears[cy];
-                s += "<tr><td colspan=5><b>{0}</b></td></tr>".format(cy);
-                for (var i = 0, t; t = yearEntries[i]; i++) {
-                    if (showHouseName && t.HouseName != householdName) {
-                        householdName = t.HouseName;
-                        s += "<tr><td colspan=5><i>{0}</i></td></tr>".format(householdName);
-                    }
-                    s += "<tr><td><span class='link' onclick='startSearch(\"{0}\", \"{1}\", \"{2}\")'>{0} {1}</span></td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td></tr>".format(
-                        t.GivenNames, t.Surname, t.YoB.substr(0, 4), t.Age,
-                        decode({ h: "head", sole: "head", w: "wife", s: "son", d: "dgtr", b: "bro" }, t.Relationship || ""),
-                        decode({ s: "sgl", m: "mrd", u: "unm", w: "wdw", d: "div" }, t.Condition || ""), t.Occupation || "");
+class PersonSearch {
+    searchPerson() {
+        var gn = $('#searchName')[0].value.trim();
+        var ln = $('#searchLastName')[0].value.trim();
+        var syob = $('#searchYob')[0].value.trim();
+        if (!gn && !ln && !syob) return;
+        $('#searchResult').show(200);
+        $("#searchCloseButton").css("background-color", "darkred");
+        $('#searchResult').html("<table><tr><th>source</th><th>house</th><th>given</th><th>surname</th><th>b</th><th>origin</th></table>");
+        this._fetch("census", gn, ln, syob, "", function (results) {
+            if (results.length > 0) {
+                var s = "";
+                for (var i = 0, t; t = results[i]; i++) {
+                    var origin = t.Origin; if (origin == "m") origin = "Moylg";
+                    s += "<tr><td>{0}cs</td><td><span {6} onclick='go({5},1)'>{1}</span></td><td>{2}</td><td>{3}</td><td>{4}</td><td>{7}</td></tr>"
+                        .format(t.PartitionKey, t.HouseName, t.GivenNames, t.Surname, t.YoB, t.PlaceId,
+                            t.PlaceId ? "class='darklink'" : "", origin);
                 }
+                $('#searchResult > table > tbody').append(s);
             }
-            s += "</table>";
-            $("#textbox").append(s);
-        }
-    });
-}
-function decode(m, code) {
-    var d = m[code];
-    return d ? d : code;
-}
-
-function getGraves(id) {
-    if (!id) return;
-    search("graves", "", "", "", id, function (result) {
-        if (result.length > 0) {
-            result.sort(function (a, b) { return a.yod - b.yod; });
-            var s = "<h4><a href='https://drive.google.com/file/d/1LjXR1C27fwazM0Ovib4oKRdfxY47TAcc/view' target='graves'>Gravestones</a></h4>"
-                + "<table>";
-            for (var i = 0, t; t = result[i]; i++) {
-                s += ("<tr><td>{0}</td><td>-{1}</td><td><span class='link' onclick='startSearch(\"{2}\", \"{3}\", \"{0}\")'>{2}</span></td>"
-                    + "<td><span class='link' onclick='startSearch(\"{2}\", \"{3}\", \"{0}\")'>{3}</span></td><td>{4}</td><td>{5}</td><td>{6}</td></tr>").format(
-                        t.yob, t.yod, t.firstNames, t.lastName, t.age, t.home, t.graveId);
+        });
+        this._fetch("graves", gn, ln, syob, "", function (results) {
+            if (results.length > 0) {
+                var s = "";
+                for (var i = 0, t; t = results[i]; i++) {
+                    s += "<tr><td>grave</td><td><span {6} onclick='go({5},1)'>{0}</span></td><td>{1}</td><td>{2}</td><td>{3}</td><td>- {4}</td></tr>"
+                        .format(t.home, t.firstNames, t.lastName, t.yob, t.yod, t.assigned,
+                            t.assigned ? "class='darklink'" : "");
+                }
+                $('#searchResult > table > tbody').append(s);
             }
-            s += "</table>";
-            $("#textbox").append(s);
+        });
+    }
+
+    startSearch(firsts, last, yob) {
+        appInsights.trackEvent("clickPerson");
+        var first = firsts.split(" ")[0];
+        $('#searchName')[0].value = first;
+        $('#searchLastName')[0].value = last;
+        $('#searchYob')[0].value = yob;
+        this.searchPerson();
+    }
+
+    getPeopleData(id, houseName) {
+        if (!id) return;
+        var censusYears = {};
+        this._fetch("census", "", "", "", id, (result) => {
+            if (result.length > 0) {
+                var showHouseName = false;
+                var cf = comparable(houseName);
+                for (var i = 0, t; t = result[i]; i++) {
+                    if (t.HouseName && comparable(t.HouseName) != cf) { showHouseName = true; }
+                    if (!censusYears[t.PartitionKey]) { censusYears[t.PartitionKey] = []; }
+                    censusYears[t.PartitionKey].push(t);
+                }
+                $("#textbox").append("<h4><a href='#' onclick=\"$('#census').toggle('slide')\">Census entries</a></h4>");
+                var householdName = "";
+                var s = "<table>";
+                for (var cy in censusYears) {
+                    var yearEntries = censusYears[cy];
+                    s += "<tr><td colspan=5><b>{0}</b></td></tr>".format(cy);
+                    for (var i = 0, t; t = yearEntries[i]; i++) {
+                        if (showHouseName && t.HouseName != householdName) {
+                            householdName = t.HouseName;
+                            s += "<tr><td colspan=5><i>{0}</i></td></tr>".format(householdName);
+                        }
+                        s += "<tr><td><span class='link' onclick='startSearch(\"{0}\", \"{1}\", \"{2}\")'>{0} {1}</span></td><td>{2}</td><td>{3}</td><td>{4}</td><td>{5}</td><td>{6}</td></tr>".format(
+                            t.GivenNames, t.Surname, t.YoB.substr(0, 4), t.Age,
+                            this._decode({ h: "head", sole: "head", w: "wife", s: "son", d: "dgtr", b: "bro" }, t.Relationship || ""),
+                            this._decode({ s: "sgl", m: "mrd", u: "unm", w: "wdw", d: "div" }, t.Condition || ""), t.Occupation || "");
+                    }
+                }
+                s += "</table>";
+                $("#textbox").append(s);
+            }
+        });
+    }
+
+    getGraves(id) {
+        if (!id) return;
+        this._fetch("graves", "", "", "", id, function (result) {
+            if (result.length > 0) {
+                result.sort(function (a, b) { return a.yod - b.yod; });
+                var s = "<h4><a href='https://drive.google.com/file/d/1LjXR1C27fwazM0Ovib4oKRdfxY47TAcc/view' target='graves'>Gravestones</a></h4>"
+                    + "<table>";
+                for (var i = 0, t; t = result[i]; i++) {
+                    s += ("<tr><td>{0}</td><td>-{1}</td><td><span class='link' onclick='startSearch(\"{2}\", \"{3}\", \"{0}\")'>{2}</span></td>"
+                        + "<td><span class='link' onclick='startSearch(\"{2}\", \"{3}\", \"{0}\")'>{3}</span></td><td>{4}</td><td>{5}</td><td>{6}</td></tr>").format(
+                            t.yob, t.yod, t.firstNames, t.lastName, t.age, t.home, t.graveId);
+                }
+                s += "</table>";
+                $("#textbox").append(s);
+            }
+        });
+    }
+
+    _fetch(table, first, last, year, place, cb) {
+        if (typeof fetch !== 'undefined') {
+            fetch(apiUrl + "{0}?first={1}&last={2}&year={3}&place={4}"
+                .format(table, first || "", last || "", year || "", place || ""))
+                .then(function (response) { return response.json(); })
+                .then(function (results) { cb(results); });
         }
-    });
-}
+        else {
+            $.get(apiUrl + "{0}?first={1}&last={2}&year={3}&place={4}"
+                .format(table, first || "", last || "", year || "", place || ""),
+                function (data, status) {
+                    cb(data);
+                });
+        }
+        appInsights.trackEvent("search");
+    }
 
-function listAudio() {
-    $.get("https://moylgrovehistory.blob.core.windows.net/audiovis?restype=container&comp=list", function (data, status) {
-        var nameElements = data.getElementsByTagName("Name");
-        window.avlist = $.makeArray(nameElements).map(function (x) { return x.textContent.replace(".mp3", ""); });
-    });
-}
-
-function getAudio(id) {
-    if (!id) return;
-    $("#audiodiv").hide();
-    if (window.avlist && window.avlist.includes(id)) {
-        $("#audiodiv").html("<audio controls><source src='{0}{1}.mp3' type='audio/mpeg'></source></audio><br/>Commentary &copy; Sally James".format(avUrl, id));
-        $("#audiodiv").show();
+    _decode(m, code) {
+        var d = m[code];
+        return d ? d : code;
     }
 }
-listAudio();
+
+window.personSearch = new PersonSearch();
+function searchPerson()                 { window.personSearch.searchPerson(); }
+function startSearch(firsts, last, yob) { window.personSearch.startSearch(firsts, last, yob); }
+
+class AudioPlayer {
+    constructor() {
+        this._load();
+    }
+
+    _load() {
+        $.get("https://moylgrovehistory.blob.core.windows.net/audiovis?restype=container&comp=list", function (data, status) {
+            var nameElements = data.getElementsByTagName("Name");
+            window.avlist = $.makeArray(nameElements).map(function (x) { return x.textContent.replace(".mp3", ""); });
+        });
+    }
+
+    play(id) {
+        if (!id) return;
+        $("#audiodiv").hide();
+        if (window.avlist && window.avlist.includes(id)) {
+            $("#audiodiv").html("<audio controls><source src='{0}{1}.mp3' type='audio/mpeg'></source></audio><br/>Commentary &copy; Sally James".format(avUrl, id));
+            $("#audiodiv").show();
+        }
+    }
+}
+
+window.audioPlayer = new AudioPlayer();
 
 function DeletePlace(id) {
     $("#message").hide();
@@ -494,15 +492,15 @@ function go(id, fromList) {
         return;
     }
     doingRetry = null;
-    selectOnList(id, fromList);
+    window.placeList.select(id, fromList);
     selectOnMap(place, fromList);
     if (!window.noHistory) {
         showMainText(id, place);
         showStreetView(place.pic1);
         showSlides(place.pic2);
-        getPeopleData(id, place.title);
-        getGraves(id);
-        getAudio(id);
+        window.personSearch.getPeopleData(id, place.title);
+        window.personSearch.getGraves(id);
+        window.audioPlayer.play(id);
     }
 
 
@@ -538,7 +536,7 @@ function clearMapSelection() {
     $("#census").fadeOut();
     $("#blog").fadeOut().children("iframe").attr("src", null);
     selectOnMap(null, false);
-    selectOnList(null, false);
+    window.placeList.select(null, false);
     if (window.fader != null) { clearInterval(fader); window.fader = null; }
     if (window.menuBox != null) { window.menuBox.setOptions({ visible: false }); }
 }
@@ -577,7 +575,7 @@ window.addEventListener("storage", function (event) {
                 var pushpin = oldPlace.pin;
                 window.map.setPin(pushpin, newPlace);
                 newPlace.pin = pushpin;
-                if (newPlace.cf != oldPlace.cf) showPlaceList();
+                if (newPlace.cf != oldPlace.cf) window.placeList.show();
                 go(newPlace.id, false);
             } else {
                 window.location.assign("./?place=" + newPlace.id);
@@ -589,79 +587,140 @@ window.addEventListener("storage", function (event) {
 var healthMenuCodes = ["UO", "VOL", "OK", "SI", "V", "?"];
 var healthMenuLabels = ["unoccupied", "volunteer", "ok", "self-isolating", "vulnerable", "unknown"];
 var healthMenuColors = ["black", "cyan", "lightgreen", "yellow", "orange", "red"];
-var healthMenuStack = "<div class='healthMenu'>";
-for (var i = 0; i < healthMenuCodes.length; i++) {
-    healthMenuStack += "<div class='healthMenuItem' "
-        + `style='background-color:${healthMenuColors[i]}' `
-        + `title='${healthMenuLabels[i]}'`
-        + `onclick='setHealthCode("${healthMenuCodes[i]}");event.stopPropagation()'`
-        + "></div>";
-}
-healthMenuStack += "</div>";
 
-function pinColor2(health) {
-    for (var i = 0; i < healthMenuCodes.length; i++) {
-        if (health == healthMenuCodes[i]) return healthMenuColors[i];
+class Place2Manager {
+    constructor() {
+        this._menuHtml = this._buildMenuHtml();
     }
-    return "red";
-}
 
-function setHealthCode(code) {
-    if (!window.poppedUpPlace) return;
-    if (!window.poppedUpPlace.place2) {
-        createPlace2(window.poppedUpPlace, code);
-    } else {
-        window.poppedUpPlace.place2.health = code;
-        updatePlace2(window.poppedUpPlace);
+    _buildMenuHtml() {
+        var html = "<div class='healthMenu'>";
+        for (var i = 0; i < healthMenuCodes.length; i++) {
+            html += "<div class='healthMenuItem' "
+                + `style='background-color:${healthMenuColors[i]}' `
+                + `title='${healthMenuLabels[i]}'`
+                + `onclick='setHealthCode("${healthMenuCodes[i]}");event.stopPropagation()'`
+                + "></div>";
+        }
+        html += "</div>";
+        return html;
+    }
+
+    pinColor(health) {
+        for (var i = 0; i < healthMenuCodes.length; i++) {
+            if (health == healthMenuCodes[i]) return healthMenuColors[i];
+        }
+        return "red";
+    }
+
+    authCheck() {
+        if (location.host == "localhost") return true;
+        if (getCookie("privatedb")) return true;
+        return false;
+    }
+
+    gotTable(results) {
+        if (!results) return;
+        window.places2 = {};
+        for (var i = 0, t; t = results[i]; i++) {
+            window.places2[t.RowKey] = t;
+        }
+        mergeTables();
+    }
+
+    setHealthCode(code) {
+        if (!window.poppedUpPlace) return;
+        if (!window.poppedUpPlace.place2) {
+            this._create(window.poppedUpPlace, code);
+        } else {
+            window.poppedUpPlace.place2.health = code;
+            this._update(window.poppedUpPlace);
+        }
+    }
+
+    /**
+     * Get text from private db.
+     */
+    popupText(place) {
+        if (!window.places2) return "";
+        let p2 = place.place2 || {};
+        let bits2 = [];
+        let b2 = [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description];
+        for (var i in b2) {
+            if (b2[i]) bits2.push(b2[i]);
+        }
+        let text2 = bits2.join("<br/>");
+        let buttonColor = this.pinColor(p2 && p2.health);
+        let ctext2 = `<div class='popup2' onclick='edit2("${place.id}")'><button`
+            + " id='popHealthButton' style='background-color:" + buttonColor + "'>" + this._menuHtml + "</button>"
+            + text2 + "</div>";
+        return ctext2;
+    }
+
+    edit(id) {
+        let p1 = window.items[id];
+        let p2 = window.places2[id];
+        if (!p2) {
+            p2 = { PartitionKey: "p1", RowKey: id, Name: p1.title };
+            p1.place2 = p2;
+            window.places2[id] = p2;
+        }
+        g("edit2uiTitle").innerHTML = p2.Name || "";
+        g("edit2uiResident").value = p2.Owner || "";
+        g("edit2uiPhone").value = p2.Phone || "";
+        g("edit2uiEmail").value = p2.Email || "";
+        g("edit2uiC3").value = p2.c3 || "";
+        g("edit2uiC4").value = p2.c4 || "";
+        g("edit2uiDescription").value = p2.Description || "";
+        g("edit2ui").placeId = id;
+        $("#edit2ui").show();
+    }
+
+    closeEdit() {
+        var id = g("edit2ui").placeId;
+        var p2 = window.places2[id];
+        p2.Owner = g("edit2uiResident").value;
+        p2.Phone = g("edit2uiPhone").value;
+        p2.Email = g("edit2uiEmail").value;
+        p2.c3 = g("edit2uiC3").value;
+        p2.c4 = g("edit2uiC4").value;
+        p2.Description = g("edit2uiDescription").value;
+        this._update(window.items[id]);
+    }
+
+    _create(place, code) {
+        place.place2 = { PartitionKey: "p1", RowKey: place.id, Name: place.title, health: code };
+        this._update(place);
+    }
+
+    _update(place) {
+        if (!place.place2) return;
+        let pin = place.pin;
+        if (pin) pin.setOptions(window.map.pinOptions(place));
+        g("popHealthButton").style.backgroundColor = this.pinColor(place.place2.health);
+        fetch(apiUrl + "updateplace2?code=" + "tLFYDagKuavQXFaPDrPlhfS9QfgtHaf1RFJk4RWEJ6WeWnTarmbOfA==",
+            {
+                body: JSON.stringify(place.place2),
+                headers: {
+                    'content-type': 'application/json'
+                },
+                method: 'PUT',
+                credentials: "same-origin"
+            });
     }
 }
 
-function createPlace2(place, code) {
-    place.place2 = { PartitionKey: "p1", RowKey: place.id, Name: place.title, health: code };
-    updatePlace2(place);
-}
-
-function updatePlace2(place) {
-    if (!place.place2) return;
-    let pin = place.pin;
-    if (pin) pin.setOptions(window.map.pinOptions(place));
-    g("popHealthButton").style.backgroundColor = pinColor2(place.place2.health);
-    fetch(apiUrl + "updateplace2?code=" + "tLFYDagKuavQXFaPDrPlhfS9QfgtHaf1RFJk4RWEJ6WeWnTarmbOfA==",
-        {
-            body: JSON.stringify(place.place2),
-            headers: {
-                'content-type': 'application/json'
-            },
-            method: 'PUT',
-            credentials: "same-origin"
-        });
-}
-
-/**
- * Get text from private db.
- * @param {} place 
- */
-function popupText2(place) {
-    if (!window.places2) return "";
-    let p2 = place.place2 || {};
-    let bits2 = [];
-    let b2 = [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description];
-    for (var i in b2) {
-        if (b2[i]) bits2.push(b2[i]);
-    }
-    let text2 = bits2.join("<br/>");
-    let buttonColor = pinColor2(p2 && p2.health);
-    let ctext2 = `<div class='popup2' onclick='edit2("${place.id}")'><button`
-        + " id='popHealthButton' style='background-color:" + buttonColor + "'>" + healthMenuStack + "</button>"
-        + text2 + "</div>";
-    return ctext2;
-}
+window.place2 = new Place2Manager();
+function pinColor2(health)   { return window.place2.pinColor(health); }   // called from map.js
+function setHealthCode(code) { window.place2.setHealthCode(code); }        // health button onclick
+function edit2(id)           { window.place2.edit(id); }                   // popup onclick
+function closeEdit2()        { window.place2.closeEdit(); }                // index.htm line 166
 
 function popupText(place) {
     window.poppedUpPlace = place;
     if (!place) return "";
     var striptext = place.text.replace(/<[^>]*>/g, " ").trim() || place.subtitle || "";
-    var shorttext = popupText2(place) + (striptext.length > 200
+    var shorttext = window.place2.popupText(place) + (striptext.length > 200
         ? striptext.substr(0, 200) + "..."
         : striptext);
     var picUrl = "";
@@ -678,38 +737,6 @@ function popupText(place) {
     }
 
     return shorttext;
-}
-
-function edit2(id) {
-    let p1 = window.items[id];
-    let p2 = window.places2[id];
-    if (!p2) {
-        p2 = {PartitionKey:"p1",
-            RowKey:id, 
-            Name:p1.title}; 
-        p1.place2 = p2;
-        window.places2[id] = p2;
-    }
-    g("edit2uiTitle").innerHTML = p2.Name || "";
-    g("edit2uiResident").value = p2.Owner || "";
-    g("edit2uiPhone").value = p2.Phone || "";
-    g("edit2uiEmail").value = p2.Email || "";
-    g("edit2uiC3").value = p2.c3 || "";
-    g("edit2uiC4").value = p2.c4 || "";
-    g("edit2uiDescription").value = p2.Description || "";
-    g("edit2ui").placeId = id;
-    $("#edit2ui").show();
-}
-function closeEdit2() {
-    var id = g("edit2ui").placeId;
-    var p2 = window.places2[id];
-    p2.Owner = g("edit2uiResident").value;
-    p2.Phone = g("edit2uiPhone").value;
-    p2.Email = g("edit2uiEmail").value;
-    p2.c3 = g("edit2uiC3").value;
-    p2.c4 = g("edit2uiC4").value;
-    p2.Description = g("edit2uiDescription").value;
-    updatePlace2(window.items[id]);
 }
 
 // Title of principal must be ~= name of zone
