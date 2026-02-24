@@ -534,8 +534,7 @@ class BingMap {
         if (!this.map) return;
         this.currentStyle = v;
         var styleLabels = { leisure: 'Leisure', outdoor: 'Outdoor', osroad: 'Road', light: 'Light', aerial: 'Aerial' };
-        var btn = document.getElementById('mapStyleButton');
-        if (btn) btn.textContent = styleLabels[v] || v;
+        showChoiceOnUI('#mapStyle', styleLabels[v] || v);
         if (this.osLayer) {
             this.map.layers.remove(this.osLayer);
             this.osLayer = null;

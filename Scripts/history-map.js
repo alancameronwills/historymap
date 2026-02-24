@@ -31,7 +31,7 @@ function initMapCentre() {
 function onMapLoaded() {
     var zoneChoice = getZoneChoiceFromCookie() || "moylgrove";
     window.zoneSelection = zoneChoice;
-    showZoneChoiceOnUI(zoneChoice);
+    showChoiceOnUI("#zone", zoneChoice);
     // Initialize zone selection UI
     $("#zoneSelect")[0].action = updateZoneChoice;
     $(".dropdown").hover(
@@ -737,14 +737,14 @@ function getChoiceFromUI(selector) {
 }
 
 // Set the drowpdown menu to reflect the current zone selection, obtained from a cookie.
-function showZoneChoiceOnUI(zones) {
+function showChoiceOnUI(selector, zones) {
     if (zones) {
-        $("#zone").html(zones.replace(/ .*/, "..."));
-        $("#zoneSelect").children("input").each(function (i, e) {
+        $(selector).html(zones.replace(/ .*/, "..."));
+        $(selector + "Select").children("input").each(function (i, e) {
             e.checked = (zones.indexOf(e.value) >= 0);
         });
     }
-    else { $("#zone").html("<span style='background-color:red'>Choose...</span>"); }
+    else { $(selector).html("<span style='background-color:red'>Choose...</span>"); }
 }
 
 function setZoneCookie(zones) {
@@ -773,7 +773,7 @@ function updateZoneChoice() {
 // Move to and display a different zone
 function setZoneChoice(zoneChoice) {
     window.zoneSelection = zoneChoice;
-    showZoneChoiceOnUI(zoneChoice);
+    showChoiceOnUI("#zone", zoneChoice);
     setZoneCookie(zoneChoice);
     displayZone(zoneChoice);
 }
