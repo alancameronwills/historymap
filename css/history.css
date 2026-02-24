@@ -260,7 +260,7 @@ th {
     float: right;
 }
 
-.dropdown div {
+.dropdown>div {
     display: none;
     background-color: black;
     border: solid 1px white;
