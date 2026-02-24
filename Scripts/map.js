@@ -1,5 +1,5 @@
 
-// map.js version 19
+// map.js version 23
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -76,7 +76,7 @@ class GoogleMap {
             this.map = new google.maps.Map(document.getElementById('theMap'),
                 {
                     center: this.mapCoords(initMapCentre()),
-                    zoom: 16,
+                    zoom: 14,
                     clickableIcons: false,
                     fullscreenControl: false,
                     gestureHandling: "greedy",
@@ -284,13 +284,13 @@ class BingMap {
         }
 
         this.mapStyles = {
+            aerial:   { name: 'Aerial',   provider: 'Azure' },
             leisure:  { name: 'Leisure',  provider: 'os' },
             outdoor:  { name: 'Outdoor',  provider: 'os' },
             osroad:   { name: 'Road',     provider: 'os' },
             light:    { name: 'Light',    provider: 'os' },
-            aerial:   { name: 'Aerial',   provider: 'Azure' },
-            nls1885:  { name: 'OS 1885',  provider: 'nls', layer: 'uk-osgb63k1885' },
-            nls1919:  { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919' },
+            nls1885:  { name: 'OS 1885',  provider: 'nls', layer: 'uk-osgb63k1885', maxzoom: 15 },
+            nls1919:  { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919', maxzoom: 13 },
         };
 
 
@@ -309,7 +309,7 @@ class BingMap {
 
         this.map.events.add('ready', () => {
             this.map.controls.add(new atlas.control.ZoomControl(), { position: 'top-right' });
-            this.mapChange('leisure');
+            this.mapChange(Object.keys(this.mapStyles)[0]);
         });
 
         this.map.events.add("click", function (e) {
@@ -556,7 +556,7 @@ class BingMap {
 
     // User selected a map type.
     mapChange(v) {
-        if (!this.map) return;
+        if (!this.map || this.currentStyle == v) return;
         this.currentStyle = v;
         showChoiceOnUI('#mapStyle', this.mapStyles[v]?.name || v);
         if (this.osLayer) {
@@ -585,6 +585,9 @@ class BingMap {
                 this.map.setStyle({ style: 'satellite' });
                 break;
         }
+        let maxz = this.mapStyles[v]?.maxzoom || 20;
+        let currentZoom = this.map.getCamera().zoom;
+        if (currentZoom > maxz) this.map.setCamera({zoom: maxz});
     }
 
     cycleMapStyle() {

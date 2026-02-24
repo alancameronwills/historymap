@@ -32,7 +32,7 @@ Other files:
 ## Architecture
 
 The Map app is a web page. Most of the logic is in the client end, written in JavaScript.  
-It uses the [Bing map service](https://docs.microsoft.com/en-us/bingmaps/v8-web-control/creating-and-hosting-map-controls/?toc=%2Fen-us%2Fbingmaps%2Fv8-web-control%2FTOC.json&bc=%2Fen-us%2FBingMaps%2Fbreadcrumb%2Ftoc.json), which lets you put dots (and other things) on the map. I use Bing because it provides more detailed aerial shots than Google, and also provides the option of Ordnance Survey maps.
+It uses the [Azure map service](https://azure.microsoft.com/en-us/products/azure-maps), which lets you put dots (and other things) on the map. I use Bing because it provides more detailed aerial shots than Google.
 The page and data are served from an [Azure Functions service](https://docs.microsoft.com/en-gb/azure/azure-functions/), and the data is kept in [Azure Storage](https://docs.microsoft.com/en-us/azure/storage/) – blobs for the code and photos, and tables for the text etc associated with each place on the map. I use Azure Functions and Storage rather than a conventional website service because they charge per use rather than per month. Our usage is very low, so it’s only pennies!
 
 ![Client and server](img/README-1.png)
@@ -45,14 +45,15 @@ API keys for Azure Functions are not stored in source. On startup, `history.js` 
 
 ## To edit and test
 
-### Easy and occasional:
+### Alan's setup:
 
-* Download all the files to a PC and put them under C:\inetpub\wwwroot. 
-* In a browser on the same machine, run http://localhost.
-  * If no response, press Windows key, type *Windows features* and enable **Internet Information Services**
-* To edit, run [VSCode](https://code.visualstudio.com/) in administrator mode.  
-  Edit the files under \inetpub directly and test //localhost.
-* When done, upload changed files to a branch here and create a pull request. Changes are deployed automatically.
+* Run "C:\Users\alan\UniServerZ\UniController.exe" and open http://localhost/historymap 
+  * One-off link to the source code:
+    ```
+    mklink /D "C:\Users\alan\UniServerZ\www\historymap" "C:\Users\alan\source\historymap"
+    ```
+   * The code is the local version, but it's running from the live data table.
+* When done, checkin and push. Changes are deployed automatically to Azure.
 
 ### More serious:
 One-off setup:
