@@ -284,11 +284,13 @@ class BingMap {
         }
 
         this.mapStyles = {
-            leisure: { name: 'Leisure', provider: 'os' },
-            outdoor: { name: 'Outdoor', provider: 'os' },
-            osroad: { name: 'Road', provider: 'os' },
-            light: { name: 'Light', provider: 'os' },
-            aerial: { name: 'Aerial', provider: 'Azure' }
+            leisure:  { name: 'Leisure',  provider: 'os' },
+            outdoor:  { name: 'Outdoor',  provider: 'os' },
+            osroad:   { name: 'Road',     provider: 'os' },
+            light:    { name: 'Light',    provider: 'os' },
+            aerial:   { name: 'Aerial',   provider: 'Azure' },
+            nls1885:  { name: 'OS 1885',  provider: 'nls', layer: 'uk-osgb63k1885' },
+            nls1919:  { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919' },
         };
 
 
@@ -567,6 +569,14 @@ class BingMap {
                 var styleName = this.mapStyles[v]?.name || 'Leisure';
                 var tileUrl = 'https://api.os.uk/maps/raster/v1/zxy/' + styleName
                     + '_3857/{z}/{x}/{y}.png?key=' + window.keys.Client_OS_DataHub_K;
+                this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
+                this.map.layers.add(this.osLayer);
+            }
+                break;
+            case 'nls': {
+                this.map.setStyle({ style: 'road' });
+                var tileUrl = 'https://api.maptiler.com/tiles/' + this.mapStyles[v].layer
+                    + '/{z}/{x}/{y}.jpg?key=' + window.keys.Client_MapTiler_K;
                 this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
                 this.map.layers.add(this.osLayer);
             }
