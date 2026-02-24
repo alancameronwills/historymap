@@ -43,7 +43,7 @@ function setMapSelectors() {
     let selectorInputs = Object.keys(s).map(style => {
         let name = s[style].name;
         return `<div><input type='radio' id='select${name}' 
-            name='mapStyleGroup' value='${name}'><label
+            name='mapStyleGroup' value='${style}'><label
             for='select${name}'>${name}</label></div>`;
     });
     let c = `<span id='mapStyle'>Aerial</span>

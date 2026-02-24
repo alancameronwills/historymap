@@ -6,11 +6,11 @@ var apiUrl = azureWS + "api/";
 var sourceUrl = azureWS + "h/";
 var avUrl = azureWS + "av/";      // Audio
 
-function g(id) {return document.getElementById(id);}
+function g(id) { return document.getElementById(id); }
 
 // Get query parameters
 location.queryParameters = {};
-location.search.substr(1).split("&").forEach(function (pair) {
+location.search.substring(1).split("&").forEach(function (pair) {
     if (pair === "") return;
     var parts = pair.split("=");
     location.queryParameters[parts[0]] = parts[1] &&
@@ -18,10 +18,10 @@ location.search.substr(1).split("&").forEach(function (pair) {
 });
 
 // Placeholder replaced in some scripts
-if (!onKeysArrived) {function onKeysArrived(){}}
+if (!onKeysArrived) { function onKeysArrived() { } }
 
 // On initialization, get API keys
-$(function() {
+$(function () {
     $.ajax({
         url: 'https://moylgrove-history.azurewebsites.net/api/Keys?code=5gJHMkN6fOy5OaQkRslNe884xX2Hlb4kMGavabHETYxT5nNsbvQm6A==',
         type: 'GET',
@@ -94,6 +94,49 @@ if (!String.prototype.format) {
     };
 }
 
+function suppressKnownConsoleErrors(suppressedPatterns)
+{
+    // Preserve original console methods
+    const originalLog = console.log;
+    const originalWarn = console.warn;
+    const originalError = console.error;
+
+    // Helper function to check if a message should be suppressed
+    function shouldSuppress(args) {
+        const m = args.map(a=>a.stack).join(" ");
+        return suppressedPatterns.some(pattern => pattern.test(m));
+    }
+
+    // Override console.log
+    console.log = function (...args) {
+        if (!shouldSuppress(args)) {
+            originalLog.apply(console, args);
+        }
+    };
+
+    // Override console.warn
+    console.warn = function (...args) {
+        if (!shouldSuppress(args)) {
+            originalWarn.apply(console, args);
+        }
+    };
+
+    // Override console.error
+    console.error = function (...args) {
+        if (!shouldSuppress(args)) {
+            originalError.apply(console, args);
+        }
+    };
+
+}
+
+suppressKnownConsoleErrors(
+    [
+        /api.os.uk/s,
+        /TypeError: Failed to fetch.*atlas\.min\.js/s
+    ]
+);
+
 function hashCode(s) {
     var hash = 0, i, chr;
     if (s.length === 0) return hash;
@@ -134,7 +177,7 @@ function makePlace(t) {
         id: t.RowKey,
         postcode: t.Postcode || "",
         location: window.map.makePosition(t.Latitude, t.Longitude),
-        zoom: t.Zoom ? (t.Zoom > 2 ? 1*t.Zoom : t.Zoom ) : 0,
+        zoom: t.Zoom ? (t.Zoom > 2 ? 1 * t.Zoom : t.Zoom) : 0,
         pic1: t.Pic1 || "",
         pic2: t.Pic2 || "",
         text: t.Text,
