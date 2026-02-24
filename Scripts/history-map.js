@@ -335,12 +335,16 @@ class PersonSearch {
         if (!gn && !ln && !syob) return;
         $('#searchResult').show(200);
         $("#searchCloseButton").css("background-color", "darkred");
+        var $tbody = $("<tbody>");
         var $table = $("<table>").append(
-            $("<tr>").append(
-                $("<th>").text("source"), $("<th>").text("house"),
-                $("<th>").text("given"), $("<th>").text("surname"),
-                $("<th>").text("b"), $("<th>").text("origin")
-            )
+            $("<thead>").append(
+                $("<tr>").append(
+                    $("<th>").text("source"), $("<th>").text("house"),
+                    $("<th>").text("given"), $("<th>").text("surname"),
+                    $("<th>").text("b"), $("<th>").text("origin")
+                )
+            ),
+            $tbody
         );
         $('#searchResult').empty().append($table);
         this._fetch("census", gn, ln, syob, "", function (results) {
@@ -349,7 +353,7 @@ class PersonSearch {
                     var origin = t.Origin === "m" ? "Moylg" : (t.Origin || "");
                     var $house = $("<span>").text(t.HouseName || "");
                     if (t.PlaceId) $house.addClass("darklink").on("click", () => go(t.PlaceId, 1));
-                    $('#searchResult > table > tbody').append(
+                    $tbody.append(
                         $("<tr>").append(
                             $("<td>").text((t.PartitionKey || "") + "cs"),
                             $("<td>").append($house),
@@ -367,7 +371,7 @@ class PersonSearch {
                 for (const t of results) {
                     var $home = $("<span>").text(t.home || "");
                     if (t.assigned) $home.addClass("darklink").on("click", () => go(t.assigned, 1));
-                    $('#searchResult > table > tbody').append(
+                    $tbody.append(
                         $("<tr>").append(
                             $("<td>").text("grave"),
                             $("<td>").append($home),
