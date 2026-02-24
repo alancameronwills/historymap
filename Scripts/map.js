@@ -289,7 +289,8 @@ class BingMap {
             outdoor:  { name: 'Outdoor',  provider: 'os' },
             osroad:   { name: 'Road',     provider: 'os' },
             // light:    { name: 'Light',    provider: 'os' },
-            nls1885:  { name: 'OS 1885',  provider: 'nls', layer: 'uk-osgb63k1885', maxzoom: 15 },
+            // nls1885:  { name: 'OS 1885',  provider: 'nls', layer: 'uk-osgb63k1885', maxzoom: 15 },
+            nlscombi: {name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888'},            
             nls1919:  { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919', maxzoom: 13 },
         };
 
