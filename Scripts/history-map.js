@@ -860,7 +860,7 @@ function zoneFromPrincipal(place) {
 // From the drop-down menu.
 function getChoiceFromUI(selector) {
     var selection = "";
-    $(selector).children("input").each(function (i, e) { if (e.checked) selection += " " + e.value; });
+    $(selector).find("input").each(function (i, e) { if (e.checked) selection += " " + e.value; });
     return selection.trim();
 }
 
