@@ -49,7 +49,7 @@ function setMapSelectors() {
     });
     let c = `<span id='mapStyle'>Aerial</span>
         <div id='mapStyleSelect' class='dropDownMenu'>
-        ${selectorInputs}</div>`;
+        ${selectorInputs.join("")}</div>`;
     let target = document.getElementById("mapTypeSelectorDiv");
     target.innerHTML = c;
 }
