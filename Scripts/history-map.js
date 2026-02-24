@@ -75,19 +75,26 @@ function displayZone(zoneChoice) {
         appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "true" }, {});
         placeListsGot = 0;
         fetch(fetchApi)
-            .then(function (response) { return response.json(); })
+            .then(function (response) {
+                if (!response.ok) throw new Error(response.status);
+                return response.json();
+            })
             .then(gotTable) // Async
             .catch(function (err) {
                 window.alert("Sorry - problem getting the map data. Please tell alan@pantywylan.org");
             });
         if (window.place2.authCheck()) {
             fetch(fetchApi2)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) throw new Error(response.status);
+                    return response.json();
+                })
                 .then(r => window.place2.gotTable(r))
-                .catch(err => { });
+                .catch(err => { console.warn("Failed to load private data:", err); });
         }
     } else {
         appInsights.trackEvent("load", { noHistory: window.noHistory, fetch: "false" }, {});
+        placeListsGot = 0;
         $.get(fetchApi, function (data, status) {
             gotTable(data);
         });
@@ -472,7 +479,10 @@ class PersonSearch {
         if (typeof fetch !== 'undefined') {
             fetch(apiUrl + "{0}?first={1}&last={2}&year={3}&place={4}"
                 .format(table, first || "", last || "", year || "", place || ""))
-                .then(function (response) { return response.json(); })
+                .then(function (response) {
+                    if (!response.ok) throw new Error(response.status);
+                    return response.json();
+                })
                 .then(function (results) { cb(results); });
         }
         else {
@@ -633,15 +643,21 @@ function clearMapSelection() {
 }
 
 window.addEventListener("beforeunload", function (e) {
-    // Might have used this after editing a place
-    if (localStorage) localStorage.clear();
+    // Clear only the key used for communicating with the editor window.
+    if (localStorage) localStorage.removeItem("place");
 });
 
 // Called when the edit window has updated a place.
 // It puts the item in local store as well as sending to server.
 window.addEventListener("storage", function (event) {
     if (event.key == "place") {
-        var newPlace = makePlace(JSON.parse(event.newValue));
+        var newPlace;
+        try {
+            newPlace = makePlace(JSON.parse(event.newValue));
+        } catch (e) {
+            console.warn("Failed to parse place from storage:", e);
+            return;
+        }
         var oldPlace = window.items[newPlace.id];
         if (newPlace.deleted) {
             delete window.items[newPlace.id];
