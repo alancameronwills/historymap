@@ -423,15 +423,9 @@ function listAudio() {
 function getAudio(id) {
     if (!id) return;
     $("#audiodiv").hide();
-    try {
-        if (window.avlist.includes(id)) {
-            try {
-                $("#audiodiv").html("<audio controls><source src='{0}{1}.mp3' type='audio/mpeg'></source></audio><br/>Commentary &copy; Sally James".format(avUrl, id));
-                $("#audiodiv").show();
-            } catch (ex) { }
-        };
-    } catch (exx) {
-        var exxx = exx;
+    if (window.avlist && window.avlist.includes(id)) {
+        $("#audiodiv").html("<audio controls><source src='{0}{1}.mp3' type='audio/mpeg'></source></audio><br/>Commentary &copy; Sally James".format(avUrl, id));
+        $("#audiodiv").show();
     }
 }
 listAudio();
@@ -651,11 +645,9 @@ function popupText2(place) {
     if (!window.places2) return "";
     let p2 = place.place2 || {};
     let bits2 = [];
-    if (bits2) { 
-        let b2 = [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description];
-        for (var i in b2) {
-            if (b2[i]) bits2.push(b2[i]);
-        }
+    let b2 = [p2.Owner, ((p2.Phone || "") + " " + (p2.email || "")).trim(), p2.Description];
+    for (var i in b2) {
+        if (b2[i]) bits2.push(b2[i]);
     }
     let text2 = bits2.join("<br/>");
     let buttonColor = pinColor2(p2 && p2.health);
@@ -718,10 +710,6 @@ function closeEdit2() {
     p2.c4 = g("edit2uiC4").value;
     p2.Description = g("edit2uiDescription").value;
     updatePlace2(window.items[id]);
-}
-
-function strip(s) {
-    return;
 }
 
 // Title of principal must be ~= name of zone

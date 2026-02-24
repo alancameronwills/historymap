@@ -37,8 +37,10 @@ $(function() {
 // For searching and sorting place names
 // Remove punctuation, spacing, Welsh chars, so that Tŷ Wylan == Ty-wylan
 function comparable(title) {
-    return title.toLocaleLowerCase().replace(/[- '",]+/g, "").replace(/^the/, ""
-        .replace(/[âêîôûŵŷ]/g, function (c) { return { "â": "a", "ê": "e", "î": "i", "ô": "o", "û": "u", "ŵ": "w", "ŷ": "y" }[c]; }));
+    return title.toLocaleLowerCase()
+        .replace(/[- '",]+/g, "")
+        .replace(/^the/, "")
+        .replace(/[âêîôûŵŷ]/g, function (c) { return { "â": "a", "ê": "e", "î": "i", "ô": "o", "û": "u", "ŵ": "w", "ŷ": "y" }[c]; });
 }
 
 /// Default 30 days
@@ -51,18 +53,10 @@ function setCookie(cname, cvalue, exdays) {
 
 function getCookie(cname) {
     var name = cname + "=";
-    var decodedCookie = decodeURIComponent(document.cookie);
-    var ca = decodedCookie.split(';');
-    for (var i = 0; i < ca.length; i++) {
-        var c = ca[i];
-        while (c.charAt(0) == ' ') {
-            c = c.substring(1);
-        }
-        if (c.indexOf(name) == 0) {
-            return c.substring(name.length, c.length);
-        }
-    }
-    return "";
+    var found = decodeURIComponent(document.cookie).split(';')
+        .map(function (c) { return c.trim(); })
+        .find(function (c) { return c.indexOf(name) === 0; });
+    return found ? found.substring(name.length) : "";
 }
 
 // Determines whether one element is contained in another

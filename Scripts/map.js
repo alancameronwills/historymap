@@ -123,7 +123,6 @@ class GoogleMap {
     }
     openPlacePopup(position, title, content, place) {
         this.placePopup.place = place;
-        this.placePopup.place = place;
         this.placePopup.setContent("<div onclick='go(window.placePopup.place.id, false)'>"
             + "<h3>" + title + "</h3>" + content + "</div>");
         this.placePopup.setPosition(position);
