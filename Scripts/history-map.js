@@ -867,7 +867,7 @@ function getChoiceFromUI(selector) {
 // Set the drowpdown menu to reflect the current zone selection, obtained from a cookie.
 function showChoiceOnUI(selector, zones) {
     if (zones) {
-        $(selector).html(zones.replace(/ .*/, "..."));
+        $(selector).html(zones.length<=10 ? zones : zones.replace(/ .*/, "..."));
         $(selector + "Select").children("input").each(function (i, e) {
             e.checked = (zones.indexOf(e.value) >= 0);
         });
