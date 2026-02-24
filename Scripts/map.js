@@ -38,7 +38,6 @@ function doLoadMap() {
 
 }
 
-
 function setMapSelectors() {
     let s = window.map.mapStyles;
     let selectorInputs = Object.keys(s).map(style => {
@@ -53,7 +52,6 @@ function setMapSelectors() {
     let target = document.getElementById("mapTypeSelectorDiv");
     target.innerHTML = c;
 }
-
 
 function mapModuleLoaded() {
     window.map.loaded(onMapLoaded || (() => { }));
