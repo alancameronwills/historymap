@@ -244,6 +244,10 @@ th {
     font-weight: normal;
 }
 
+.contextMenu {
+    padding: 2px 24px 2px 10px;
+}
+
 .dropdown {
     padding: 0.1em 0.5em 0.2em 0.5em;
     background-color: var(--headergray);

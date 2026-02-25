@@ -113,7 +113,7 @@ class GoogleMap {
             menuString += "<br/>";
         }
         this.menuBox = new google.maps.InfoWindow({
-            content: menuString
+            content: `<div class='contextMenu' data="x">${menuString}</div>`
         });
         this.map.addListener("rightclick", function (e) {
             // console.log("rightclick 1");
@@ -284,19 +284,19 @@ class BingMap {
         }
 
         this.mapStyles = {
-            aerial:   { name: 'Aerial',   provider: 'Azure' },
-            leisure:  { name: 'Leisure',  provider: 'os' },
-            outdoor:  { name: 'Outdoor',  provider: 'os' },
-            osroad:   { name: 'Road',     provider: 'os' },
+            aerial: { name: 'Aerial', provider: 'Azure' },
+            leisure: { name: 'Leisure', provider: 'os' },
+            outdoor: { name: 'Outdoor', provider: 'os' },
+            osroad: { name: 'Road', provider: 'os' },
             // light:    { name: 'Light',    provider: 'os' },
             // nls1885:  { name: 'OS 1885',  provider: 'nls', layer: 'uk-osgb63k1885', maxzoom: 15 },
-            nlscombi: {name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888'},
-            nls1919:  { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919', maxzoom: 13 },
-            osm:      { name: 'OSM',      provider: 'maptiler', layer: 'openstreetmap' },
-            osmout:   { name: 'OSM Out',  provider: 'maptiler', layer: 'outdoor-v2' },
-            osmstreet:   { name: 'Streets',  provider: 'maptiler', layer: 'streets-v2' },
-            topo:   { name: 'Topo',  provider: 'maptiler', layer: 'topo-v2' },
-            dataviz:   { name: 'Dataviz',  provider: 'maptiler', layer: 'dataviz' },
+            nlscombi: { name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888' },
+            nls1919: { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919', maxzoom: 13 },
+            osm: { name: 'OSM', provider: 'maptiler', layer: 'openstreetmap' },
+            osmout: { name: 'OSM Out', provider: 'maptiler', layer: 'outdoor-v2' },
+            osmstreet: { name: 'Streets', provider: 'maptiler', layer: 'streets-v2' },
+            topo: { name: 'Topo', provider: 'maptiler', layer: 'topo-v2' },
+            dataviz: { name: 'Dataviz', provider: 'maptiler', layer: 'dataviz' },
         };
 
 
@@ -338,7 +338,12 @@ class BingMap {
             menuString += "<a href='#' onclick='rightClickActions[{1}].eventHandler()'>{0}</a>".format(rightClickActions[i].label, i);
             menuString += "<br/>";
         }
-        this.menuBox = new atlas.Popup({ closeButton: false, fillColor: 'white', content: menuString, position: [0, 0] });
+        this.menuBox = new atlas.Popup({
+            closeButton: true, 
+            fillColor: 'white',
+            content: `<div class='contextMenu'>${menuString}</div>`,
+            position: [0, 0]
+        });
         this.map.events.add("contextmenu", (e) => {
             this.menuBoxLocation = { latitude: e.position[1], longitude: e.position[0] };
             this.menuBox.setOptions({ position: e.position });
@@ -601,7 +606,7 @@ class BingMap {
         }
         let maxz = this.mapStyles[v]?.maxzoom || 20;
         let currentZoom = this.map.getCamera().zoom;
-        if (currentZoom > maxz) this.map.setCamera({zoom: maxz});
+        if (currentZoom > maxz) this.map.setCamera({ zoom: maxz });
     }
 
     cycleMapStyle() {
