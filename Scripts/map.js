@@ -290,8 +290,13 @@ class BingMap {
             osroad:   { name: 'Road',     provider: 'os' },
             // light:    { name: 'Light',    provider: 'os' },
             // nls1885:  { name: 'OS 1885',  provider: 'nls', layer: 'uk-osgb63k1885', maxzoom: 15 },
-            nlscombi: {name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888'},            
+            nlscombi: {name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888'},
             nls1919:  { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919', maxzoom: 13 },
+            osm:      { name: 'OSM',      provider: 'maptiler', layer: 'openstreetmap' },
+            osmout:   { name: 'OSM Out',  provider: 'maptiler', layer: 'outdoor-v2' },
+            osmstreet:   { name: 'Streets',  provider: 'maptiler', layer: 'streets-v2' },
+            topo:   { name: 'Topo',  provider: 'maptiler', layer: 'topo-v2' },
+            dataviz:   { name: 'Dataviz',  provider: 'maptiler', layer: 'dataviz' },
         };
 
 
@@ -301,7 +306,7 @@ class BingMap {
                 center: mapCenter,
                 showLocateMeButton: false,
                 disableKeyboardInput: true,
-                zoom: 15,
+                zoom: 13,
                 authOptions: {
                     authType: 'subscriptionKey',
                     subscriptionKey: window.keys.Client_Azure_Map_K
@@ -578,6 +583,14 @@ class BingMap {
                 this.map.setStyle({ style: 'road' });
                 var tileUrl = 'https://api.maptiler.com/tiles/' + this.mapStyles[v].layer
                     + '/{z}/{x}/{y}.jpg?key=' + window.keys.Client_MapTiler_K;
+                this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
+                this.map.layers.add(this.osLayer);
+            }
+                break;
+            case 'maptiler': {
+                this.map.setStyle({ style: 'road' });
+                var tileUrl = 'https://api.maptiler.com/maps/' + this.mapStyles[v].layer
+                    + '/256/{z}/{x}/{y}.png?key=' + window.keys.Client_MapTiler_K;
                 this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
                 this.map.layers.add(this.osLayer);
             }
