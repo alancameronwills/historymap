@@ -162,7 +162,7 @@ function ShowPhoto1(url) {
     if (!url) return;
     var category = "";
     // Link to locally stored blob or external pic
-    if (url.match(/.*(jpg|jpeg|png|gif)$/i)) {
+    if (url.match(/.*(jpg|jpeg|png|gif|webp)$/i)) {
         $("#photo1prompt").hide();
         $("#photo1google").html("").hide();
         var picBlob = url.replace(/^images\//, imgUrl);
@@ -304,7 +304,7 @@ function onAddPhoto2(url) {
 var slideCount = 0;
 // Append a photo to the gallery. select => Show in the enlarged pic.
 function AddPhoto2(url, select) {
-    if (!url || !(url.match(/\.(jpg|jpeg|png|gif)$/i))) { return; }
+    if (!url || !(url.match(/\.(jpg|jpeg|png|gif|webp)$/i))) { return; }
     var picBlob = url.replace(/^images\//, imgUrl);
     $("#photo2Gallery").append("<img id='slide{1}' src='{0}' title='Click to show at left' onclick='ShowPhoto2({1})' style='max-width:100px;max-height:100px;display:inline;'/> "
         .format(picBlob, ++slideCount));

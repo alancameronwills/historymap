@@ -168,7 +168,7 @@
                 <br/> - or -
                 <br/> Paste a link to a picture, or Google Street View:
                 <br/>
-                <input id="photo1url" type="text" style="width:300px" pattern="<iframe.*</iframe>|http.*(jpg|jpeg|png|gif) *" placeholder="<iframe... or http...jpg|.png|.gif"
+                <input id="photo1url" type="text" style="width:300px" pattern="<iframe.*</iframe>|http.*(jpg|jpeg|png|gif|webp) *" placeholder="<iframe... or http...jpg|.png|.gif|.webp"
                     onchange="onLinkPhoto1()" onfocus="this.select()" />
                 <input type="button" onclick="onLinkPhoto1()" value="+" style="background-color:lightgreen;" title="Set the photo or street view."
                 />
@@ -209,7 +209,7 @@
                 />
                 <br/> or paste the web address of a picture on the web:
                 <br/>
-                <input id="photo2url" type="text" style="width:300px" pattern="http.*(jpg|jpeg|png|gif) *" placeholder="http...jpg|.png|.gif"
+                <input id="photo2url" type="text" style="width:300px" pattern="http.*(jpg|jpeg|png|gif|webp) *" placeholder="http...jpg|.png|.gif|.webp"
                     onchange="onAddPhoto2($('#photo2url')[0].value)" onfocus="this.select()" title="Paste the URL (web address) of a picture."
                 />
                 <input type="button" value="+" onclick="onAddPhoto2($('#photo2url')[0].value)" style="background-color:lightgreen;" title="Add the picture to this slide show."
