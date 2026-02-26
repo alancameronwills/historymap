@@ -17,6 +17,10 @@ function initMapCentre() {
     return lat && long ? "" + lat + "," + long : getCookie("mapCenter") || "52.068287,-4.747708";
 }
 
+function showChoiceOnUI (selector, choice) {
+    $("#mapStyleButton").text(choice);
+}
+
 // On map load
 function onMapLoaded() {
     window.place = {
