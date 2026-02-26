@@ -284,19 +284,19 @@ class BingMap {
         }
 
         this.mapStyles = {
-            aerial: { name: 'Aerial', provider: 'Azure' },
-            leisure: { name: 'Leisure', provider: 'os' },
-            outdoor: { name: 'Outdoor', provider: 'os' },
+            nlscombi: { name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888' },
+            osmout: { name: 'Outdoor', provider: 'maptiler', layer: 'outdoor-v2' },
             osroad: { name: 'Road', provider: 'os' },
+            aerial: { name: 'Aerial', provider: 'Azure' },
+            //leisure: { name: 'Leisure', provider: 'os' },
+            //outdoor: { name: 'Outdoor', provider: 'os' },
             // light:    { name: 'Light',    provider: 'os' },
             // nls1885:  { name: 'OS 1885',  provider: 'nls', layer: 'uk-osgb63k1885', maxzoom: 15 },
-            nlscombi: { name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888' },
-            nls1919: { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919', maxzoom: 13 },
-            osm: { name: 'OSM', provider: 'maptiler', layer: 'openstreetmap' },
-            osmout: { name: 'OSM Out', provider: 'maptiler', layer: 'outdoor-v2' },
-            osmstreet: { name: 'Streets', provider: 'maptiler', layer: 'streets-v2' },
-            topo: { name: 'Topo', provider: 'maptiler', layer: 'topo-v2' },
-            dataviz: { name: 'Dataviz', provider: 'maptiler', layer: 'dataviz' },
+            //nls1919: { name: 'OS 1920s', provider: 'nls', layer: 'uk-osgb1919', maxzoom: 13 },
+            //osm: { name: 'OSM', provider: 'maptiler', layer: 'openstreetmap' },
+            //osmstreet: { name: 'Streets', provider: 'maptiler', layer: 'streets-v2' },
+            //topo: { name: 'Topo', provider: 'maptiler', layer: 'topo-v2' },
+            //dataviz: { name: 'Dataviz', provider: 'maptiler', layer: 'dataviz' },
         };
 
 
@@ -577,7 +577,7 @@ class BingMap {
         switch (this.mapStyles[v]?.provider) {
             case 'os': {
                 this.map.setStyle({ style: 'road' });
-                var styleName = this.mapStyles[v]?.name || 'Leisure';
+                var styleName = this.mapStyles[v]?.name || 'Road';
                 var tileUrl = 'https://api.os.uk/maps/raster/v1/zxy/' + styleName
                     + '_3857/{z}/{x}/{y}.png?key=' + window.keys.Client_OS_DataHub_K;
                 this.osLayer = new atlas.layer.TileLayer({ tileUrl: tileUrl, tileSize: 256 });
@@ -611,7 +611,7 @@ class BingMap {
 
     cycleMapStyle() {
         var styles = Object.keys(this.mapStyles);
-        var idx = styles.indexOf(this.currentStyle || 'leisure');
+        var idx = styles.indexOf(this.currentStyle || 'aerial');
         this.mapChange(styles[(idx + 1) % styles.length]);
     }
 
