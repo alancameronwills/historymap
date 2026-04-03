@@ -283,7 +283,7 @@ class BingMap {
         }
 
         this.mapStyles = {
-            nlscombi: { name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888', maxzoom: 16 },
+            nlscombi: { name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888', maxzoom: 17 },
             osmout: { name: 'Outdoor', provider: 'maptiler', layer: 'outdoor-v2' },
             osroad: { name: 'Road', provider: 'os' },
             aerial: { name: 'Aerial', provider: 'Azure' },
