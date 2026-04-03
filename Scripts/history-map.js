@@ -163,7 +163,6 @@ function gotTable(results) {
 // place == null to just clear the selection
 // fromList : user chose place from the left-side index, not the map
 function selectOnMap(place, fromList) {
-    // console.log("selectOnMap 1");
     window.map.highlightPin(place ? place.pin : null);
     if (place != null) {
         if (place.location.latitude != null && place.location.longitude != null) {
@@ -173,7 +172,6 @@ function selectOnMap(place, fromList) {
             window.map.showPlace(place, proximity(place), true);
         }
     }
-    // console.log("selectOnMap 2");
 }
 
 var latKm = 0.000089; // Pembs. 

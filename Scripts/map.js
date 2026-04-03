@@ -1,5 +1,5 @@
 
-// map.js version 23
+// map.js version 24
 
 /*
 Google maps API is user pantywylan@gmail.com, project name moylegrove-f7u
@@ -85,7 +85,6 @@ class GoogleMap {
                     mapTypeId: "satellite"
                 });
             this.map.addListener("click", function () {
-                // console.log("click 1");
                 clearMessageOrMapSelection();
             });
             this.getMapType();
@@ -116,7 +115,6 @@ class GoogleMap {
             content: `<div class='contextMenu' data="x">${menuString}</div>`
         });
         this.map.addListener("rightclick", function (e) {
-            // console.log("rightclick 1");
             window.map.menuBox.setPosition(e.latLng);
             window.map.menuBox.open(window.map.map);
         });
@@ -151,7 +149,6 @@ class GoogleMap {
     }
     makePin(place, nopopup) {
         if (place.cf.length > 0) {
-            // console.log("makePin " + place.title);
             var options = this.pinOptions(place);
             var pushpin = new google.maps.Marker(options);
             this.markers.push(pushpin);
@@ -162,15 +159,12 @@ class GoogleMap {
 
             if (!nopopup) {
                 pushpin.addListener("click", (e) => {
-                    // console.log("pin click 1");
                     go(place.id, false);
                 });
                 pushpin.addListener('mouseover', function (e) {
-                    // console.log("pin over 1");
                     window.map.openPlacePopup(pushpin.getPosition(), place.title, popupText(place), place);
                 });
                 pushpin.addListener('mouseout', function (e) {
-                    // console.log("pin out 1");
                     window.map.placePopup.close();
                 });
             }
@@ -221,13 +215,11 @@ class GoogleMap {
         // Clear current highlight:
         if (this.selectedPin != null) {
             // myColor is an additional property we added to keep the default colour of each pin:
-            //this.selectedPin.getIcon().strokeColor = this.selectedPin.myColor;
             this.setPinColor(this.selectedPin, this.selectedPin.myColor);
         }
         this.selectedPin = pin;
         if (pin) {
             pin.myColor = pin.getIcon().strokeColor;
-            //pin.getIcon().strokeColor = "#FF00F0";
             this.setPinColor(this.selectedPin, "#FF00F0");
         }
     }
@@ -291,7 +283,7 @@ class BingMap {
         }
 
         this.mapStyles = {
-            nlscombi: { name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888' },
+            nlscombi: { name: 'OS 1900s', provider: 'nls', layer: 'uk-osgb1888', maxzoom: 16 },
             osmout: { name: 'Outdoor', provider: 'maptiler', layer: 'outdoor-v2' },
             osroad: { name: 'Road', provider: 'os' },
             aerial: { name: 'Aerial', provider: 'Azure' },
@@ -567,7 +559,7 @@ class BingMap {
         if (place.location.longitude == null || place.location.latitude == null) return;
         var cameraOpts = { center: [place.location.longitude, place.location.latitude] };
         if (zoom) {
-            cameraOpts.zoom = zoom;
+            cameraOpts.zoom = Math.min(zoom, (this.mapStyles[this.currentStyle]?.maxzoom || 20));
         }
         this.map.setCamera(cameraOpts);
     }

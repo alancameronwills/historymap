@@ -88,7 +88,7 @@ function clearMessageOrMapSelection() {
 function createSinglePin(place) {
     // Attach the pin to the map:
     window.map.singlePin = window.map.makePin(place, true);
-    window.map.showPlace(place, 17);
+    window.map.showPlace(place, 16);
 }
 
 
