@@ -92,9 +92,20 @@ function createSinglePin(place) {
 }
 
 
+function onCentreMarkerClick() {
+    var menu = document.getElementById('centreMarkerMenu');
+    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+}
+
+function onMovePlaceToMapCentre() {
+    window.place.location = window.map.movePinToMapCenter();
+    document.getElementById('centreMarkerMenu').style.display = 'none';
+}
+
 // User clicked to put the map back on the place (maybe after panning it around and losing the place)
 function onCentreMapOnPlace() {
     window.map.recenter();
+    document.getElementById('centreMarkerMenu').style.display = 'none';
 }
 
 // Set the various places in the UI the lat & long appear. Return the Location.
@@ -636,6 +647,12 @@ function TwoRandomDigits() {
 
 // Find out who the user is
 $(document).ready(function () {
+    document.addEventListener('click', function (e) {
+        if (!e.target.closest('#centreMarkerMenu') && e.target.id !== 'centreMarkerBtn') {
+            var menu = document.getElementById('centreMarkerMenu');
+            if (menu) menu.style.display = 'none';
+        }
+    });
     getUserName();
     if (!isAdvancedBrowser) {
         $("body").html("<div style='position:fixed;top:100px;font-size:large;font-weight:bold;margin:10px;'>Sorry - This form doesn't work on your browser. Please complain to Alan.</div>");

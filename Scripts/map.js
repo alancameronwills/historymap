@@ -256,6 +256,13 @@ class GoogleMap {
         return loc;
     }
 
+    movePinToMapCenter() {
+        if (!this.singlePin) return null;
+        var center = this.map.getCenter();
+        this.singlePin.setPosition(center);
+        return new Pin(center.lat(), center.lng());
+    }
+
     recenter() {
         this.map.setCenter(this.singlePin.position);
     }
@@ -649,6 +656,13 @@ class BingMap {
         var loc = this.menuBoxLocation;
         this.singlePin.setOptions({ position: [loc.longitude, loc.latitude] });
         return loc;
+    }
+
+    movePinToMapCenter() {
+        if (!this.singlePin) return null;
+        var center = this.map.getCamera().center;
+        this.singlePin.setOptions({ position: center });
+        return { latitude: center[1], longitude: center[0] };
     }
 
     recenter() {
